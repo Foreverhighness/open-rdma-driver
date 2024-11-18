@@ -1,23 +1,18 @@
-use std::{
-    error::Error,
-    net::Ipv4Addr,
-    sync::{
-        atomic::AtomicBool,
-        Arc,
-    },
-};
+use std::error::Error;
+use std::net::Ipv4Addr;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 use flume::{unbounded, Receiver};
 use log::debug;
 
-use crate::SchedulerStrategy;
-
 use self::net_agent::udp_agent::{UDPReceiveAgent, UDPSendAgent};
-
+use super::scheduler::DescriptorScheduler;
 use super::{
-    scheduler::DescriptorScheduler, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb,
-    ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc,
+    DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc, ToHostCtrlRbDesc,
+    ToHostRb, ToHostWorkRbDesc,
 };
+use crate::SchedulerStrategy;
 
 mod logic;
 mod net_agent;
@@ -52,7 +47,12 @@ struct ToHostCtrlRb(Receiver<ToHostCtrlRbDesc>);
 
 impl<Strat: SchedulerStrategy> SoftwareDevice<Strat> {
     /// Initializing an software device.
-    pub(crate) fn new(addr: Ipv4Addr, port: u16, strategy: Strat,scheduler_size:u32) -> Result<Self, Box<dyn Error>> {
+    pub(crate) fn new(
+        addr: Ipv4Addr,
+        port: u16,
+        strategy: Strat,
+        scheduler_size: u32,
+    ) -> Result<Self, Box<dyn Error>> {
         let send_agent = UDPSendAgent::new(addr, port)?;
         let (ctrl_sender, ctrl_receiver) = unbounded();
         let (work_sender, work_receiver) = unbounded();
@@ -69,7 +69,7 @@ impl<Strat: SchedulerStrategy> SoftwareDevice<Strat> {
         let scheduler = Arc::new(DescriptorScheduler::new_with_software(
             strategy,
             this_device,
-            scheduler_size
+            scheduler_size,
         ));
         let to_card_work_rb = ToCardWorkRb(scheduler);
         Ok(Self {

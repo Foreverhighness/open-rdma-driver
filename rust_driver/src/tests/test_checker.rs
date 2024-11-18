@@ -1,30 +1,30 @@
-use std::{
-    collections::HashMap,
-    slice::from_raw_parts,
-    sync::{atomic::Ordering, Arc},
-    time::Duration,
-};
+use std::collections::HashMap;
+use std::slice::from_raw_parts;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+use std::time::Duration;
 
 use derive_builder::Builder;
 use flume::unbounded;
-use parking_lot::{lock_api::RwLock, Mutex};
+use parking_lot::lock_api::RwLock;
+use parking_lot::Mutex;
 
-use crate::{
-    buf::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE},
-    checker::{PacketCheckEvent, PacketCheckerContext, RecvContextMap},
-    device::{
-        layout::Aeth, ToCardCtrlRbDesc, ToCardWorkRbDesc, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon, ToHostWorkRbDescRead, ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType
-    },
-    op_ctx::CtrlOpCtx,
-    qp::{QpContext, QpStatus},
-    retry::RetryMap,
-    types::{Key, Msn, Pmtu, Psn, QpType, Qpn},
-    utils::{calculate_packet_cnt, get_first_packet_max_length},
-    CtrlDescriptorSender, WorkDescriptorSender,
+use crate::buf::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE};
+use crate::checker::{PacketCheckEvent, PacketCheckerContext, RecvContextMap};
+use crate::device::layout::Aeth;
+use crate::device::{
+    ToCardCtrlRbDesc, ToCardWorkRbDesc, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon,
+    ToHostWorkRbDescRead, ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
 };
+use crate::op_ctx::CtrlOpCtx;
+use crate::qp::{QpContext, QpStatus};
+use crate::retry::RetryMap;
+use crate::types::{Key, Msn, Pmtu, Psn, QpType, Qpn};
+use crate::utils::{calculate_packet_cnt, get_first_packet_max_length};
+use crate::{CtrlDescriptorSender, WorkDescriptorSender};
 
 macro_rules! construct_context {
-    ($context : ident,$device: ident, $qpn : ident = $qpn_val : expr) => {
+    ($context:ident, $device:ident, $qpn:ident = $qpn_val:expr) => {
         let $device = Arc::new(MockCtrlDescSender::default());
         let ctrl_desc_sender: Arc<dyn CtrlDescriptorSender> = $device.clone();
         let work_desc_sender: Arc<dyn WorkDescriptorSender> = $device.clone();
@@ -60,10 +60,16 @@ macro_rules! construct_context {
 }
 
 macro_rules! make_ref_packet_event {
-    ($name : ident,$qpn:ident,$start_psn: ident = $start_psn_val :expr,
-         $msn : ident = $msn_val : expr,
-         addr= $addr_val:expr,
-         len= $len_val:expr) => {
+    (
+        $name:ident,
+        $qpn:ident,
+        $start_psn:ident =
+        $start_psn_val:expr,
+        $msn:ident =
+        $msn_val:expr,addr =
+        $addr_val:expr,len =
+        $len_val:expr
+    ) => {
         let $msn = Msn::new($msn_val);
         let $start_psn = Psn::new($start_psn_val);
         let $name: PacketCheckEvent = PacketWriteBuilder::create_empty()
@@ -81,7 +87,7 @@ macro_rules! make_ref_packet_event {
 }
 
 macro_rules! reset_packet_psn {
-    ($packets : ident, psn = $psn:expr,expected = $expected: expr) => {
+    ($packets:ident,psn = $psn:expr,expected = $expected:expr) => {
         let base_psn = if let PacketCheckEvent::Write(p) = &($packets)[0] {
             p.psn
         } else {
@@ -759,13 +765,15 @@ impl MockCtrlDescSender {
     }
 }
 
-fn check_aeth_code(desc : &ToCardWorkRbDesc) -> Option<ToHostWorkRbDescAethCode>{
+fn check_aeth_code(desc: &ToCardWorkRbDesc) -> Option<ToHostWorkRbDescAethCode> {
     if let ToCardWorkRbDesc::WriteWithImm(ref raw) = *desc {
-        let buf = &unsafe { from_raw_parts(raw.sge0.addr as *const u8, raw.sge0.len.try_into().unwrap()) }[54..];
+        let buf = &unsafe {
+            from_raw_parts(raw.sge0.addr as *const u8, raw.sge0.len.try_into().unwrap())
+        }[54..];
         let aeth_header = Aeth(buf);
         let code = aeth_header.get_aeth_code() as u8;
         Some(ToHostWorkRbDescAethCode::try_from(code).unwrap())
-    }else{
+    } else {
         None
     }
 }

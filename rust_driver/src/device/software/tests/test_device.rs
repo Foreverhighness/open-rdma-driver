@@ -1,24 +1,22 @@
+use std::net::Ipv4Addr;
+use std::sync::Arc;
+use std::thread::sleep;
+use std::time::Duration;
+
 use flume::unbounded;
 use serial_test::serial;
-use std::net::Ipv4Addr;
-use std::{sync::Arc, thread::sleep, time::Duration};
 
-use super::SGListBuilder;
-use super::ToCardCtrlRbDescBuilderType::QpManagement;
-use super::ToCardCtrlRbDescBuilderType::UpdateMrTable;
+use super::ToCardCtrlRbDescBuilderType::{QpManagement, UpdateMrTable};
+use super::{SGListBuilder, ToCardCtrlRbDescBuilder};
 use crate::device::scheduler::round_robin::RoundRobinStrategy;
+use crate::device::software::logic::BlueRDMALogic;
+use crate::device::software::net_agent::udp_agent::{UDPReceiveAgent, UDPSendAgent};
 use crate::device::software::tests::ToCardWorkRbDescBuilder;
-use crate::device::ToHostWorkRbDescWriteType;
 use crate::device::{
-    software::{
-        logic::BlueRDMALogic,
-        net_agent::udp_agent::{UDPReceiveAgent, UDPSendAgent},
-    },
     DeviceAdaptor, SoftwareDevice, ToCardWorkRbDescOpcode, ToHostWorkRbDesc,
+    ToHostWorkRbDescWriteType,
 };
 use crate::types::{MemAccessTypeFlag, Pmtu, QpType, WorkReqSendFlag};
-
-use super::ToCardCtrlRbDescBuilder;
 
 #[test]
 #[serial]

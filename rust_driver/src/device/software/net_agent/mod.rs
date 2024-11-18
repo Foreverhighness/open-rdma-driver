@@ -1,13 +1,12 @@
-use std::{fmt::Debug, net::Ipv4Addr};
+use std::fmt::Debug;
+use std::io;
+use std::net::Ipv4Addr;
 
 use thiserror::Error;
 
-use super::{
-    packet::PacketError,
-    packet_processor::PacketProcessorError,
-    types::{PayloadInfo, RdmaMessage},
-};
-use std::io;
+use super::packet::PacketError;
+use super::packet_processor::PacketProcessorError;
+use super::types::{PayloadInfo, RdmaMessage};
 
 pub(crate) mod udp_agent;
 

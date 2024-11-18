@@ -1,4 +1,7 @@
-use std::{fs::File, io, mem::size_of, os::fd::AsRawFd, process};
+use std::fs::File;
+use std::mem::size_of;
+use std::os::fd::AsRawFd;
+use std::{io, process};
 
 use log::error;
 
@@ -33,10 +36,10 @@ impl PhysAddrResolver {
         let offset = vaddr % PAGE_SIZE;
         let pagemap_fd = self.pagemap_fd.as_raw_fd();
         let data: u64 = 0;
-        log::info!("query {:x}",vaddr);
-        let ret = unsafe{libc::lseek(pagemap_fd, (vpn * 8) as i64, libc::SEEK_SET)};
-        if ret < 0{
-            error!("lseek failed :{:?}",io::Error::last_os_error());
+        log::info!("query {:x}", vaddr);
+        let ret = unsafe { libc::lseek(pagemap_fd, (vpn * 8) as i64, libc::SEEK_SET) };
+        if ret < 0 {
+            error!("lseek failed :{:?}", io::Error::last_os_error());
         }
         if unsafe {
             libc::read(

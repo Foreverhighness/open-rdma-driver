@@ -1,15 +1,10 @@
-use crate::{
-    device::{
-        DescSge, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescOpcode,
-        ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType,
-    },
-    types::{MemAccessTypeFlag, Psn, QpType},
+use super::logic::BlueRdmaLogicError;
+use super::packet::{Immediate, PacketError, AETH, BTH, RDMA_PAYLOAD_ALIGNMENT, RETH};
+use crate::device::{
+    DescSge, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescOpcode,
+    ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType,
 };
-
-use super::{
-    logic::BlueRdmaLogicError,
-    packet::{Immediate, PacketError, AETH, BTH, RDMA_PAYLOAD_ALIGNMENT, RETH},
-};
+use crate::types::{MemAccessTypeFlag, Psn, QpType};
 
 /// Queue-pair number
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -188,21 +183,22 @@ impl PayloadInfo {
     }
 
     /// Get the first and only element of the scatter-gather list.
-    /// Note that you should only use this function when you are sure that the payload only contains one element.
-    /// 
-    /// If `skip_eth` is `true`, it will skip the first 14 bytes of the payload, which is the Ethernet header.
-    pub(crate) fn direct_data_ptr(&self,skip_eth:bool) -> Option<&[u8]> {
+    /// Note that you should only use this function when you are sure that the payload only contains
+    /// one element.
+    ///
+    /// If `skip_eth` is `true`, it will skip the first 14 bytes of the payload, which is the
+    /// Ethernet header.
+    pub(crate) fn direct_data_ptr(&self, skip_eth: bool) -> Option<&[u8]> {
         let buf = self.sg_list.first();
-        buf.map(|first|{
-            let data = unsafe { std::slice::from_raw_parts(first.data, first.len)};
+        buf.map(|first| {
+            let data = unsafe { std::slice::from_raw_parts(first.data, first.len) };
             #[allow(clippy::indexing_slicing)]
-            if skip_eth{
+            if skip_eth {
                 &data[14..]
-            } else{
+            } else {
                 data
             }
         })
-        
     }
 }
 
@@ -242,6 +238,7 @@ pub(crate) struct RdmaMessageMetaCommon {
 
 impl TryFrom<&BTH> for RdmaMessageMetaCommon {
     type Error = PacketError;
+
     fn try_from(bth: &BTH) -> Result<Self, PacketError> {
         Ok(Self {
             tran_type: ToHostWorkRbDescTransType::try_from(bth.get_transaction_type())
@@ -418,7 +415,7 @@ impl SGList {
         }
     }
 
-    #[allow(clippy::arithmetic_side_effects)] //sge_counter is either 0 or 1
+    #[allow(clippy::arithmetic_side_effects)] // sge_counter is either 0 or 1
     pub(crate) fn new_with_sge_list(
         sge0: DescSge,
         sge1: Option<DescSge>,
@@ -442,10 +439,10 @@ impl SGList {
 
     /// Cut a buffer of length from the scatter-gather list
     ///
-    /// The function iterate from `cur_level` of the scatter-gather list and cut the buffer of `length` from the list.
-    /// If current level is not enough, it will move to the next level.
+    /// The function iterate from `cur_level` of the scatter-gather list and cut the buffer of
+    /// `length` from the list. If current level is not enough, it will move to the next level.
     /// All the slice will be added to the `payload`.
-    #[allow(clippy::indexing_slicing,clippy::arithmetic_side_effects)]
+    #[allow(clippy::indexing_slicing, clippy::arithmetic_side_effects)]
     pub(crate) fn cut(&mut self, mut length: u32) -> Result<PayloadInfo, BlueRdmaLogicError> {
         let mut current_level = self.cur_level as usize;
         let mut payload = PayloadInfo::new();
@@ -455,7 +452,9 @@ impl SGList {
             if self.data[current_level].len >= length {
                 let addr = self.data[current_level].addr as *mut u8;
                 payload.add(addr, length as usize);
-                self.data[current_level].addr = self.data[current_level].addr.wrapping_add(u64::from(length));
+                self.data[current_level].addr = self.data[current_level]
+                    .addr
+                    .wrapping_add(u64::from(length));
                 self.data[current_level].len -= length;
                 if self.data[current_level].len == 0 {
                     current_level += 1;
@@ -487,12 +486,7 @@ impl SGList {
     #[cfg(test)]
     pub(crate) fn into_four_sges(
         self,
-    ) -> (
-        DescSge,
-        Option<DescSge>,
-        Option<DescSge>,
-        Option<DescSge>,
-    ) {
+    ) -> (DescSge, Option<DescSge>, Option<DescSge>, Option<DescSge>) {
         use crate::types::Key;
 
         let sge1 = (self.len > 1).then(|| DescSge {
@@ -612,7 +606,7 @@ impl ToCardWriteDescriptor {
 
     pub(crate) fn write_last_opcode_with_imm(&self) -> (ToHostWorkRbDescOpcode, Option<u32>) {
         match (self.is_last, self.is_resp(), self.has_imm()) {
-            (true, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseLast, None), // ignore read response last with imm
+            (true, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseLast, None), /* ignore read response last with imm */
             (true, false, true) => (ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate, self.imm),
             (true, false, false) => (ToHostWorkRbDescOpcode::RdmaWriteLast, None),
             (false, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseMiddle, None),

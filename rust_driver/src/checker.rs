@@ -1,33 +1,26 @@
-use std::{
-    cell::{RefCell, RefMut},
-    collections::{BTreeMap, HashMap},
-    ops::Bound,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-};
-
-use crate::{
-    buf::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE},
-    device::{
-        ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescUpdateErrPsnRecoverPoint,
-        ToHostWorkRbDescAck, ToHostWorkRbDescAethCode, ToHostWorkRbDescRead,
-        ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
-    },
-    op_ctx::OpCtx,
-    qp::QpContext,
-    responser::{make_ack, make_nack, make_read_resp},
-    retry::RetryMap,
-    types::{Msn, Pmtu, Psn, Qpn, PSN_MAX_WINDOW_SIZE},
-    utils::calculate_packet_cnt,
-    CtrlDescriptorSender, ThreadSafeHashmap, WorkDescriptorSender,
-};
+use std::cell::{RefCell, RefMut};
+use std::collections::{BTreeMap, HashMap};
+use std::ops::Bound;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use flume::{Receiver, TryRecvError};
-
 use log::{error, info};
 use parking_lot::RwLock;
+
+use crate::buf::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE};
+use crate::device::{
+    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescUpdateErrPsnRecoverPoint,
+    ToHostWorkRbDescAck, ToHostWorkRbDescAethCode, ToHostWorkRbDescRead,
+    ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
+};
+use crate::op_ctx::OpCtx;
+use crate::qp::QpContext;
+use crate::responser::{make_ack, make_nack, make_read_resp};
+use crate::retry::RetryMap;
+use crate::types::{Msn, Pmtu, Psn, Qpn, PSN_MAX_WINDOW_SIZE};
+use crate::utils::calculate_packet_cnt;
+use crate::{CtrlDescriptorSender, ThreadSafeHashmap, WorkDescriptorSender};
 
 const MAX_MSN_WINDOW_PER_QP: usize = 16;
 
@@ -514,6 +507,7 @@ impl RecvContextMap {
             }))
         }
     }
+
     pub(crate) fn get_or_create_per_qp_ctx_mut(
         &self,
         qpn: Qpn,
@@ -640,7 +634,7 @@ impl SlidingWindow {
         let (_, second_last_right) = iter.next().unwrap();
         let left = *last_left;
         let right = *second_last_right;
-        assert!(left.wrapping_add(1) != right,"Invalid gap");
+        assert!(left.wrapping_add(1) != right, "Invalid gap");
         Some((
             Psn::new(left.wrapping_add(1)),
             Psn::new(right.wrapping_sub(1)),
@@ -797,27 +791,21 @@ fn get_continous_range(largest_psn_recved: Psn, expected_psn: Psn) -> Option<(Ps
 #[cfg(test)]
 mod tests {
 
-    use std::{
-        collections::HashMap,
-        sync::{
-            atomic::{AtomicBool, Ordering},
-            Arc,
-        },
-        thread::{sleep, spawn},
-        time::Duration,
-    };
+    use std::collections::HashMap;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    use std::thread::{sleep, spawn};
+    use std::time::Duration;
 
-    use parking_lot::{lock_api::RwLock, Mutex};
-
-    use crate::{
-        checker::get_continous_range,
-        device::ToCardCtrlRbDesc,
-        op_ctx::{CtrlOpCtx, OpCtx},
-        types::{Msn, Psn, Qpn},
-        CtrlDescriptorSender,
-    };
+    use parking_lot::lock_api::RwLock;
+    use parking_lot::Mutex;
 
     use super::wakeup_user_op_ctx;
+    use crate::checker::get_continous_range;
+    use crate::device::ToCardCtrlRbDesc;
+    use crate::op_ctx::{CtrlOpCtx, OpCtx};
+    use crate::types::{Msn, Psn, Qpn};
+    use crate::CtrlDescriptorSender;
 
     #[test]
     fn test_sliding_window() {
@@ -918,17 +906,15 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::clone_on_ref_ptr)] //FIXME: refactor later
+    #[allow(clippy::clone_on_ref_ptr)] // FIXME: refactor later
     fn test_try_recover() {
         use std::collections::HashMap;
 
-        use crate::{
-            qp::{QpContext, QpStatus},
-            types::Qpn,
-        };
         use parking_lot::lock_api::RwLock;
 
         use super::try_recover;
+        use crate::qp::{QpContext, QpStatus};
+        use crate::types::Qpn;
 
         let sender = Arc::new(MockCtrlDescSender::default());
         let qpn = Qpn::new(123);

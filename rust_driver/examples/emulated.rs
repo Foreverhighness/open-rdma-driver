@@ -1,21 +1,18 @@
-use buddy_system_allocator::LockedHeap;
+use std::ffi::{c_void, CStr};
+use std::net::Ipv4Addr;
+use std::thread::sleep;
+use std::time::Duration;
 
+use buddy_system_allocator::LockedHeap;
 use eui48::MacAddress;
 use log::info;
-use open_rdma_driver::{
-    qp::QpManager,
-    types::{
-        MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
-        RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
-    },
-    AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig,
-    RoundRobinStrategy,
+use open_rdma_driver::qp::QpManager;
+use open_rdma_driver::types::{
+    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
+    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
 };
-use std::{
-    ffi::{c_void, CStr},
-    net::Ipv4Addr,
-    thread::sleep,
-    time::Duration,
+use open_rdma_driver::{
+    AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig, RoundRobinStrategy,
 };
 
 use crate::common::init_logging;
@@ -65,7 +62,7 @@ fn init_global_allocator() {
             libc::O_RDWR,
             0o600,
         );
-        if shm_fd == -1{
+        if shm_fd == -1 {
             libc::exit(shm_fd);
         }
         assert!(shm_fd != -1, "shm_open failed");

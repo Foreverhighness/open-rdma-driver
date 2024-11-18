@@ -1,9 +1,7 @@
 use std::error::Error;
 
-use crate::{
-    types::Qpn,
-    RoundRobinStrategy, SchedulerStrategy, SealedDesc, POP_BATCH_SIZE,
-};
+use crate::types::Qpn;
+use crate::{RoundRobinStrategy, SchedulerStrategy, SealedDesc, POP_BATCH_SIZE};
 
 /// Testing Handler
 pub trait TestingHandler: Send + Sync + Clone + 'static {
@@ -54,13 +52,10 @@ impl<T: TestingHandler> SchedulerStrategy for TestingStrategy<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        device::{ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescWrite},
-        types::{Psn, Qpn},
-        SchedulerStrategy, SealedDesc,
-    };
-
     use super::{TestingHandler, TestingStrategy};
+    use crate::device::{ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescWrite};
+    use crate::types::{Psn, Qpn};
+    use crate::{SchedulerStrategy, SealedDesc};
 
     #[derive(Debug, Clone)]
     struct Handlers {
@@ -68,10 +63,7 @@ mod tests {
     }
 
     impl TestingHandler for Handlers {
-        fn handle_pkt(
-            &self,
-            desc: &mut Vec<SealedDesc>,
-        ) -> Result<(), Box<dyn std::error::Error>> {
+        fn handle_pkt(&self, desc: &mut Vec<SealedDesc>) -> Result<(), Box<dyn std::error::Error>> {
             (self.handler)(desc);
             Ok(())
         }
@@ -105,7 +97,7 @@ mod tests {
             desc.retain(|desc| desc.get_psn().get() % 3 != 0);
         }
         let strategy = TestingStrategy::new(Handlers {
-            handler: filter_threes_fold
+            handler: filter_threes_fold,
         });
         // generate psn from 1 to 10
         let desc = generate_random_descriptors(2, 1, 10);

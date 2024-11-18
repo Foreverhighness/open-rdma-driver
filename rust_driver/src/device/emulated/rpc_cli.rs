@@ -1,19 +1,16 @@
-use serde::{Deserialize, Serialize};
-use std::{
-    io::Error as IoError,
-    net::{SocketAddr, UdpSocket},
-    sync::Arc,
-};
+use std::io::Error as IoError;
+use std::net::{SocketAddr, UdpSocket};
+use std::sync::Arc;
 
-use crate::device::{
-    constants::{
-        CSR_ADDR_CMD_REQ_QUEUE_HEAD, CSR_ADDR_CMD_REQ_QUEUE_TAIL, CSR_ADDR_CMD_RESP_QUEUE_HEAD,
-        CSR_ADDR_CMD_RESP_QUEUE_TAIL, CSR_ADDR_META_REPORT_QUEUE_HEAD,
-        CSR_ADDR_META_REPORT_QUEUE_TAIL, CSR_ADDR_SEND_QUEUE_HEAD, CSR_ADDR_SEND_QUEUE_TAIL,
-    },
-    ringbuf::{CsrReaderAdaptor, CsrWriterAdaptor},
-    DeviceError,
+use serde::{Deserialize, Serialize};
+
+use crate::device::constants::{
+    CSR_ADDR_CMD_REQ_QUEUE_HEAD, CSR_ADDR_CMD_REQ_QUEUE_TAIL, CSR_ADDR_CMD_RESP_QUEUE_HEAD,
+    CSR_ADDR_CMD_RESP_QUEUE_TAIL, CSR_ADDR_META_REPORT_QUEUE_HEAD, CSR_ADDR_META_REPORT_QUEUE_TAIL,
+    CSR_ADDR_SEND_QUEUE_HEAD, CSR_ADDR_SEND_QUEUE_TAIL,
 };
+use crate::device::ringbuf::{CsrReaderAdaptor, CsrWriterAdaptor};
+use crate::device::DeviceError;
 
 #[derive(Debug, Clone)]
 pub(super) struct RpcClient(Arc<UdpSocket>);
@@ -72,6 +69,7 @@ pub(crate) struct ToCardCtrlRbCsrProxy(RpcClient);
 impl ToCardCtrlRbCsrProxy {
     const HEAD_CSR: usize = CSR_ADDR_CMD_REQ_QUEUE_HEAD;
     const TAIL_CSR: usize = CSR_ADDR_CMD_REQ_QUEUE_TAIL;
+
     pub(crate) fn new(client: RpcClient) -> Self {
         Self(client)
     }
@@ -80,6 +78,7 @@ impl CsrWriterAdaptor for ToCardCtrlRbCsrProxy {
     fn write_head(&self, data: u32) -> Result<(), DeviceError> {
         self.0.write_csr(Self::HEAD_CSR, data)
     }
+
     fn read_tail(&self) -> Result<u32, DeviceError> {
         self.0.read_csr(Self::TAIL_CSR)
     }
@@ -91,6 +90,7 @@ pub(crate) struct ToHostCtrlRbCsrProxy(RpcClient);
 impl ToHostCtrlRbCsrProxy {
     const HEAD_CSR: usize = CSR_ADDR_CMD_RESP_QUEUE_HEAD;
     const TAIL_CSR: usize = CSR_ADDR_CMD_RESP_QUEUE_TAIL;
+
     pub(crate) fn new(client: RpcClient) -> Self {
         Self(client)
     }
@@ -100,6 +100,7 @@ impl CsrReaderAdaptor for ToHostCtrlRbCsrProxy {
     fn write_tail(&self, data: u32) -> Result<(), DeviceError> {
         self.0.write_csr(Self::TAIL_CSR, data)
     }
+
     fn read_head(&self) -> Result<u32, DeviceError> {
         self.0.read_csr(Self::HEAD_CSR)
     }
@@ -111,6 +112,7 @@ pub(crate) struct ToCardWorkRbCsrProxy(RpcClient);
 impl ToCardWorkRbCsrProxy {
     const HEAD_CSR: usize = CSR_ADDR_SEND_QUEUE_HEAD;
     const TAIL_CSR: usize = CSR_ADDR_SEND_QUEUE_TAIL;
+
     pub(crate) fn new(client: RpcClient) -> Self {
         Self(client)
     }
@@ -120,6 +122,7 @@ impl CsrWriterAdaptor for ToCardWorkRbCsrProxy {
     fn write_head(&self, data: u32) -> Result<(), DeviceError> {
         self.0.write_csr(Self::HEAD_CSR, data)
     }
+
     fn read_tail(&self) -> Result<u32, DeviceError> {
         self.0.read_csr(Self::TAIL_CSR)
     }
@@ -131,6 +134,7 @@ pub(crate) struct ToHostWorkRbCsrProxy(RpcClient);
 impl ToHostWorkRbCsrProxy {
     const HEAD_CSR: usize = CSR_ADDR_META_REPORT_QUEUE_HEAD;
     const TAIL_CSR: usize = CSR_ADDR_META_REPORT_QUEUE_TAIL;
+
     pub(crate) fn new(client: RpcClient) -> Self {
         Self(client)
     }
@@ -140,6 +144,7 @@ impl CsrReaderAdaptor for ToHostWorkRbCsrProxy {
     fn write_tail(&self, data: u32) -> Result<(), DeviceError> {
         self.0.write_csr(Self::TAIL_CSR, data)
     }
+
     fn read_head(&self) -> Result<u32, DeviceError> {
         self.0.read_csr(Self::HEAD_CSR)
     }

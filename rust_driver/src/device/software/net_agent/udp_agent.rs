@@ -1,28 +1,22 @@
-use std::{
-    mem::{size_of, MaybeUninit},
-    net::{Ipv4Addr, SocketAddrV4},
-    os::fd::AsRawFd,
-    sync::{
-        atomic::{AtomicBool, AtomicU16, Ordering},
-        Arc,
-    },
-    thread,
-};
+use std::mem::{size_of, MaybeUninit};
+use std::net::{Ipv4Addr, SocketAddrV4};
+use std::os::fd::AsRawFd;
+use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
+use std::sync::Arc;
+use std::thread;
 
 use log::{error, info};
 use socket2::{Domain, Protocol, Socket, Type};
 
-use crate::device::software::{
-    packet::{CommonPacketHeader, IpUdpHeaders, ICRC_SIZE},
-    packet_processor::{is_icrc_valid, PacketProcessor, PacketWriter},
-    types::{PayloadInfo, RdmaMessage},
-};
-
 use super::{NetAgentError, NetReceiveLogic, NetSendAgent};
+use crate::device::software::packet::{CommonPacketHeader, IpUdpHeaders, ICRC_SIZE};
+use crate::device::software::packet_processor::{is_icrc_valid, PacketProcessor, PacketWriter};
+use crate::device::software::types::{PayloadInfo, RdmaMessage};
 
 pub(crate) const NET_SERVER_BUF_SIZE: usize = 8192;
 
-/// A single thread udp server that listens to the corresponding port and calls the `recv` method of the receiver when a message is received.
+/// A single thread udp server that listens to the corresponding port and calls the `recv` method of
+/// the receiver when a message is received.
 #[derive(Debug)]
 pub(crate) struct UDPReceiveAgent {
     listen_thread: Option<thread::JoinHandle<()>>,
@@ -104,7 +98,7 @@ impl UDPReceiveAgent {
                     };
 
                     match is_icrc_valid(received_data) {
-                        Ok(is_valid) =>{
+                        Ok(is_valid) => {
                             if !is_valid {
                                 error!("ICRC check failed {:?}", received_data);
                                 continue;
@@ -204,7 +198,8 @@ impl NetSendAgent for UDPSendAgent {
 mod tests {
     use std::sync::{Arc, Mutex};
 
-    use crate::device::software::{net_agent::NetReceiveLogic, types::RdmaMessage};
+    use crate::device::software::net_agent::NetReceiveLogic;
+    use crate::device::software::types::RdmaMessage;
     #[derive(Debug)]
     struct DummyNetReceiveLogic {
         packets: Arc<Mutex<Vec<RdmaMessage>>>,

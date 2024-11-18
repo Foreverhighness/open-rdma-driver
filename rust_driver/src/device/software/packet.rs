@@ -1,23 +1,16 @@
-/*
-Base and extended transport header
-*/
+// Base and extended transport header
 
-use std::{
-    mem::{size_of, transmute},
-    net::Ipv4Addr,
-};
+use std::mem::{size_of, transmute};
+use std::net::Ipv4Addr;
 
 use thiserror::Error;
-
-use crate::{
-    device::{ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType},
-    types::QpType,
-};
 
 use super::types::{
     AethHeader, Metadata, PayloadInfo, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon,
     RethHeader,
 };
+use crate::device::{ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType};
+use crate::types::QpType;
 
 pub(crate) const ICRC_SIZE: usize = 4;
 pub(crate) const IPV4_DEFAULT_VERSION_AND_HEADER_LENGTH: u8 = 0x45;
@@ -76,7 +69,7 @@ impl BTH {
         (self.flags & BTH_FLAGS_PAD_CNT_MASK) >> BTH_FLAGS_PAD_CNT_SHIFT
     }
 
-    #[allow(clippy::arithmetic_side_effects)]// pad_cnt is derived from payload_length,and will always be less than payload_length
+    #[allow(clippy::arithmetic_side_effects)] // pad_cnt is derived from payload_length,and will always be less than payload_length
     pub(crate) fn get_packet_real_length(&self, payload_length: usize) -> usize {
         let pad_cnt: usize = self.get_pad_cnt().into();
         payload_length - pad_cnt
@@ -277,8 +270,9 @@ impl Immediate {
 pub(crate) trait RdmaPacketHeader: Sized {
     /// Get the pointer to the payload data
     ///
-    /// The payload is just behind the header, so we can get the pointer to the payload data by adding 1 to the header pointer.
-    /// SAFETY: User should ensure the buffer is large enough to hold the packet header
+    /// The payload is just behind the header, so we can get the pointer to the payload data by
+    /// adding 1 to the header pointer. SAFETY: User should ensure the buffer is large enough to
+    /// hold the packet header
     fn get_data_ptr(&self) -> *const u8 {
         unsafe { (self as *const Self).offset(1).cast::<u8>() }
     }
@@ -486,18 +480,23 @@ impl Ipv4Header {
     pub(crate) fn set_total_length(&mut self, length: u16) {
         self.total_length = length.to_be_bytes();
     }
+
     pub(crate) fn set_identification(&mut self, id: u16) {
         self.identification = id.to_be_bytes();
     }
+
     pub(crate) fn set_flags_fragment_offset(&mut self, flags: u16) {
         self.flags_fragment_offset = flags.to_be_bytes();
     }
+
     pub(crate) fn set_checksum(&mut self, checksum: u16) {
         self.checksum = checksum.to_be_bytes();
     }
+
     pub(crate) fn set_source(&mut self, source: Ipv4Addr) {
         self.source = source.octets();
     }
+
     pub(crate) fn set_destination(&mut self, destination: Ipv4Addr) {
         self.destination = destination.octets();
     }
@@ -547,7 +546,8 @@ impl IpUdpHeaders {
 }
 
 /// A composite packet layout that contains the Ipv4 header, the Udp header and the BTH.
-/// The packet may contains the RETH or the AETH, but for ICRC computation, we don't need to include them.
+/// The packet may contains the RETH or the AETH, but for ICRC computation, we don't need to include
+/// them.
 #[derive(Clone, Copy)]
 #[repr(C, packed)]
 pub(crate) struct CommonPacketHeader {

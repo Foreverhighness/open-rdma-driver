@@ -1,18 +1,18 @@
-use std::{net::Ipv4Addr, time::Duration};
+use std::net::Ipv4Addr;
+use std::time::Duration;
 
 use buddy_system_allocator::LockedHeap;
 use common::init_logging;
 use eui48::MacAddress;
 use libc::c_void;
 use log::info;
+use open_rdma_driver::qp::QpManager;
+use open_rdma_driver::types::{
+    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
+    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
+};
 use open_rdma_driver::{
-    qp::QpManager,
-    types::{
-        MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
-        RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
-    },
-    AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig,
-    RoundRobinStrategy,
+    AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig, RoundRobinStrategy,
 };
 
 mod common;

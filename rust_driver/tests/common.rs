@@ -1,6 +1,7 @@
-use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use std::fs::OpenOptions;
 use std::io::Write;
+
+use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 
 pub struct SimpleLogger {
     file: std::fs::File,
@@ -39,7 +40,13 @@ pub fn init_logging(file_path: &str) -> Result<(), SetLoggerError> {
 
 #[macro_export]
 macro_rules! setup_emulator {
-    ($magic_virt_addr:expr, $heap_block_size:expr, $shm_path:expr, $script_path:expr, $script_file:expr) => {
+    (
+        $magic_virt_addr:expr,
+        $heap_block_size:expr,
+        $shm_path:expr,
+        $script_path:expr,
+        $script_file:expr
+    ) => {
         const ORDER: usize = 32;
         /// Use `LockedHeap` as global allocator
         #[global_allocator]
@@ -50,13 +57,14 @@ macro_rules! setup_emulator {
         static SCRIPT_PATH: &str = $script_path;
         #[macro_use]
         extern crate ctor;
-        use std::{ffi::CStr,ptr};
+        use std::ffi::CStr;
+        use std::ptr;
 
         #[ctor]
         fn init_global_allocator() {
-            unsafe{
+            unsafe {
                 let pid = libc::fork();
-                if pid == 0{
+                if pid == 0 {
                     libc::chdir(SCRIPT_PATH.as_bytes().as_ptr() as *const i8);
                     let script = CStr::from_bytes_with_nul_unchecked(SCRIPT.as_bytes());
 
@@ -64,10 +72,10 @@ macro_rules! setup_emulator {
 
                     libc::execvp(script.as_ptr(), args.as_ptr());
                     std::process::exit(1);
-                }else if pid > 0{
+                } else if pid > 0 {
                     let mut status = 0;
                     libc::waitpid(pid, &mut status, 0);
-                }else{
+                } else {
                     panic!("fork failed");
                 }
             }

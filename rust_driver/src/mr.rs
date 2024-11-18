@@ -1,25 +1,24 @@
-use crate::{
-    buf::PacketBuf,
-    device::{
-        ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescUpdateMrTable,
-        ToCardCtrlRbDescUpdatePageTable,
-    },
-    types::{Key, MemAccessTypeFlag, PAGE_SIZE},
-    utils::Buffer,
-    Device, Error, Pd, MR_PGT_ENTRY_SIZE,
-};
+use std::hash::{Hash, Hasher};
+use std::{mem, ptr};
+
 use rand::RngCore as _;
-use std::{
-    hash::{Hash, Hasher},
-    mem, ptr,
+
+use crate::buf::PacketBuf;
+use crate::device::{
+    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescUpdateMrTable,
+    ToCardCtrlRbDescUpdatePageTable,
 };
+use crate::types::{Key, MemAccessTypeFlag, PAGE_SIZE};
+use crate::utils::Buffer;
+use crate::{Device, Error, Pd, MR_PGT_ENTRY_SIZE};
 
 pub(crate) const ACKNOWLEDGE_BUFFER_SIZE: usize = PAGE_SIZE;
 pub(crate) const NIC_BUFFER_SIZE: usize = PAGE_SIZE;
 
 /// Memory Region
 ///
-/// User use `Device::alloc_mr(..)` to allocate a `Mr` and use `Device::dereg_mr(..)` to deallocate a `Mr`.
+/// User use `Device::alloc_mr(..)` to allocate a `Mr` and use `Device::dereg_mr(..)` to deallocate
+/// a `Mr`.
 #[derive(Debug, Clone, Copy)]
 pub struct Mr {
     pub(crate) key: Key,
@@ -85,7 +84,8 @@ impl Device {
         }
 
         let update_pgt_op_id = self.get_ctrl_op_id();
-        // `pgt_offset` and `pg_size` are both derived from pg_size, which is a u32. So it's safe to covert
+        // `pgt_offset` and `pg_size` are both derived from pg_size, which is a u32. So it's safe to
+        // covert
         #[allow(clippy::cast_possible_truncation, clippy::arithmetic_side_effects)]
         let update_pgt_desc = ToCardCtrlRbDesc::UpdatePageTable(ToCardCtrlRbDescUpdatePageTable {
             common: ToCardCtrlRbDescCommon {
@@ -95,7 +95,8 @@ impl Device {
                 .0
                 .adaptor
                 .get_phys_addr(mr_pgt.table.as_ref().as_ptr() as usize)
-                .map_err(|e| Error::GetPhysAddrFailed(e.to_string()))? as u64,
+                .map_err(|e| Error::GetPhysAddrFailed(e.to_string()))?
+                as u64,
             pgt_idx: pgt_offset as u32,
             pgte_cnt: pgte_cnt as u32,
         });

@@ -1,21 +1,21 @@
 #![allow(warnings)] // FIXME: debug only
+use std::io::{self, BufRead};
+use std::net::Ipv4Addr;
+use std::thread::sleep;
+use std::time::{Duration, Instant};
+
 use eui48::MacAddress;
 use log::{debug, info};
+use open_rdma_driver::qp::QpManager;
+use open_rdma_driver::types::{
+    Key, MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
+    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
+};
 use open_rdma_driver::{
-    qp::QpManager,
-    types::{
-        Key, MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
-        RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
-    },
     Device, DeviceConfigBuilder, DeviceType, MmapMemory, Mr, Pd, RetryConfig, RoundRobinStrategy,
 };
-use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::{
-    io::{self, BufRead},
-    net::Ipv4Addr,
-    thread::sleep,
-    time::{Duration, Instant},
-};
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 
 use crate::common::init_logging;
 

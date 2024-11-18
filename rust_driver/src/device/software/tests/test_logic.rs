@@ -1,19 +1,16 @@
-use std::{cell::RefCell, collections::LinkedList, net::Ipv4Addr, sync::Arc};
+use std::cell::RefCell;
+use std::collections::LinkedList;
+use std::net::Ipv4Addr;
+use std::sync::Arc;
 
 use flume::unbounded;
 
-use crate::{
-    device::{
-        software::{
-            logic::BlueRDMALogic,
-            net_agent::{NetAgentError, NetSendAgent},
-            tests::{SGListBuilder, ToCardWorkRbDescBuilder},
-            types::{Metadata, PayloadInfo, RdmaMessage},
-        },
-        ToCardWorkRbDescOpcode, ToHostWorkRbDescOpcode,
-    },
-    types::{Pmtu, QpType},
-};
+use crate::device::software::logic::BlueRDMALogic;
+use crate::device::software::net_agent::{NetAgentError, NetSendAgent};
+use crate::device::software::tests::{SGListBuilder, ToCardWorkRbDescBuilder};
+use crate::device::software::types::{Metadata, PayloadInfo, RdmaMessage};
+use crate::device::{ToCardWorkRbDescOpcode, ToHostWorkRbDescOpcode};
+use crate::types::{Pmtu, QpType};
 
 #[derive(Debug)]
 struct DummpyProxy {
@@ -112,7 +109,8 @@ fn test_logic_send() {
         assert_eq!(message2.payload.get_length(), 512);
     }
 
-    // va=1023,length = 4096, expect write_first + write_middle + write_middle + write_middle + write_last
+    // va=1023,length = 4096, expect write_first + write_middle + write_middle + write_middle +
+    // write_last
     {
         let desc = ToCardWorkRbDescBuilder::default()
             .with_opcode(ToCardWorkRbDescOpcode::Write)
@@ -162,7 +160,8 @@ fn test_logic_send() {
         assert_eq!(message_last.payload.get_length(), 1023);
     }
 
-    // read, va=1023,length = 4096, expect write_first + write_middle + write_middle + write_middle + write_last
+    // read, va=1023,length = 4096, expect write_first + write_middle + write_middle + write_middle
+    // + write_last
     {
         let desc = ToCardWorkRbDescBuilder::default()
             .with_opcode(ToCardWorkRbDescOpcode::ReadResp)

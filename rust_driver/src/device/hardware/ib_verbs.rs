@@ -1,5 +1,8 @@
-use std::{fs::{File, OpenOptions}, io, mem::size_of, os::fd::AsRawFd, path::Path};
-
+use std::fs::{File, OpenOptions};
+use std::io;
+use std::mem::size_of;
+use std::os::fd::AsRawFd;
+use std::path::Path;
 
 const RDMA_IOCTL_CMD: u64 = 0xc018_1b01;
 #[repr(C)]
@@ -35,7 +38,7 @@ impl RDMAGetUContextSyscallReq {
     #[allow(clippy::arithmetic_side_effects, clippy::cast_possible_truncation)]
     pub(crate) fn new_get_context(resp: &RDMAGetUContextSyscallResp) -> Self {
         let req = RDMASyscallReq {
-            length: (size_of::<RDMASyscallReq>() + size_of::<RDMASyscallReqAttr>()) as u16, // 40, this will never overflow
+            length: (size_of::<RDMASyscallReq>() + size_of::<RDMASyscallReqAttr>()) as u16, /* 40, this will never overflow */
             object_id: 0,
             method_id: 3, // get context
             num_attrs: 1,
@@ -58,7 +61,7 @@ impl RDMAGetUContextSyscallReq {
 // FIXME: try bindings
 #[repr(C)]
 #[derive(Debug, Default)]
-pub(crate)struct RDMAGetUContextSyscallResp {
+pub(crate) struct RDMAGetUContextSyscallResp {
     pub(crate) csr: i64,
     pub(crate) cmdq_sq: i64,
     pub(crate) cmdq_rq: i64,

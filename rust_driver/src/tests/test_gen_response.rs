@@ -1,13 +1,11 @@
 use eui48::MacAddress;
 use parking_lot::lock_api::{Mutex, RwLock};
 
-use crate::{
-    buf::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE},
-    device::{ToHostWorkRbDescCommon, ToHostWorkRbDescRead},
-    qp::QpContext,
-    responser::{make_ack, make_nack, make_read_resp, ACKPACKET_SIZE},
-    types::{Key, Msn, Pmtu, Psn, Qpn, WorkReqSendFlag},
-};
+use crate::buf::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE};
+use crate::device::{ToHostWorkRbDescCommon, ToHostWorkRbDescRead};
+use crate::qp::QpContext;
+use crate::responser::{make_ack, make_nack, make_read_resp, ACKPACKET_SIZE};
+use crate::types::{Key, Msn, Pmtu, Psn, Qpn, WorkReqSendFlag};
 
 const BUFFER_SIZE: usize = 1024 * RDMA_ACK_BUFFER_SLOT_SIZE;
 

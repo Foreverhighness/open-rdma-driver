@@ -1,29 +1,20 @@
-use std::{
-    collections::LinkedList,
-    error::Error,
-    fmt::Debug,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    thread::spawn,
-};
+use std::collections::LinkedList;
+use std::error::Error;
+use std::fmt::Debug;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread::spawn;
 
 use core_affinity::CoreId;
 use flume::{unbounded, Receiver, Sender, TryRecvError};
 use log::{debug, error};
 use parking_lot::Mutex;
 
-use super::{
-    ringbuf::{CsrWriterAdaptor, Ringbuf},
-    software::BlueRDMALogic,
-    DescSge, DeviceError, ToCardRb, ToCardWorkRbDesc, ToCardWorkRbDescCommon,
-};
-
-use crate::{
-    types::{Msn, Pmtu, Psn, Qpn},
-    utils::{calculate_packet_cnt, get_first_packet_max_length, Buffer},
-};
+use super::ringbuf::{CsrWriterAdaptor, Ringbuf};
+use super::software::BlueRDMALogic;
+use super::{DescSge, DeviceError, ToCardRb, ToCardWorkRbDesc, ToCardWorkRbDescCommon};
+use crate::types::{Msn, Pmtu, Psn, Qpn};
+use crate::utils::{calculate_packet_cnt, get_first_packet_max_length, Buffer};
 
 const MAX_SGL_LENGTH: usize = 1;
 
@@ -118,7 +109,8 @@ impl SealedDesc {
 /// Size of each batch pop from the scheduler
 pub const POP_BATCH_SIZE: usize = 8;
 
-/// A descriptor scheduler that cut descriptor into `SCHEDULER_SIZE` size and schedule with a strategy.
+/// A descriptor scheduler that cut descriptor into `SCHEDULER_SIZE` size and schedule with a
+/// strategy.
 #[derive(Debug)]
 #[allow(dead_code)]
 pub(crate) struct DescriptorScheduler<Strat: SchedulerStrategy> {
@@ -366,7 +358,8 @@ fn get_to_card_desc_common(desc: &ToCardWorkRbDesc) -> &ToCardWorkRbDescCommon {
 }
 
 // We allow indexing_slicing because
-// * `new_sgl_level` will always smaller than `origin_sgl` sgl level, which is less than `MAX_SGL_LENGTH`
+// * `new_sgl_level` will always smaller than `origin_sgl` sgl level, which is less than
+//   `MAX_SGL_LENGTH`
 // * `current_level` won't be greater than `origin_sgl.len`, which is less than `MAX_SGL_LENGTH`
 #[allow(clippy::indexing_slicing, clippy::arithmetic_side_effects)]
 fn cut_from_sgl(mut length: u32, origin_sgl: &mut SGList) -> SGList {
@@ -515,7 +508,8 @@ pub(crate) fn split_descriptor(
 /// Recalculate the PSN of the descriptor
 ///
 /// # Example
-/// `base_psn` = 0 , `desc.raddr` = 4095,`pmtu` = 4096 and `desc.common_header.total_len` = 4096 * 4.
+/// `base_psn` = 0 , `desc.raddr` = 4095,`pmtu` = 4096 and `desc.common_header.total_len` = 4096 *
+/// 4.
 ///
 /// so the `first_packet_length` = 4096 - 4095 = 1
 /// then the psn = 0 + ceil((4096 * 4 - `first_packet_length`),4096) = 4
@@ -534,23 +528,22 @@ fn recalculate_psn(raddr: u64, pmtu: Pmtu, total_len: u32, base_psn: Psn) -> Psn
 
 #[cfg(test)]
 mod test {
+    use std::collections::LinkedList;
     use std::sync::atomic::{AtomicU32, Ordering};
+    use std::sync::Arc;
     use std::thread::sleep;
-    use std::{collections::LinkedList, sync::Arc};
 
     use parking_lot::lock_api::Mutex;
 
+    use super::{SGList, MAX_SGL_LENGTH};
     use crate::device::ringbuf::{CsrWriterAdaptor, Ringbuf};
     use crate::device::{
         DescSge, DeviceError, ToCardRb, ToCardWorkRbDesc, ToCardWorkRbDescCommon,
         ToCardWorkRbDescWrite, ToCardWorkRbDescWriteWithImm,
     };
-
     use crate::types::{Key, Msn, Qpn, WorkReqSendFlag};
     use crate::utils::Buffer;
     use crate::SealedDesc;
-
-    use super::{SGList, MAX_SGL_LENGTH};
 
     pub(crate) struct SGListBuilder {
         sg_list: Vec<DescSge>,
@@ -630,6 +623,7 @@ mod test {
             self.0.head.store(data, Ordering::Release);
             Ok(())
         }
+
         fn read_tail(&self) -> Result<u32, DeviceError> {
             Ok(self.0.tail.load(Ordering::Acquire))
         }

@@ -1,17 +1,12 @@
-use std::sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    };
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use core_affinity::CoreId;
-use log::{error,info};
+use log::{error, info};
 
-use crate::{
-    device::{
-        CtrlRbDescOpcode, ToHostCtrlRbDesc, ToHostRb
-    },
-    op_ctx::CtrlOpCtx, ThreadSafeHashmap,
-};
+use crate::device::{CtrlRbDescOpcode, ToHostCtrlRbDesc, ToHostRb};
+use crate::op_ctx::CtrlOpCtx;
+use crate::ThreadSafeHashmap;
 
 #[derive(Debug)]
 pub(crate) struct ControlPoller {
@@ -27,14 +22,17 @@ pub(crate) struct ControlPollerContext {
 unsafe impl Send for ControlPollerContext {}
 
 impl ControlPoller {
-    pub(crate) fn new(ctx: ControlPollerContext,core_id: Option<CoreId>) -> Self {
+    pub(crate) fn new(ctx: ControlPollerContext, core_id: Option<CoreId>) -> Self {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let thread_stop_flag = Arc::clone(&stop_flag);
         let thread = std::thread::spawn(move || {
-            if let Some(core_id) = core_id{
+            if let Some(core_id) = core_id {
                 if !core_affinity::set_for_current(core_id) {
-                    log::error!("failed to set core_affinity {:?} in cmd queue poller", core_id);
-                }else{
+                    log::error!(
+                        "failed to set core_affinity {:?} in cmd queue poller",
+                        core_id
+                    );
+                } else {
                     log::info!("set core_affinity in cmd queue poller successfully");
                 }
             }
@@ -57,9 +55,11 @@ impl ControlPollerContext {
                     return;
                 }
             };
-            if matches!(desc.common.opcode,CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint){
-                
-            }else{
+            if matches!(
+                desc.common.opcode,
+                CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint
+            ) {
+            } else {
                 ctx.handle_ctrl_desc_resp(&desc);
             }
         }
@@ -69,7 +69,7 @@ impl ControlPollerContext {
         let ctx_map = self.ctrl_op_ctx_map.read();
 
         if let Some(ctx) = ctx_map.get(&desc.common.op_id) {
-            if let Some(handler) = ctx.take_handler(){
+            if let Some(handler) = ctx.take_handler() {
                 handler(desc.common.is_success);
             }
             if let Err(e) = ctx.set_result(desc.common.is_success) {

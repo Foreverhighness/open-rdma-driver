@@ -1,15 +1,15 @@
 use std::net::Ipv4Addr;
 
-use crate::buf::{Slot, RDMA_ACK_BUFFER_SLOT_SIZE};
-use crate::device::layout::{Aeth, Bth, Ipv4, Mac, NReth, Udp};
-use crate::qp::QpContext;
-use crate::types::{Imm, Key, Msn, Psn, QpType, Qpn, WorkReqSendFlag};
 use eui48::MacAddress;
 
+use crate::buf::{Slot, RDMA_ACK_BUFFER_SLOT_SIZE};
+use crate::device::layout::{Aeth, Bth, Ipv4, Mac, NReth, Udp};
 use crate::device::{
     ToCardWorkRbDesc, ToCardWorkRbDescBuilder, ToCardWorkRbDescCommon, ToCardWorkRbDescOpcode,
     ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescRead,
 };
+use crate::qp::QpContext;
+use crate::types::{Imm, Key, Msn, Psn, QpType, Qpn, WorkReqSendFlag};
 use crate::utils::calculate_packet_cnt;
 use crate::{Error, Sge, ThreadSafeHashmap};
 
@@ -183,7 +183,8 @@ fn write_packet(
     ip_header.set_dscp_ecn(0);
 
     // The `total_length` take a 16 bits **big-endian** number as input.
-    // Only the third and forth bytes are used, so the we put the `ACKPACKET_SIZE` into the third byte.
+    // Only the third and forth bytes are used, so the we put the `ACKPACKET_SIZE` into the third
+    // byte.
     #[allow(clippy::cast_possible_truncation)]
     ip_header.set_total_length(u32::from_be_bytes([
         0,
@@ -269,7 +270,7 @@ const ACKPACKET_SIZE_WITHOUT_MAC_AND_IPV4: usize =
 
 const ACKPACKET_SIZE_WITHOUT_MAC: usize = IPV4_HEADER_SIZE + ACKPACKET_SIZE_WITHOUT_MAC_AND_IPV4;
 
-pub(crate)const ACKPACKET_SIZE: usize = MAC_HEADER_SIZE + ACKPACKET_SIZE_WITHOUT_MAC;
+pub(crate) const ACKPACKET_SIZE: usize = MAC_HEADER_SIZE + ACKPACKET_SIZE_WITHOUT_MAC;
 #[allow(clippy::assertions_on_constants)]
 const _: () = assert!(
     RDMA_ACK_BUFFER_SLOT_SIZE >= ACKPACKET_SIZE,
@@ -349,9 +350,8 @@ fn calculate_ipv4_checksum(header: &[u8]) -> u16 {
 #[cfg(test)]
 mod tests {
 
-    use crate::responser::calculate_ipv4_checksum;
-
     use super::calculate_icrc;
+    use crate::responser::calculate_ipv4_checksum;
 
     #[test]
     fn test_icrc_computing() {
@@ -406,5 +406,4 @@ mod tests {
         let expected_checksum: u16 = u16::from_be_bytes([0xf8, 0xda]);
         assert_eq!(checksum, expected_checksum);
     }
-
 }

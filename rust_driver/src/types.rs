@@ -13,7 +13,6 @@ use crate::Pd;
 pub const PAGE_SIZE: usize = 1024 * 1024 * 2;
 pub(crate) const PSN_MAX_WINDOW_SIZE: u32 = 1 << 23_i32;
 
-
 /// Type for `Imm`
 #[derive(Debug, Clone, Copy, Hash, Default)]
 pub struct Imm(u32);
@@ -127,22 +126,22 @@ pub type Psn = ThreeBytesStruct;
 /// Queue Pair Number
 pub type Qpn = ThreeBytesStruct;
 
-/// In RDMA spec, some structs are defined as 24 bits. 
+/// In RDMA spec, some structs are defined as 24 bits.
 /// For example : `PSN`, `QPN` etc.
-/// 
+///
 /// This struct is used to represent these 24 bits.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Default)]
 pub struct ThreeBytesStruct(u32);
 
 impl ThreeBytesStruct {
-    const WIDTH: usize = 24;
-    const MASK: u32 = u32::MAX >> (32 - Self::WIDTH);
     const BORDER: u32 = Self::MASK + 1;
+    const MASK: u32 = u32::MAX >> (32 - Self::WIDTH);
     #[cfg(test)]
-    pub(crate) const MAX_VALUE : u32 = Self::MASK;
+    pub(crate) const MAX_VALUE: u32 = Self::MASK;
+    const WIDTH: usize = 24;
 
     /// Create a new `ThreeBytesStruct` with the given value.
-    /// 
+    ///
     /// If the value is greater than 24 bits, the higher bits will be ignored.
     #[must_use]
     pub fn new(key: u32) -> Self {
@@ -177,7 +176,7 @@ impl ThreeBytesStruct {
 
     /// wrapping add the current value with rhs
     #[must_use]
-    #[allow(clippy::arithmetic_side_effects)] 
+    #[allow(clippy::arithmetic_side_effects)]
     pub fn wrapping_add(&self, rhs: u32) -> Self {
         // since (a+b) mod p  = (a + (b mod p)) mod p, we don't have to let rhs= rhs%p here
         Self((self.0 + rhs) % Self::BORDER)
@@ -185,7 +184,7 @@ impl ThreeBytesStruct {
 
     /// wrapping sub the current value with rhs
     #[must_use]
-    #[allow(clippy::arithmetic_side_effects)] 
+    #[allow(clippy::arithmetic_side_effects)]
     pub fn wrapping_sub(&self, rhs: u32) -> Self {
         let rhs = rhs % Self::BORDER;
         if self.0 >= rhs {
@@ -199,7 +198,7 @@ impl ThreeBytesStruct {
     /// We assume that the bigger PSN should not exceed the
     /// smaller PSN by more than 2^23(that half of the range)
     #[must_use]
-    #[allow(clippy::arithmetic_side_effects)] 
+    #[allow(clippy::arithmetic_side_effects)]
     pub fn wrapping_abs(&self, rhs: Psn) -> u32 {
         if self.0 >= rhs.0 {
             self.0 - rhs.get()
@@ -209,7 +208,7 @@ impl ThreeBytesStruct {
     }
 
     /// Check if the current PSN is larger or equal to the PSN in the argument
-    pub(crate) fn larger_in_psn(&self,rhs:Psn) -> bool{
+    pub(crate) fn larger_in_psn(&self, rhs: Psn) -> bool {
         let diff = self.wrapping_sub(rhs.get()).get();
         // if diff < 2^23, then self is larger or equal to rhs
         diff <= PSN_MAX_WINDOW_SIZE
@@ -252,11 +251,10 @@ bitflags! {
 
         /// Hugetlb
         const IbvAccessHugetlb = 128;    // (1 << 7)
-        
+
         // IbvAccessRelaxedOrdering   = IBV_ACCESS_OPTIONAL_FIRST,
     }
 }
-
 
 bitflags! {
     /// Work Request Send Flag
@@ -276,7 +274,6 @@ bitflags! {
         const IbvSendChecksum   = 16;
     }
 }
-
 
 /// Queue Pair Type for software/hardware
 #[non_exhaustive]
@@ -457,13 +454,14 @@ pub enum Error {
 
     /// Pipe broken
     #[error("Pipe brocken : {0}")]
-    PipeBroken(&'static str)
+    PipeBroken(&'static str),
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::types::Psn;
     use std::slice::from_raw_parts;
+
+    use crate::types::Psn;
 
     #[test]
     fn test_wrapping_add() {

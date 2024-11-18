@@ -1,27 +1,23 @@
-use std::{
-    collections::HashMap,
-    net::Ipv4Addr,
-    sync::{atomic::AtomicBool, Arc},
-    thread::{self, sleep, JoinHandle, Thread},
-};
+use std::collections::HashMap;
+use std::net::Ipv4Addr;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use std::thread::{self, sleep, JoinHandle, Thread};
 
-use crate::{
-    buf::{PacketBuf, Slot, NIC_PACKET_BUFFER_SLOT_SIZE},
-    device::{ToCardWorkRbDescBuilder, ToCardWorkRbDescCommon, ToCardWorkRbDescOpcode},
-    types::QpType,
-    Device as BlueRdmaDevice, WorkDescriptorSender,
-};
 use eui48::MacAddress;
 use flume::{Receiver, Sender, TryRecvError};
 use log::debug;
 use parking_lot::Mutex;
-use smoltcp::{
-    iface::{Config, Interface, SocketSet},
-    phy::{Device, DeviceCapabilities, Medium, RxToken, TxToken},
-    socket::{dhcpv4, icmp},
-    time::Instant,
-    wire::{EthernetAddress, Icmpv4Packet, Icmpv4Repr, IpAddress, IpCidr, Ipv4Cidr},
-};
+use smoltcp::iface::{Config, Interface, SocketSet};
+use smoltcp::phy::{Device, DeviceCapabilities, Medium, RxToken, TxToken};
+use smoltcp::socket::{dhcpv4, icmp};
+use smoltcp::time::Instant;
+use smoltcp::wire::{EthernetAddress, Icmpv4Packet, Icmpv4Repr, IpAddress, IpCidr, Ipv4Cidr};
+
+use crate::buf::{PacketBuf, Slot, NIC_PACKET_BUFFER_SLOT_SIZE};
+use crate::device::{ToCardWorkRbDescBuilder, ToCardWorkRbDescCommon, ToCardWorkRbDescOpcode};
+use crate::types::QpType;
+use crate::{Device as BlueRdmaDevice, WorkDescriptorSender};
 
 // the first 6 bytes of the ethernet frame is the destination mac address
 const ETH_SRC_POS: std::ops::Range<usize> = 6..12;
@@ -54,14 +50,14 @@ pub(crate) struct NicInterface {
     neighbor_cache: Arc<Mutex<HashMap<Ipv4Addr, MacAddress>>>,
     stop_flag: Arc<AtomicBool>,
     handler: Option<JoinHandle<()>>,
-    context : Option<NicWorkingContext>,
+    context: Option<NicWorkingContext>,
 }
 
 #[derive(Debug)]
-struct NicWorkingContext{
+struct NicWorkingContext {
     self_mac_addr: MacAddress,
     icmp_queries_receiver: Receiver<(Ipv4Addr, Thread)>,
-    device : BasicNicDeivce,
+    device: BasicNicDeivce,
 }
 
 impl NicInterface {
@@ -81,7 +77,7 @@ impl NicInterface {
             neighbor_cache: cache.clone(),
         };
         let stop_flag = Arc::new(AtomicBool::new(false));
-        let context = NicWorkingContext{
+        let context = NicWorkingContext {
             self_mac_addr,
             icmp_queries_receiver,
             device,
@@ -91,19 +87,16 @@ impl NicInterface {
             neighbor_cache: cache,
             stop_flag,
             handler: None,
-            context : Some(context),
+            context: Some(context),
         }
     }
 
     #[allow(clippy::unwrap_used)]
-    pub(crate) fn start(&mut self){
-        if let Some(mut context) = self.context.take(){
+    pub(crate) fn start(&mut self) {
+        if let Some(mut context) = self.context.take() {
             let stop_flag_clone = Arc::<AtomicBool>::clone(&self.stop_flag);
             let handler = thread::spawn(move || {
-                working_thread(
-                    &stop_flag_clone,
-                    &mut context
-                );
+                working_thread(&stop_flag_clone, &mut context);
             });
             self.handler = Some(handler);
         }
@@ -142,8 +135,14 @@ impl Drop for NicInterface {
 }
 
 impl Device for BasicNicDeivce {
-    type RxToken<'a> = NicRxToken<'a> where Self: 'a;
-    type TxToken<'a> = NicTxToken<'a> where Self: 'a;
+    type RxToken<'a>
+        = NicRxToken<'a>
+    where
+        Self: 'a;
+    type TxToken<'a>
+        = NicTxToken<'a>
+    where
+        Self: 'a;
 
     #[allow(clippy::indexing_slicing)]
     fn receive(&mut self, _timestamp: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
@@ -152,7 +151,8 @@ impl Device for BasicNicDeivce {
                 let buf = notification.buf.as_mut_slice();
                 let len = notification.len as usize;
                 return Some((
-                    NicRxToken(&mut buf[..len], self), // the length is guaranteed to be less than the buffer size
+                    NicRxToken(&mut buf[..len], self), /* the length is guaranteed to be less
+                                                        * than the buffer size */
                     NicTxToken(&self.device, &self.tx_buf),
                 ));
             }
@@ -262,10 +262,7 @@ impl TxToken for NicTxToken<'_> {
     clippy::too_many_lines,
     clippy::arithmetic_side_effects
 )]
-fn working_thread(
-    stop_flag: &AtomicBool,
-    context : &mut NicWorkingContext,
-) {
+fn working_thread(stop_flag: &AtomicBool, context: &mut NicWorkingContext) {
     // Create interface
     let mut config = Config::new(EthernetAddress(context.self_mac_addr.to_array()).into());
     config.random_seed = rand::random();
@@ -333,8 +330,10 @@ fn working_thread(
                         };
                         let icmp_payload = socket.send(icmp_reply_repr.buffer_len(), addr).unwrap();
                         let mut icmp_reply_packet = Icmpv4Packet::new_unchecked(icmp_payload);
-                        icmp_reply_repr
-                            .emit(&mut icmp_reply_packet, &context.device.capabilities().checksum);
+                        icmp_reply_repr.emit(
+                            &mut icmp_reply_packet,
+                            &context.device.capabilities().checksum,
+                        );
                     }
                 }
                 Icmpv4Repr::EchoReply { .. }
@@ -342,7 +341,8 @@ fn working_thread(
                 | Icmpv4Repr::TimeExceeded { .. } => {}
                 _ => unreachable!(),
             }
-            // If we receive the message, the we must have sent the message, and got its mac address(suppose we are in LAN).
+            // If we receive the message, the we must have sent the message, and got its mac
+            // address(suppose we are in LAN).
             if let Some((thread, _timeout)) = icmp_query_map.get(&addr) {
                 thread.unpark();
             }

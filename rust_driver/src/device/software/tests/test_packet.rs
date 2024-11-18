@@ -1,21 +1,12 @@
 use std::mem::size_of;
 
-use crate::device::software::packet::Immediate;
-use crate::device::software::packet::AETH;
-use crate::device::software::packet::BTH;
-use crate::device::software::packet::RETH;
+use crate::device::software::packet::{Immediate, AETH, BTH, RETH};
 use crate::device::software::packet_processor::PacketProcessor;
-use crate::device::software::types::Key;
-use crate::device::software::types::Metadata;
-use crate::device::software::types::PKey;
-use crate::device::software::types::PayloadInfo;
-use crate::device::software::types::Qpn;
-use crate::device::software::types::RdmaGeneralMeta;
-use crate::device::software::types::RdmaMessage;
-use crate::device::software::types::RdmaMessageMetaCommon;
-use crate::device::software::types::RethHeader;
-use crate::device::ToHostWorkRbDescOpcode;
-use crate::device::ToHostWorkRbDescTransType;
+use crate::device::software::types::{
+    Key, Metadata, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon,
+    RethHeader,
+};
+use crate::device::{ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType};
 use crate::types::Psn;
 
 const BTH_SIZE: usize = size_of::<BTH>();

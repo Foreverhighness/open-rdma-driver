@@ -1,20 +1,17 @@
-use std::{mem::size_of, net::Ipv4Addr};
+use std::mem::size_of;
+use std::net::Ipv4Addr;
 
 use thiserror::Error;
 
-use crate::device::ToHostWorkRbDescOpcode;
-
-use super::{
-    packet::{
-        CommonPacketHeader, IpUdpHeaders, Ipv4Header, PacketError, RdmaAcknowledgeHeader,
-        RdmaPacketHeader, RdmaReadRequestHeader, RdmaReadResponseFirstHeader,
-        RdmaReadResponseLastHeader, RdmaReadResponseMiddleHeader, RdmaReadResponseOnlyHeader,
-        RdmaWriteFirstHeader, RdmaWriteLastHeader, RdmaWriteLastWithImmediateHeader,
-        RdmaWriteMiddleHeader, RdmaWriteOnlyHeader, RdmaWriteOnlyWithImmediateHeader, BTH,
-        ICRC_SIZE,
-    },
-    types::RdmaMessage,
+use super::packet::{
+    CommonPacketHeader, IpUdpHeaders, Ipv4Header, PacketError, RdmaAcknowledgeHeader,
+    RdmaPacketHeader, RdmaReadRequestHeader, RdmaReadResponseFirstHeader,
+    RdmaReadResponseLastHeader, RdmaReadResponseMiddleHeader, RdmaReadResponseOnlyHeader,
+    RdmaWriteFirstHeader, RdmaWriteLastHeader, RdmaWriteLastWithImmediateHeader,
+    RdmaWriteMiddleHeader, RdmaWriteOnlyHeader, RdmaWriteOnlyWithImmediateHeader, BTH, ICRC_SIZE,
 };
+use super::types::RdmaMessage;
+use crate::device::ToHostWorkRbDescOpcode;
 
 pub(crate) struct PacketProcessor;
 
@@ -353,7 +350,8 @@ pub(crate) fn write_ip_udp_header(
 pub(crate) fn is_icrc_valid(received_data: &mut [u8]) -> Result<bool, PacketProcessorError> {
     let length = received_data.len();
     // chcek the icrc
-    let icrc_array: [u8; 4] = match received_data[length.wrapping_sub(ICRC_SIZE)..length].try_into() {
+    let icrc_array: [u8; 4] = match received_data[length.wrapping_sub(ICRC_SIZE)..length].try_into()
+    {
         Ok(arr) => arr,
         #[allow(clippy::cast_possible_truncation)]
         Err(_) => return Err(PacketProcessorError::BufferNotLargeEnough(ICRC_SIZE)),

@@ -1,17 +1,21 @@
 #![allow(warnings)] // FIXME: debug only
 use core::time;
+use std::net::Ipv4Addr;
+use std::thread;
+use std::time::Duration;
+
 use eui48::MacAddress;
 use log::{debug, info};
+use open_rdma_driver::qp::QpManager;
+use open_rdma_driver::types::{
+    Key, MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
+    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
+};
 use open_rdma_driver::{
-    qp::QpManager,
-    types::{
-        Key, MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
-        RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
-    },
     Device, DeviceConfigBuilder, DeviceType, MmapMemory, Mr, Pd, RetryConfig, RoundRobinStrategy,
 };
-use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::{net::Ipv4Addr, thread, time::Duration};
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 
 use crate::common::init_logging;
 
@@ -122,20 +126,19 @@ fn main() {
         mr_a.get_key().get()
     );
     debug!("===========6====================");
-  
 
     loop {
         let mut buffer = String::new();
         std::io::stdin().read_line(&mut buffer).unwrap();
         let mut rng = StdRng::from_seed(RAND_SEED);
         let mut iter = mr_buffer_a.as_ref().iter();
-        for chunk in 0..2048{
+        for chunk in 0..2048 {
             let mut mark_error = false;
-            for _ in 0..4096{
+            for _ in 0..4096 {
                 let v: u8 = rng.gen();
                 let item = iter.next().unwrap();
-                if !mark_error && *item!= v{
-                    log::error!("In chunk idx={:?}, {} != {}",chunk,*item,v);
+                if !mark_error && *item != v {
+                    log::error!("In chunk idx={:?}, {} != {}", chunk, *item, v);
                     mark_error = true;
                 }
             }

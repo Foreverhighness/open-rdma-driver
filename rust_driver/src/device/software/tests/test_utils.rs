@@ -5,9 +5,7 @@ fn test_helper_cut_from_sgl() {
     // Here we don't care the va boundary
     // test: has [1000,0,0,0], request 1000
     {
-        let mut sgl = SGListBuilder::new()
-            .with_sge(0x1000, 1000, 0_u32)
-            .build();
+        let mut sgl = SGListBuilder::new().with_sge(0x1000, 1000, 0_u32).build();
         let payload = sgl.cut(1000).unwrap();
         assert_eq!(payload.get_length(), 1000);
         assert_eq!(sgl.data[0].len, 0);
@@ -16,9 +14,7 @@ fn test_helper_cut_from_sgl() {
 
     // test has [1000,0,0,0], request 1000
     {
-        let mut sgl = SGListBuilder::new()
-            .with_sge(0x1000, 1000, 0_u32)
-            .build();
+        let mut sgl = SGListBuilder::new().with_sge(0x1000, 1000, 0_u32).build();
         let payload = sgl.cut(900).unwrap();
         assert_eq!(payload.get_length(), 900);
         assert_eq!(sgl.data[0].len, 100);
@@ -27,9 +23,7 @@ fn test_helper_cut_from_sgl() {
 
     // test has [1024,0,0,0], request 512,512
     {
-        let mut sgl = SGListBuilder::new()
-            .with_sge(0x1000, 1024, 0_u32)
-            .build();
+        let mut sgl = SGListBuilder::new().with_sge(0x1000, 1024, 0_u32).build();
         let payload1 = sgl.cut(512).unwrap();
         let payload2 = sgl.cut(512).unwrap();
         assert_eq!(payload1.get_length(), 512);

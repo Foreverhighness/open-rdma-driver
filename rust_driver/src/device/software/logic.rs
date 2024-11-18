@@ -1,28 +1,26 @@
+use std::collections::HashMap;
+use std::sync::{Arc, PoisonError, RwLock};
+
 use flume::Sender;
 use thiserror::Error;
 
-use crate::{
-    device::{
-        CtrlRbDescOpcode, ToCardCtrlRbDesc, ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostCtrlRbDescCommon, ToHostWorkRbDesc, ToHostWorkRbDescAck, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon, ToHostWorkRbDescOpcode, ToHostWorkRbDescRead, ToHostWorkRbDescStatus, ToHostWorkRbDescTransType, ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType, ToHostWorkRbDescWriteWithImm
-    },
-    types::{MemAccessTypeFlag, Msn, Pmtu, Psn, QpType},
-    utils::get_first_packet_max_length,
+use super::net_agent::{NetAgentError, NetReceiveLogic, NetSendAgent};
+use super::types::{
+    Key, Metadata, PDHandle, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage,
+    RdmaMessageMetaCommon, RethHeader, ToCardDescriptor, ToCardReadDescriptor,
+    ToCardWriteDescriptor,
 };
+use crate::device::{
+    CtrlRbDescOpcode, ToCardCtrlRbDesc, ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostCtrlRbDescCommon,
+    ToHostWorkRbDesc, ToHostWorkRbDescAck, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon,
+    ToHostWorkRbDescOpcode, ToHostWorkRbDescRead, ToHostWorkRbDescStatus,
+    ToHostWorkRbDescTransType, ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
+    ToHostWorkRbDescWriteWithImm,
+};
+use crate::types::{MemAccessTypeFlag, Msn, Pmtu, Psn, QpType};
+use crate::utils::get_first_packet_max_length;
 
-use super::{
-    net_agent::{NetAgentError, NetReceiveLogic, NetSendAgent},
-    types::{
-        Key, Metadata, PDHandle, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage,
-        RdmaMessageMetaCommon, RethHeader, ToCardDescriptor, ToCardReadDescriptor,
-        ToCardWriteDescriptor,
-    },
-};
-use std::{
-    collections::HashMap,
-    sync::{Arc, PoisonError, RwLock},
-};
-
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 struct QueuePairInner {
     pmtu: Pmtu,
     qp_type: QpType,
@@ -52,8 +50,9 @@ struct MemoryRegion {
 /// The simulating hardware logic of `BlueRDMA`
 ///
 /// Typically, the logic needs a `NetSendAgent` and a `NetReceiveAgent` to send and receive packets.
-/// User use the `send` method to send a `ToCardWorkRbDesc` to the network, and use the `update` method to update the hardware context.
-/// And when the `recv_agent` is binded, the received packets will be parsed and be pushed to the `to_host_data_descriptor_queue`.
+/// User use the `send` method to send a `ToCardWorkRbDesc` to the network, and use the `update`
+/// method to update the hardware context. And when the `recv_agent` is binded, the received packets
+/// will be parsed and be pushed to the `to_host_data_descriptor_queue`.
 #[derive(Debug)]
 pub(crate) struct BlueRDMALogic {
     mr_rkey_table: RwLock<HashMap<Key, Arc<RwLock<MemoryRegion>>>>,
@@ -169,7 +168,8 @@ impl BlueRDMALogic {
         Ok(())
     }
 
-    /// Convert a `ToCardWorkRbDesc` to a `RdmaMessage` and call the `net_send_agent` to send through the network.
+    /// Convert a `ToCardWorkRbDesc` to a `RdmaMessage` and call the `net_send_agent` to send
+    /// through the network.
     pub(crate) fn send(&self, desc: Box<ToCardWorkRbDesc>) -> Result<(), BlueRdmaLogicError> {
         let desc = ToCardDescriptor::from(desc);
         // if it's a raw packet, send it directly
@@ -220,8 +220,8 @@ impl BlueRDMALogic {
                 let mut cur_len = sge_total_length;
                 let mut psn = req.common.psn;
 
-                // since the packet size is larger than first_packet_max_length, first_packet_length should equals
-                // to first_packet_max_length
+                // since the packet size is larger than first_packet_max_length, first_packet_length
+                // should equals to first_packet_max_length
                 let first_packet_length = first_packet_max_length;
 
                 let payload = req.sg_list.cut(first_packet_length)?;
@@ -286,7 +286,7 @@ impl BlueRDMALogic {
     #[allow(clippy::unwrap_in_result)]
     pub(crate) fn update(&self, desc: ToCardCtrlRbDesc) -> Result<(), BlueRdmaLogicError> {
         let opcode = to_host_ctrl_opcode(&desc);
-        let (op_id,is_succ) = match desc {
+        let (op_id, is_succ) = match desc {
             ToCardCtrlRbDesc::QpManagement(desc) => {
                 let mut qp_table = self.qp_table.write()?;
                 let qpn = Qpn::new(desc.qpn.get());
@@ -338,34 +338,24 @@ impl BlueRDMALogic {
                     // we have ensured that the qpn is not exists.
                     let _: Option<Arc<RwLock<MemoryRegion>>> = mr_table.insert(key, mr);
                 }
-                (desc.common.op_id,true)
+                (desc.common.op_id, true)
             }
             // Userspace types use virtual address directly
-            ToCardCtrlRbDesc::UpdatePageTable(desc) => {
-                (desc.common.op_id,true)
-            }
-            ToCardCtrlRbDesc::SetNetworkParam(desc) => {
-                (desc.common.op_id,true)
-            }
-            ToCardCtrlRbDesc::SetRawPacketReceiveMeta(desc) => {
-                (desc.common.op_id,true)
-            }
-            ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(desc) => {
-                (desc.common.op_id,true)
-            }
+            ToCardCtrlRbDesc::UpdatePageTable(desc) => (desc.common.op_id, true),
+            ToCardCtrlRbDesc::SetNetworkParam(desc) => (desc.common.op_id, true),
+            ToCardCtrlRbDesc::SetRawPacketReceiveMeta(desc) => (desc.common.op_id, true),
+            ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(desc) => (desc.common.op_id, true),
         };
-        let resp_desc = ToHostCtrlRbDesc{
-            common: ToHostCtrlRbDescCommon{
+        let resp_desc = ToHostCtrlRbDesc {
+            common: ToHostCtrlRbDescCommon {
                 op_id,
                 is_success: is_succ,
-                opcode
+                opcode,
             },
-        };  
+        };
         #[allow(clippy::unwrap_used)] // if the pipe in software is broken, we should panic.
         {
-            self.to_host_ctrl_descriptor_queue
-                .send(resp_desc)
-                .unwrap();
+            self.to_host_ctrl_descriptor_queue.send(resp_desc).unwrap();
         }
         Ok(())
     }
@@ -513,7 +503,9 @@ impl NetReceiveLogic<'_> for BlueRDMALogic {
                     ToHostWorkRbDescAethCode::Ack => ToHostWorkRbDesc::Ack(ToHostWorkRbDescAck {
                         common,
                         #[allow(clippy::cast_possible_truncation)]
-                        msn: crate::types::Msn::new(header.msn as u16), // msn is u16 currently. So we can just truncate it.
+                        msn: crate::types::Msn::new(header.msn as u16), /* msn is u16 currently.
+                                                                         * So we can just
+                                                                         * truncate it. */
                         value: header.aeth_value,
                         psn: crate::types::Psn::new(header.common_meta.psn.get()),
                         code: ToHostWorkRbDescAethCode::Ack,
@@ -537,36 +529,34 @@ impl NetReceiveLogic<'_> for BlueRDMALogic {
     }
 }
 
-fn to_host_ctrl_opcode(desc : &ToCardCtrlRbDesc) -> CtrlRbDescOpcode {
+fn to_host_ctrl_opcode(desc: &ToCardCtrlRbDesc) -> CtrlRbDescOpcode {
     match desc {
         ToCardCtrlRbDesc::UpdateMrTable(_) => CtrlRbDescOpcode::UpdateMrTable,
         ToCardCtrlRbDesc::UpdatePageTable(_) => CtrlRbDescOpcode::UpdatePageTable,
         ToCardCtrlRbDesc::QpManagement(_) => CtrlRbDescOpcode::QpManagement,
         ToCardCtrlRbDesc::SetNetworkParam(_) => CtrlRbDescOpcode::SetNetworkParam,
         ToCardCtrlRbDesc::SetRawPacketReceiveMeta(_) => CtrlRbDescOpcode::SetRawPacketReceiveMeta,
-        ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(_) => CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint,
+        ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(_) => {
+            CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{net::Ipv4Addr, sync::Arc};
+    use std::net::Ipv4Addr;
+    use std::sync::Arc;
 
     use flume::unbounded;
 
-    use crate::{
-        device::{
-            software::{
-                net_agent::{NetAgentError, NetSendAgent},
-                types::{Key, PayloadInfo, Qpn, RdmaMessage},
-            },
-            ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement,
-            ToCardCtrlRbDescUpdateMrTable,
-        },
-        types::{MemAccessTypeFlag, Pmtu, QpType},
-    };
-
     use super::BlueRDMALogic;
+    use crate::device::software::net_agent::{NetAgentError, NetSendAgent};
+    use crate::device::software::types::{Key, PayloadInfo, Qpn, RdmaMessage};
+    use crate::device::{
+        ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement,
+        ToCardCtrlRbDescUpdateMrTable,
+    };
+    use crate::types::{MemAccessTypeFlag, Pmtu, QpType};
 
     // test update mr table, qp table
     #[test]

@@ -1,24 +1,19 @@
-use std::{
-    collections::{hash_map::Entry, HashMap},
-    fmt::Debug,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    thread::sleep,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-    u128,
-};
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread::sleep;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::u128;
 
 use parking_lot::{Mutex, RwLock};
 
-use crate::{
-    device::ToCardWorkRbDesc,
-    op_ctx::OpCtx,
-    types::{Msn, Pmtu, Qpn},
-    utils::{calculate_packet_cnt, get_first_packet_max_length},
-    Error, ThreadSafeHashmap, WorkDescriptorSender,
-};
+use crate::device::ToCardWorkRbDesc;
+use crate::op_ctx::OpCtx;
+use crate::types::{Msn, Pmtu, Qpn};
+use crate::utils::{calculate_packet_cnt, get_first_packet_max_length};
+use crate::{Error, ThreadSafeHashmap, WorkDescriptorSender};
 
 #[derive(Debug)]
 pub(crate) struct RetryContext {
@@ -37,7 +32,7 @@ pub(crate) struct RetryMap {
 }
 
 /// Giving the absolute PSN, return the offset to that PSN
-#[allow(clippy::arithmetic_side_effects)] //wrapping_div is safe
+#[allow(clippy::arithmetic_side_effects)] // wrapping_div is safe
 fn psn_addr_offset(base_addr: u64, pmtu: Pmtu, psn: u32) -> u64 {
     if psn == 0 {
         return 0;
@@ -286,19 +281,19 @@ fn retry_monitor_working_thread(stop_flag: &AtomicBool, monitor: &mut RetryMonit
 
 #[cfg(test)]
 mod test {
-    use std::{collections::HashMap, sync::Arc, time::Duration};
+    use std::collections::HashMap;
+    use std::sync::Arc;
+    use std::time::Duration;
 
-    use parking_lot::{lock_api::RwLock, Mutex, RawRwLock};
-
-    use crate::{
-        device::{DescSge, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescWrite},
-        op_ctx::{self, CtxStatus},
-        retry::RetryMap,
-        types::{Key, Msn, Qpn, ThreeBytesStruct},
-        Error, WorkDescriptorSender,
-    };
+    use parking_lot::lock_api::RwLock;
+    use parking_lot::{Mutex, RawRwLock};
 
     use super::{psn_addr_offset, RetryConfig, RetryMonitorContext};
+    use crate::device::{DescSge, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescWrite};
+    use crate::op_ctx::{self, CtxStatus};
+    use crate::retry::RetryMap;
+    use crate::types::{Key, Msn, Qpn, ThreeBytesStruct};
+    use crate::{Error, WorkDescriptorSender};
     struct MockDevice(Mutex<Vec<ToCardWorkRbDesc>>);
 
     impl WorkDescriptorSender for MockDevice {

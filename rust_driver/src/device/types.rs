@@ -1,24 +1,26 @@
 // TODO: implement for handling in big-endian machine
-use crate::{
-    device::layout::{
-        CmdQueueReqDescQpManagementSeg0, CmdQueueReqDescSetNetworkParam,
-        CmdQueueReqDescSetRawPacketReceiveMeta, CmdQueueReqDescUpdateErrRecoverPoint,
-        CmdQueueReqDescUpdateMrTable, CmdQueueReqDescUpdatePGT,
-        MetaReportQueueDescFragSecondaryRETH,
-    },
-    types::{Imm, Key, MemAccessTypeFlag, Msn, Pmtu, Psn, QpType, Qpn, Sge, WorkReqSendFlag},
-    utils::u8_slice_to_u64,
-    Error,
-};
+use std::net::Ipv4Addr;
+use std::thread::sleep;
+use std::time::{Duration, Instant};
+
 use eui48::MacAddress;
 use num_enum::TryFromPrimitive;
-use std::{net::Ipv4Addr, thread::sleep, time::{Duration, Instant}};
 
 use super::layout::{
     CmdQueueDescCommonHead, MetaReportQueueDescBthReth, MetaReportQueueDescFragAETH,
     MetaReportQueueDescFragBTH, MetaReportQueueDescFragImmDT, MetaReportQueueDescFragRETH,
     SendQueueDescCommonHead, SendQueueReqDescFragSGE, SendQueueReqDescSeg0, SendQueueReqDescSeg1,
 };
+use crate::device::layout::{
+    CmdQueueReqDescQpManagementSeg0, CmdQueueReqDescSetNetworkParam,
+    CmdQueueReqDescSetRawPacketReceiveMeta, CmdQueueReqDescUpdateErrRecoverPoint,
+    CmdQueueReqDescUpdateMrTable, CmdQueueReqDescUpdatePGT, MetaReportQueueDescFragSecondaryRETH,
+};
+use crate::types::{
+    Imm, Key, MemAccessTypeFlag, Msn, Pmtu, Psn, QpType, Qpn, Sge, WorkReqSendFlag,
+};
+use crate::utils::u8_slice_to_u64;
+use crate::Error;
 
 #[derive(Debug)]
 pub(crate) enum ToCardCtrlRbDesc {
@@ -97,8 +99,8 @@ pub(crate) struct ToCardCtrlRbDescUpdateMrTable {
 pub(crate) struct ToCardCtrlRbDescUpdatePageTable {
     pub(crate) common: ToCardCtrlRbDescCommon,
     pub(crate) start_addr: u64,
-    pub(crate) pgt_idx: u32,  //offset
-    pub(crate) pgte_cnt: u32, //bytes
+    pub(crate) pgt_idx: u32,  // offset
+    pub(crate) pgte_cnt: u32, // bytes
 }
 
 #[derive(Debug)]
@@ -1131,7 +1133,7 @@ impl ToHostWorkRbDesc {
                     value,
                     psn,
                     code,
-                    retry_psn
+                    retry_psn,
                 }))
             }
         }
@@ -1160,7 +1162,8 @@ impl IncompleteToHostWorkRbDesc {
                 desc.rkey = rkey;
                 Ok(ToHostWorkRbDesc::Read(desc))
             }
-            ToHostWorkRbDesc::Raw(desc) => Ok(ToHostWorkRbDesc::Raw(desc)), // ignore the redundant imm
+            ToHostWorkRbDesc::Raw(desc) => Ok(ToHostWorkRbDesc::Raw(desc)), // ignore the
+            // redundant imm
             ToHostWorkRbDesc::WriteOrReadResp(_)
             | ToHostWorkRbDesc::WriteWithImm(_)
             | ToHostWorkRbDesc::Ack(_) => unreachable!(),

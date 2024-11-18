@@ -1,21 +1,25 @@
-use crate::{utils::Buffer, MmapMemory, SchedulerStrategy};
+use std::fs::{File, OpenOptions};
+use std::path::Path;
+use std::sync::Arc;
+
 use core_affinity::CoreId;
 use csr_cli::CSR_LENGTH;
 use log::debug;
 use parking_lot::Mutex;
 
-use self::{
-    csr_cli::{
-        CsrClient, ToCardCtrlRbCsrProxy, ToCardWorkRbCsrProxy, ToHostCtrlRbCsrProxy,
-        ToHostWorkRbCsrProxy,
-    },
-    phys_addr_resolver::PhysAddrResolver,
+use self::csr_cli::{
+    CsrClient, ToCardCtrlRbCsrProxy, ToCardWorkRbCsrProxy, ToHostCtrlRbCsrProxy,
+    ToHostWorkRbCsrProxy,
 };
-
+use self::phys_addr_resolver::PhysAddrResolver;
+use super::ringbuf::Ringbuf;
+use super::scheduler::DescriptorScheduler;
 use super::{
-    constants, ringbuf::Ringbuf, scheduler::DescriptorScheduler, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError
+    constants, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc,
+    ToCardWorkRbDescCommon, ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError,
 };
-use std::{fs::{File, OpenOptions}, path::Path, sync::Arc};
+use crate::utils::Buffer;
+use crate::{MmapMemory, SchedulerStrategy};
 
 mod csr_cli;
 mod ib_verbs;
@@ -74,7 +78,7 @@ impl<Strat: SchedulerStrategy> HardwareDevice<Strat> {
         device_path: P,
         strategy: Strat,
         core_id: Option<CoreId>,
-        scheduler_size : u32,
+        scheduler_size: u32,
     ) -> Result<Self, DeviceError> {
         let device_file = OpenOptions::new()
             .read(true)
@@ -99,10 +103,8 @@ impl<Strat: SchedulerStrategy> HardwareDevice<Strat> {
             ucontext.cmdq_rq,
         )
         .map_err(|e| DeviceError::Device(e.to_string()))?;
-        let to_host_ctrl_rb = ToHostCtrlRb::new(
-            ToHostCtrlRbCsrProxy::new(csr_cli.clone()),
-            to_host_ctrl_rb,
-        );
+        let to_host_ctrl_rb =
+            ToHostCtrlRb::new(ToHostCtrlRbCsrProxy::new(csr_cli.clone()), to_host_ctrl_rb);
 
         let to_card_work_rb_buffer = MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(
             &device_file,
@@ -130,14 +132,14 @@ impl<Strat: SchedulerStrategy> HardwareDevice<Strat> {
             strategy,
             Mutex::new(to_card_work_rb),
             core_id,
-            scheduler_size
+            scheduler_size,
         ));
         let dev = Self(Arc::new(HardwareDeviceInner {
             to_card_ctrl_rb: Mutex::new(to_card_ctrl_rb).into(),
             to_host_ctrl_rb: Mutex::new(to_host_ctrl_rb).into(),
             to_host_work_rb: Mutex::new(to_host_work_rb).into(),
             csr_cli,
-            _device_file : device_file,
+            _device_file: device_file,
             scheduler: Arc::<DescriptorScheduler<Strat>>::clone(&scheduler),
             phys_addr_resolver,
         }));

@@ -1,10 +1,11 @@
-use std::{collections::LinkedList, error::Error, sync::Arc};
+use std::collections::LinkedList;
+use std::error::Error;
+use std::sync::Arc;
 
 use parking_lot::Mutex;
 
-use crate::types::Qpn;
-
 use super::{SchedulerStrategy, SealedDesc, POP_BATCH_SIZE};
+use crate::types::Qpn;
 
 /// The round-robin strategy for the scheduler.
 #[allow(clippy::module_name_repetitions, clippy::linkedlist)]
@@ -86,18 +87,16 @@ impl SchedulerStrategy for RoundRobinStrategy {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::LinkedList, net::Ipv4Addr};
+    use std::collections::LinkedList;
+    use std::net::Ipv4Addr;
 
     use eui48::MacAddress;
 
-    use crate::{
-        device::{
-            scheduler::{round_robin::RoundRobinStrategy, SchedulerStrategy},
-            DescSge, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescWrite,
-        },
-        types::{Key, Msn, Pmtu, Psn, QpType, Qpn, WorkReqSendFlag},
-        SealedDesc,
-    };
+    use crate::device::scheduler::round_robin::RoundRobinStrategy;
+    use crate::device::scheduler::SchedulerStrategy;
+    use crate::device::{DescSge, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescWrite};
+    use crate::types::{Key, Msn, Pmtu, Psn, QpType, Qpn, WorkReqSendFlag};
+    use crate::SealedDesc;
 
     pub(crate) fn generate_random_descriptors(qpn: u32, num: usize) -> LinkedList<SealedDesc> {
         let desc = Box::new(ToCardWorkRbDesc::Write(ToCardWorkRbDescWrite {

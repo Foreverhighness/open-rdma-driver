@@ -1,22 +1,23 @@
-use std::{fmt::Debug, sync::Arc};
+use std::fmt::Debug;
+use std::sync::Arc;
 
 use thiserror::Error;
 
 mod constants;
 mod emulated;
 mod hardware;
+pub(crate) mod layout;
 mod ringbuf;
 mod software;
 mod types;
-pub(crate) mod layout;
 
 pub(crate) mod scheduler;
 pub(crate) use types::ToCardWorkRbDesc;
 
-
-pub(crate) use self::{
-    emulated::EmulatedDevice, hardware::HardwareDevice, software::SoftwareDevice, types::*,
-};
+pub(crate) use self::emulated::EmulatedDevice;
+pub(crate) use self::hardware::HardwareDevice;
+pub(crate) use self::software::SoftwareDevice;
+pub(crate) use self::types::*;
 
 /// Public interface for a device. Can be a real hardware device or a software emulation.
 pub(crate) trait DeviceAdaptor: Send + Sync {

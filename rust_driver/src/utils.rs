@@ -1,12 +1,10 @@
-use std::{
-    alloc::{alloc, dealloc, Layout},
-    fs::{File, OpenOptions},
-    io,
-    ops::{Deref, DerefMut, Index, IndexMut},
-    os::fd::AsRawFd,
-    path::Path,
-    slice::from_raw_parts_mut,
-};
+use std::alloc::{alloc, dealloc, Layout};
+use std::fs::{File, OpenOptions};
+use std::io;
+use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::os::fd::AsRawFd;
+use std::path::Path;
+use std::slice::from_raw_parts_mut;
 
 use log::error;
 
@@ -84,8 +82,8 @@ impl MmapMemory {
             addr: ptr as usize,
         })
     }
+
     /// # Errors
-    ///
     pub fn new(size: usize) -> io::Result<Self> {
         let size = align_up::<{ Self::HUGE_PAGE_SIZE }>(size);
         let buffer = unsafe {
@@ -182,7 +180,7 @@ impl AlignedMemory {
 
     /// Length of the buffer
     #[allow(clippy::len_without_is_empty)]
-    pub fn len(&self) -> usize{
+    pub fn len(&self) -> usize {
         self.0.len()
     }
 }
@@ -198,7 +196,6 @@ impl AsMut<[u8]> for AlignedMemory {
         self.0
     }
 }
-
 
 impl Drop for AlignedMemory {
     fn drop(&mut self) {
@@ -231,6 +228,7 @@ impl Buffer {
 
 impl Index<usize> for Buffer {
     type Output = u64;
+
     #[allow(
         clippy::ptr_as_ptr,
         clippy::cast_ptr_alignment,
@@ -305,9 +303,8 @@ impl AsMut<[u8]> for Buffer {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::Pmtu;
-
     use super::align_up;
+    use crate::types::Pmtu;
 
     #[test]
     fn test_calculate_packet_cnt() {

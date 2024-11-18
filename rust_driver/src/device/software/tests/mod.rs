@@ -2,17 +2,14 @@ use std::net::Ipv4Addr;
 
 use eui48::MacAddress;
 
-use crate::{
-    device::{
-        ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement,
-        ToCardCtrlRbDescUpdateMrTable, ToCardWorkRbDesc, ToCardWorkRbDescCommon,
-        ToCardWorkRbDescOpcode, ToCardWorkRbDescRead, ToCardWorkRbDescWrite,
-        ToCardWorkRbDescWriteWithImm,
-    },
-    types::{MemAccessTypeFlag, Pmtu, QpType, WorkReqSendFlag},
-};
-
 use super::types::{Key, SGList, SGListElementWithKey};
+use crate::device::{
+    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement,
+    ToCardCtrlRbDescUpdateMrTable, ToCardWorkRbDesc, ToCardWorkRbDescCommon,
+    ToCardWorkRbDescOpcode, ToCardWorkRbDescRead, ToCardWorkRbDescWrite,
+    ToCardWorkRbDescWriteWithImm,
+};
+use crate::types::{MemAccessTypeFlag, Pmtu, QpType, WorkReqSendFlag};
 
 mod test_device;
 mod test_logic;
@@ -87,6 +84,7 @@ impl ToCardWorkRbDescBuilder {
             sg_list: None,
         }
     }
+
     pub(crate) fn with_is_first(&mut self, is_first: bool) -> &mut Self {
         self.is_first = Some(is_first);
         self
@@ -183,7 +181,7 @@ impl ToCardWorkRbDescBuilder {
             ToCardWorkRbDescOpcode::WriteWithImm => {
                 let imm = if matches!(common.qp_type, QpType::RawPacket) {
                     0
-                }else{
+                } else {
                     self.imm.unwrap()
                 };
                 ToCardWorkRbDesc::WriteWithImm(ToCardWorkRbDescWriteWithImm {

@@ -31,7 +31,8 @@ pub(super) trait CsrReaderAdaptor {
 /// `BUF` is the buffer.
 /// `DEPTH` is the max capacity of the ringbuf.
 /// `ELEM_SIZE` is the size of each descriptor.
-/// `PAGE_SIZE` is the size of the page. In real hardware, the buffer should be aligned to `PAGE_SIZE`.
+/// `PAGE_SIZE` is the size of the page. In real hardware, the buffer should be aligned to
+/// `PAGE_SIZE`.
 #[derive(Debug)]
 pub(super) struct Ringbuf<
     T,
@@ -165,8 +166,8 @@ impl<
 impl<'a, T: CsrWriterAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_SIZE: usize>
     RingbufWriter<'a, '_, T, BUF, DEPTH, ELEM_SIZE>
 {
-    const HARDWARE_IDX_MASK: usize = gen_hardware_idx_mask(DEPTH);
     const HARDWARE_IDX_GUARD_MASK: usize = gen_hardware_idx_guard_mask(DEPTH);
+    const HARDWARE_IDX_MASK: usize = gen_hardware_idx_mask(DEPTH);
     const MEMORY_IDX_MASK: usize = gen_memory_idx_mask(DEPTH);
 
     /// get a buffer to write a descriptor to the ring buffer
@@ -271,8 +272,8 @@ pub(super) struct RingbufReader<
 impl<'a, T: CsrReaderAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_SIZE: usize>
     RingbufReader<'a, '_, T, BUF, DEPTH, ELEM_SIZE>
 {
-    const HARDWARE_IDX_MASK: usize = gen_hardware_idx_mask(DEPTH);
     const HARDWARE_IDX_GUARD_MASK: usize = gen_hardware_idx_guard_mask(DEPTH);
+    const HARDWARE_IDX_MASK: usize = gen_hardware_idx_mask(DEPTH);
     const MEMORY_IDX_MASK: usize = gen_memory_idx_mask(DEPTH);
 
     /// read a descriptor from the ring buffer
@@ -430,8 +431,8 @@ fn is_full_helper(
     memory_idx_mask: usize,
     hardware_idx_guard_mask: usize,
 ) -> bool {
-    // Since the highest bit stands for two times of the DEPTH in bineary, if the head and tail have different highest bit and the rest bits are the same,
-    // it means the ringbuf is full.
+    // Since the highest bit stands for two times of the DEPTH in bineary, if the head and tail have
+    // different highest bit and the rest bits are the same, it means the ringbuf is full.
     // In hardware we use like `(head.idx == tail.idx) && (head.guard != tail.guard)`
     let head_guard = head & hardware_idx_guard_mask;
     let tail_guard = tail & hardware_idx_guard_mask;
@@ -488,21 +489,17 @@ fn get_descriptor_helper(
 
 #[cfg(test)]
 mod test {
-    use std::{
-        slice::from_raw_parts_mut,
-        sync::{
-            atomic::{AtomicBool, AtomicU32, Ordering},
-            Arc,
-        },
-        thread::{sleep, spawn},
-        time::Duration,
-    };
+    use std::slice::from_raw_parts_mut;
+    use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+    use std::sync::Arc;
+    use std::thread::{sleep, spawn};
+    use std::time::Duration;
 
     use rand::Rng;
 
-    use crate::{device::DeviceError, types::PAGE_SIZE};
-
     use super::{PollDescriptor, Ringbuf};
+    use crate::device::DeviceError;
+    use crate::types::PAGE_SIZE;
 
     #[derive(Debug, Clone)]
     struct Adaptor(Arc<AdaptorInner>);
@@ -540,6 +537,7 @@ mod test {
                 self.0.head.store(new_head, Ordering::Release);
             }
         }
+
         fn head(&self) -> u32 {
             self.0.head.load(Ordering::Acquire)
         }
@@ -553,6 +551,7 @@ mod test {
             self.0.head.store(data, Ordering::Release);
             Ok(())
         }
+
         fn read_tail(&self) -> Result<u32, DeviceError> {
             Ok(self.0.tail.load(Ordering::Acquire))
         }
@@ -562,6 +561,7 @@ mod test {
             self.0.tail.store(data, Ordering::Release);
             Ok(())
         }
+
         fn read_head(&self) -> Result<u32, DeviceError> {
             Ok(self.0.head.load(Ordering::Acquire))
         }

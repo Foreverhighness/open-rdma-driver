@@ -1,19 +1,22 @@
+use std::fmt::Debug;
+use std::net::SocketAddr;
+use std::sync::Arc;
+
 use log::debug;
 use parking_lot::Mutex;
-
-use crate::{utils::Buffer, AlignedMemory, SchedulerStrategy};
 
 use self::rpc_cli::{
     RpcClient, ToCardCtrlRbCsrProxy, ToCardWorkRbCsrProxy, ToHostCtrlRbCsrProxy,
     ToHostWorkRbCsrProxy,
 };
-use super::{
-    constants, ringbuf::Ringbuf, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb,
-    ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError,
-};
-use std::{fmt::Debug, net::SocketAddr, sync::Arc};
-
+use super::ringbuf::Ringbuf;
 use super::scheduler::DescriptorScheduler;
+use super::{
+    constants, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc,
+    ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError,
+};
+use crate::utils::Buffer;
+use crate::{AlignedMemory, SchedulerStrategy};
 
 mod rpc_cli;
 

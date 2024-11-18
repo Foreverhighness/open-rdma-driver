@@ -1,9 +1,10 @@
-use crate::{types::Qpn, Device, Error, Mr};
+use std::collections::HashSet;
+use std::hash::{Hash, Hasher};
+
 use rand::RngCore as _;
-use std::{
-    collections::HashSet,
-    hash::{Hash, Hasher},
-};
+
+use crate::types::Qpn;
+use crate::{Device, Error, Mr};
 
 // TODO: PD will be shared by multi function call. Use reference counter?
 /// Protection Domain

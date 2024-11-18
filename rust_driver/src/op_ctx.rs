@@ -1,8 +1,6 @@
-use std::{
-    fmt::Debug,
-    sync::{Arc, OnceLock},
-    thread::{self, Thread},
-};
+use std::fmt::Debug;
+use std::sync::{Arc, OnceLock};
+use std::thread::{self, Thread};
 
 use parking_lot::Mutex;
 
@@ -28,11 +26,12 @@ pub enum CtxStatus {
 /// The operation context is track to manage the status of operations.
 /// When calling the `read`,`write` or some `control` command, you get an operation context.
 ///
-/// You can wait for the operation to finish by calling the `wait` method and get the result by calling the `get_result` method.
+/// You can wait for the operation to finish by calling the `wait` method and get the result by
+/// calling the `get_result` method.
 #[derive(Debug, Clone)]
 pub struct OpCtx<Payload>(Arc<OpCtxWrapper<Payload>>);
 
-#[allow(clippy::type_complexity)] //FIXME: refactor later
+#[allow(clippy::type_complexity)] // FIXME: refactor later
 struct OpCtxWrapper<Payload> {
     inner: Mutex<OpCtxInner>,
     payload: OnceLock<Payload>,
@@ -94,6 +93,7 @@ impl<Payload> OpCtx<Payload> {
             thread.unpark();
         }
     }
+
     pub(crate) fn set_result(&self, result: Payload) -> Result<(), Error> {
         self.0
             .payload
@@ -120,8 +120,8 @@ impl<Payload> OpCtx<Payload> {
     /// Returns an error if the operation context is poisoned.
     pub fn wait_result(&self) -> Result<Option<&Payload>, Error> {
         self.wait()?;
-        if let CtxStatus::Failed(reason) = self.0.inner.lock().status{
-            return Err(Error::Device(reason.into()))
+        if let CtxStatus::Failed(reason) = self.0.inner.lock().status {
+            return Err(Error::Device(reason.into()));
         }
         Ok(self.0.payload.get())
     }
@@ -131,17 +131,13 @@ impl<Payload> OpCtx<Payload> {
         self.0.inner.lock().status
     }
 
-    pub(crate) fn set_handler(&self, handler: Box<dyn Fn(bool) + Send + Sync>){
-        let mut guard = self.0
-            .handler
-            .lock();
+    pub(crate) fn set_handler(&self, handler: Box<dyn Fn(bool) + Send + Sync>) {
+        let mut guard = self.0.handler.lock();
         *guard = Some(handler);
     }
 
     pub(crate) fn take_handler(&self) -> Option<Box<(dyn Fn(bool) + Send + Sync)>> {
-        let mut guard = self.0
-            .handler
-            .lock();
+        let mut guard = self.0.handler.lock();
         guard.take()
     }
 }

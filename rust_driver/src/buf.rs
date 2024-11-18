@@ -1,7 +1,5 @@
-use std::{
-    slice::from_raw_parts_mut,
-    sync::atomic::{AtomicU16, Ordering},
-};
+use std::slice::from_raw_parts_mut;
+use std::sync::atomic::{AtomicU16, Ordering};
 
 use crate::types::{Key, Sge};
 
@@ -88,9 +86,8 @@ impl<const SLOT_SIZE: usize> PacketBuf<SLOT_SIZE> {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::Key;
-
     use super::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE};
+    use crate::types::Key;
 
     #[test]
     fn test_buffer() {

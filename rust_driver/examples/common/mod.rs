@@ -1,5 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::Write;
+
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 
 pub struct SimpleLogger {
@@ -17,9 +18,7 @@ impl SimpleLogger {
     }
 }
 
-
 impl log::Log for SimpleLogger {
-    
     fn enabled(&self, metadata: &Metadata) -> bool {
         metadata.level() <= Level::Debug
     }
@@ -35,5 +34,6 @@ impl log::Log for SimpleLogger {
 }
 
 pub fn init_logging(file_path: &str) -> Result<(), SetLoggerError> {
-    log::set_boxed_logger(Box::new(SimpleLogger::new(file_path))).map(|()| log::set_max_level(LevelFilter::Info))
+    log::set_boxed_logger(Box::new(SimpleLogger::new(file_path)))
+        .map(|()| log::set_max_level(LevelFilter::Info))
 }

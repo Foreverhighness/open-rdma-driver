@@ -1,15 +1,20 @@
+use std::net::Ipv4Addr;
+use std::thread::sleep;
+use std::time::Duration;
+
 use eui48::MacAddress;
 use log::info;
+use open_rdma_driver::qp::QpManager;
+use open_rdma_driver::types::{
+    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
+    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
+};
 use open_rdma_driver::{
-    qp::QpManager, types::{
-        MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam, RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE
-    }, AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig, RoundRobinStrategy
+    AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig, RoundRobinStrategy,
 };
 use serial_test::serial;
-use std::{net::Ipv4Addr, thread::sleep, time::Duration};
 
 use crate::common::init_logging;
-
 
 const SHM_PATH: &str = "/bluesim1\0";
 const HEAP_BLOCK_SIZE: usize = 1024 * 1024 * 64;
@@ -18,7 +23,13 @@ const BUFFER_LENGTH: usize = 1024 * 128;
 
 mod common;
 
-setup_emulator!(0x7f7e8e600000, HEAP_BLOCK_SIZE, SHM_PATH, "../blue-rdma\0","run_system_test.sh\0");
+setup_emulator!(
+    0x7f7e8e600000,
+    HEAP_BLOCK_SIZE,
+    SHM_PATH,
+    "../blue-rdma\0",
+    "run_system_test.sh\0"
+);
 
 fn create_and_init_card(
     card_id: usize,
@@ -45,7 +56,7 @@ fn create_and_init_card(
         .build()
         .unwrap();
     let dev = Device::new(config).unwrap();
-    
+
     info!("[{}] Device created", card_id);
 
     let pd = dev.alloc_pd().unwrap();
@@ -133,7 +144,7 @@ fn main() {
     let ctx1 = dev_a
         .write(
             dpqn,
-        mr_buffer_b.as_ref().as_ptr() as usize as u64,
+            mr_buffer_b.as_ref().as_ptr() as usize as u64,
             mr_b.get_key(),
             WorkReqSendFlag::IbvSendSignaled,
             sge0,
@@ -142,7 +153,10 @@ fn main() {
 
     let _ = ctx1.wait();
     sleep(Duration::from_secs(3));
-    assert_eq!(mr_buffer_a.as_ref()[0..SEND_CNT], mr_buffer_b.as_ref()[0..SEND_CNT]);
+    assert_eq!(
+        mr_buffer_a.as_ref()[0..SEND_CNT],
+        mr_buffer_b.as_ref()[0..SEND_CNT]
+    );
     info!("write success");
 
     // // test read
@@ -171,7 +185,7 @@ fn main() {
 
     // assert_eq!(mr_buffer_a[0..SEND_CNT], mr_buffer_b[0..SEND_CNT]);
     // info!("read success");
-    
+
     // for (idx, item) in mr_buffer_a.iter_mut().enumerate() {
     //     *item = idx as u8;
     // }

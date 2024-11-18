@@ -1,18 +1,14 @@
+use std::hash::{Hash, Hasher};
+use std::net::Ipv4Addr;
+use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
+
 use atomic_enum::atomic_enum;
 use eui48::MacAddress;
-
-use crate::{
-    device::{ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement},
-    types::{MemAccessTypeFlag, Msn, Pmtu, Psn, Qp, QpType, Qpn},
-    Device, Error, Pd,
-};
-use std::{
-    hash::{Hash, Hasher},
-    net::Ipv4Addr,
-    sync::atomic::{AtomicBool, AtomicU16, Ordering},
-};
-
 use parking_lot::Mutex;
+
+use crate::device::{ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement};
+use crate::types::{MemAccessTypeFlag, Msn, Pmtu, Psn, Qp, QpType, Qpn};
+use crate::{Device, Error, Pd};
 
 const QP_MAX_CNT: usize = 1024;
 
@@ -27,8 +23,8 @@ pub enum QpStatus {
     OutOfOrder = 1,
 }
 
-impl QpStatus{
-    pub(crate) fn is_normal(&self) -> bool{
+impl QpStatus {
+    pub(crate) fn is_normal(&self) -> bool {
         matches!(self, QpStatus::Normal)
     }
 }
@@ -140,7 +136,7 @@ impl Device {
             qp_type: qp.qp_type,
             rq_acc_flags: qp.rq_acc_flags,
             pmtu: qp.pmtu,
-            peer_qpn: qp.peer_qpn
+            peer_qpn: qp.peer_qpn,
         });
 
         let ctx = self.do_ctrl_op(op_id, desc)?;
@@ -190,7 +186,7 @@ impl Device {
                 qp_type: qp_ctx.qp_type,
                 rq_acc_flags: MemAccessTypeFlag::IbvAccessNoFlags,
                 pmtu: qp_ctx.pmtu,
-                peer_qpn: qp_ctx.peer_qpn
+                peer_qpn: qp_ctx.peer_qpn,
             });
             (pd_ctx, desc)
         } else {

@@ -1,5 +1,6 @@
 #![allow(clippy::indexing_slicing)]
-use std::{mem::size_of, ptr};
+use std::mem::size_of;
+use std::ptr;
 
 // Using the `#!` to suppress the warning of `clippy::indexing_slicing` in the generated code.
 use bitfield::{bitfield, BitRange, BitRangeMut};

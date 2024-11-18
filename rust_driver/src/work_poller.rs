@@ -1,21 +1,19 @@
 use core::panic;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
 use core_affinity::CoreId;
 use flume::Sender;
 use log::{debug, error, info};
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
 
-use crate::{
-    buf::Slot,
-    checker::PacketCheckEvent,
-    device::{
-        DeviceError, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescRaw, ToHostWorkRbDescStatus, ToHostWorkRbDescWriteWithImm
-    },
-    nic::NicRecvNotification,
-    Error,
+use crate::buf::Slot;
+use crate::checker::PacketCheckEvent;
+use crate::device::{
+    DeviceError, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescRaw, ToHostWorkRbDescStatus,
+    ToHostWorkRbDescWriteWithImm,
 };
+use crate::nic::NicRecvNotification;
+use crate::Error;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
@@ -33,14 +31,17 @@ pub(crate) struct WorkDescPollerContext {
 unsafe impl Send for WorkDescPollerContext {}
 
 impl WorkDescPoller {
-    pub(crate) fn new(ctx: WorkDescPollerContext,core_id:Option<CoreId>) -> Self {
+    pub(crate) fn new(ctx: WorkDescPollerContext, core_id: Option<CoreId>) -> Self {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let thread_stop_flag = Arc::clone(&stop_flag);
         let thread = std::thread::spawn(move || {
-            if let Some(core_id) = core_id{
+            if let Some(core_id) = core_id {
                 if !core_affinity::set_for_current(core_id) {
-                    log::error!("failed to set core_affinity {:?} in work queue poller", core_id);
-                }else{
+                    log::error!(
+                        "failed to set core_affinity {:?} in work queue poller",
+                        core_id
+                    );
+                } else {
                     log::info!("set core_affinity in work queue poller successfully");
                 }
             }
@@ -62,7 +63,7 @@ impl WorkDescPollerContext {
                     error!("parse descriptor failed : {:?}", e);
                     continue;
                 }
-                Err(e)=>{
+                Err(e) => {
                     error!("WorkDescPoller is stopped due to : {:?}", e);
                     return;
                 }
