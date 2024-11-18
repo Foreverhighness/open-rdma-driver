@@ -10,3 +10,4 @@ reorder_impl_items = true
 reorder_imports = true
 tab_spaces = 4
 wrap_comments = true
+max_width = 120

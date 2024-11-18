@@ -192,6 +192,8 @@ mod checker;
 mod ctrl_poller;
 /// adaptor device: hardware, software, emulated
 mod device;
+/// model for rdma
+mod model;
 /// basic nic functions
 mod nic;
 /// responser thread: sending the response(read resp or ack) to the device
