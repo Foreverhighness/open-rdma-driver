@@ -1,7 +1,6 @@
 // TODO: implement for handling in big-endian machine
 use std::net::Ipv4Addr;
-use std::thread::sleep;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use eui48::MacAddress;
 use num_enum::TryFromPrimitive;
@@ -1221,9 +1220,9 @@ impl ToCardWorkRbDescBuilder {
                     is_last: true,
                     is_first: true,
                     sge0: sge0.into(),
-                    sge1: sge1.map(bitfield::Into::into),
-                    sge2: sge2.map(bitfield::Into::into),
-                    sge3: sge3.map(bitfield::Into::into),
+                    sge1: sge1.map(Into::into),
+                    sge2: sge2.map(Into::into),
+                    sge3: sge3.map(Into::into),
                 })
             }
             ToCardWorkRbDescOpcode::WriteWithImm => {
@@ -1241,9 +1240,9 @@ impl ToCardWorkRbDescBuilder {
                     is_first: true,
                     imm,
                     sge0: sge0.into(),
-                    sge1: sge1.map(bitfield::Into::into),
-                    sge2: sge2.map(bitfield::Into::into),
-                    sge3: sge3.map(bitfield::Into::into),
+                    sge1: sge1.map(Into::into),
+                    sge2: sge2.map(Into::into),
+                    sge3: sge3.map(Into::into),
                 })
             }
             ToCardWorkRbDescOpcode::Read => {
@@ -1269,9 +1268,9 @@ impl ToCardWorkRbDescBuilder {
                     is_last: true,
                     is_first: true,
                     sge0: sge0.into(),
-                    sge1: sge1.map(bitfield::Into::into),
-                    sge2: sge2.map(bitfield::Into::into),
-                    sge3: sge3.map(bitfield::Into::into),
+                    sge1: sge1.map(Into::into),
+                    sge2: sge2.map(Into::into),
+                    sge3: sge3.map(Into::into),
                 })
             }
         };

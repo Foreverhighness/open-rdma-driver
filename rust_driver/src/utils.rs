@@ -1,9 +1,8 @@
 use std::alloc::{alloc, dealloc, Layout};
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io;
-use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::ops::{Index, IndexMut};
 use std::os::fd::AsRawFd;
-use std::path::Path;
 use std::slice::from_raw_parts_mut;
 
 use log::error;
@@ -41,7 +40,7 @@ pub(crate) fn u8_slice_to_u64(slice: &[u8]) -> u64 {
 
 #[allow(clippy::arithmetic_side_effects)]
 pub(crate) fn align_up<const PAGE: usize>(addr: usize) -> usize {
-    (((addr) + ((PAGE) - 1)) / PAGE) * PAGE
+    (addr).div_ceil(PAGE) * PAGE
 }
 
 /// A struct to manage hugepage memory
@@ -237,9 +236,7 @@ impl Index<usize> for Buffer {
     fn index(&self, index: usize) -> &u64 {
         match self {
             Buffer::DmaBuffer(buffer) => {
-                let ptr = unsafe {
-                    buffer.as_ptr().add(index * std::mem::size_of::<u64>()) as *const u64
-                };
+                let ptr = unsafe { buffer.as_ptr().add(index * size_of::<u64>()) as *const u64 };
                 unsafe { &*ptr }
             }
             Buffer::AlignedMemory(aligned_memory) => {
@@ -247,7 +244,7 @@ impl Index<usize> for Buffer {
                     aligned_memory
                         .as_ref()
                         .as_ptr()
-                        .add(index * std::mem::size_of::<u64>()) as *const u64
+                        .add(index * size_of::<u64>()) as *const u64
                 };
                 unsafe { &*ptr }
             }
@@ -264,8 +261,7 @@ impl IndexMut<usize> for Buffer {
     fn index_mut(&mut self, index: usize) -> &mut u64 {
         match self {
             Buffer::DmaBuffer(buffer) => {
-                let ptr =
-                    unsafe { buffer.as_ptr().add(index * std::mem::size_of::<u64>()) as *mut u64 };
+                let ptr = unsafe { buffer.as_ptr().add(index * size_of::<u64>()) as *mut u64 };
                 unsafe { &mut *ptr }
             }
             Buffer::AlignedMemory(aligned_memory) => {
@@ -273,7 +269,7 @@ impl IndexMut<usize> for Buffer {
                     aligned_memory
                         .as_mut()
                         .as_mut_ptr()
-                        .add(index * std::mem::size_of::<u64>()) as *mut u64
+                        .add(index * size_of::<u64>()) as *mut u64
                 };
                 unsafe { &mut *ptr }
             }

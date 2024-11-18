@@ -1,5 +1,5 @@
 use std::hash::{Hash, Hasher};
-use std::{mem, ptr};
+use std::ptr;
 
 use rand::RngCore as _;
 
@@ -163,7 +163,7 @@ impl Device {
         // mr_idx is smaller than `MR_TABLE_SIZE`. Currently, it's a relatively small number.
         // And it's expected to smaller than 2^32 during transimission
         #[allow(clippy::cast_possible_truncation, clippy::arithmetic_side_effects)]
-        let key_idx = (mr_idx as u32) << (mem::size_of::<u32>() * 8 - crate::MR_KEY_IDX_BIT_CNT);
+        let key_idx = (mr_idx as u32) << (u32::BITS as usize - crate::MR_KEY_IDX_BIT_CNT);
         let key_secret = rand::thread_rng().next_u32() >> crate::MR_KEY_IDX_BIT_CNT;
         let key = Key::new(key_idx | key_secret);
 
@@ -248,7 +248,7 @@ impl Device {
         let mut mr_table = self.0.mr_table.lock();
         let mut pd_pool = self.0.pd.lock();
         #[allow(clippy::arithmetic_side_effects)]
-        let mr_idx = mr.key.get() >> (mem::size_of::<u32>() * 8 - crate::MR_KEY_IDX_BIT_CNT);
+        let mr_idx = mr.key.get() >> (u32::BITS as usize - crate::MR_KEY_IDX_BIT_CNT);
         let ctx_option = mr_table
             .get_mut(mr_idx as usize)
             .ok_or(Error::Invalid(format!("MR :{mr_idx}")))?;

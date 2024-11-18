@@ -20,7 +20,7 @@ fn test_header_bth_reth() {
     let bth = BTH::from_bytes(&buf);
     bth.set_opcode_and_type(
         ToHostWorkRbDescOpcode::RdmaWriteFirst,
-        crate::device::ToHostWorkRbDescTransType::Rc,
+        ToHostWorkRbDescTransType::Rc,
     );
     bth.set_destination_qpn(1);
     bth.set_psn(1);
@@ -38,7 +38,7 @@ fn test_header_bth_reth() {
         Metadata::General(header) => {
             assert_eq!(
                 header.common_meta.tran_type as u8,
-                crate::device::ToHostWorkRbDescTransType::Rc as u8
+                ToHostWorkRbDescTransType::Rc as u8
             );
             assert_eq!(
                 header.common_meta.opcode.clone() as u8,
@@ -68,7 +68,7 @@ fn test_header_bth_reth_imm() {
     let bth = BTH::from_bytes(&buf);
     bth.set_opcode_and_type(
         ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate,
-        crate::device::ToHostWorkRbDescTransType::Rc,
+        ToHostWorkRbDescTransType::Rc,
     );
     bth.set_destination_qpn(1);
     bth.set_psn(1);
@@ -87,7 +87,7 @@ fn test_header_bth_reth_imm() {
         Metadata::General(header) => {
             assert_eq!(
                 header.common_meta.tran_type as u8,
-                crate::device::ToHostWorkRbDescTransType::Rc as u8
+                ToHostWorkRbDescTransType::Rc as u8
             );
             assert_eq!(
                 header.common_meta.opcode.clone() as u8,
@@ -118,7 +118,7 @@ fn test_header_bth_reth_reth() {
     let bth = BTH::from_bytes(&buf);
     bth.set_opcode_and_type(
         ToHostWorkRbDescOpcode::RdmaReadRequest,
-        crate::device::ToHostWorkRbDescTransType::Rc,
+        ToHostWorkRbDescTransType::Rc,
     );
     bth.set_destination_qpn(1);
     bth.set_psn(1);
@@ -139,7 +139,7 @@ fn test_header_bth_reth_reth() {
         Metadata::General(header) => {
             assert_eq!(
                 header.common_meta.tran_type as u8,
-                crate::device::ToHostWorkRbDescTransType::Rc as u8
+                ToHostWorkRbDescTransType::Rc as u8
             );
             assert_eq!(
                 header.common_meta.opcode.clone() as u8,
@@ -173,7 +173,7 @@ fn test_header_bth_aeth() {
     let bth = BTH::from_bytes(&buf);
     bth.set_opcode_and_type(
         ToHostWorkRbDescOpcode::Acknowledge,
-        crate::device::ToHostWorkRbDescTransType::Rc,
+        ToHostWorkRbDescTransType::Rc,
     );
     bth.set_destination_qpn(1);
     bth.set_psn(1);
@@ -189,7 +189,7 @@ fn test_header_bth_aeth() {
         Metadata::Acknowledge(header) => {
             assert_eq!(
                 header.common_meta.tran_type as u8,
-                crate::device::ToHostWorkRbDescTransType::Rc as u8
+                ToHostWorkRbDescTransType::Rc as u8
             );
             assert_eq!(
                 header.common_meta.opcode.clone() as u8,

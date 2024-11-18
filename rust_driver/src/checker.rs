@@ -945,11 +945,7 @@ mod tests {
         let handler = ctx.take_handler().unwrap();
         handler(true);
         let guard = qp_table.read();
-        let status = guard
-            .get(&qpn)
-            .unwrap()
-            .status
-            .load(std::sync::atomic::Ordering::Acquire);
+        let status = guard.get(&qpn).unwrap().status.load(Ordering::Acquire);
         assert!(matches!(status, QpStatus::Normal));
     }
 

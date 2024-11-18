@@ -16,7 +16,7 @@ use super::ringbuf::Ringbuf;
 use super::scheduler::DescriptorScheduler;
 use super::{
     constants, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc,
-    ToCardWorkRbDescCommon, ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError,
+    ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError,
 };
 use crate::utils::Buffer;
 use crate::{MmapMemory, SchedulerStrategy};

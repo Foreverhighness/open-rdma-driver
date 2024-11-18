@@ -16,7 +16,7 @@ use super::{
     ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError,
 };
 use crate::utils::Buffer;
-use crate::{AlignedMemory, SchedulerStrategy};
+use crate::SchedulerStrategy;
 
 mod rpc_cli;
 

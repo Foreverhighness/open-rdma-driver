@@ -45,7 +45,7 @@ impl UDPSendAgent {
                 libc::IPPROTO_IP,
                 libc::IP_HDRINCL,
                 on_ref,
-                std::mem::size_of_val(&on) as u32, // size_of(int) is a u32 value
+                size_of_val(&on) as u32, // size_of(int) is a u32 value
             );
             if ret != 0_i32 {
                 return Err(NetAgentError::SetSockOptFailed(ret));
@@ -149,9 +149,7 @@ impl NetSendAgent for UDPSendAgent {
         let mut buf = [0u8; NET_SERVER_BUF_SIZE];
         let src_addr = self.src_addr;
         let src_port = self.src_port;
-        let ip_id = self
-            .sending_id_counter
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let ip_id = self.sending_id_counter.fetch_add(1, Ordering::Relaxed);
 
         let total_length = PacketWriter::new(&mut buf)
             .src_addr(src_addr)

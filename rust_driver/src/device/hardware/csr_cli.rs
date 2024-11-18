@@ -45,7 +45,7 @@ impl CsrClient {
         if addr >= CSR_LENGTH {
             return Err(DeviceError::Device(format!("csr overflow :{addr}")));
         }
-        let mut buf = self.0.mapping.lock();
+        let buf = self.0.mapping.lock();
         #[allow(clippy::ptr_offset_with_cast)]
         let offset = unsafe { buf.as_ptr().offset(addr as isize) as *mut u32 };
         unsafe { offset.write_volatile(data) }

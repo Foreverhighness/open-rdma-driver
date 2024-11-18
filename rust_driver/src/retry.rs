@@ -326,7 +326,7 @@ mod test {
                 true,
                 3,
                 Duration::from_millis(1000),
-                std::time::Duration::from_millis(10),
+                Duration::from_millis(10),
             ),
         };
         map.write().insert(
@@ -353,16 +353,16 @@ mod test {
         retry_map.add((Qpn::default(), Msn::default()), desc.clone(), true);
 
         // should send first retry
-        std::thread::sleep(std::time::Duration::from_millis(1020));
+        std::thread::sleep(Duration::from_millis(1020));
         assert_eq!(device.0.lock().len(), 1);
         // should send second retry
-        std::thread::sleep(std::time::Duration::from_millis(1020));
+        std::thread::sleep(Duration::from_millis(1020));
         assert_eq!(device.0.lock().len(), 2);
         // should send last retry
-        std::thread::sleep(std::time::Duration::from_millis(1020));
+        std::thread::sleep(Duration::from_millis(1020));
         assert_eq!(device.0.lock().len(), 3);
 
-        std::thread::sleep(std::time::Duration::from_millis(1020));
+        std::thread::sleep(Duration::from_millis(1020));
         // should remove the record
         matches!(
             map.read()
@@ -372,7 +372,7 @@ mod test {
             CtxStatus::Failed(_)
         );
         device.0.lock().clear();
-        std::thread::sleep(std::time::Duration::from_millis(1000));
+        std::thread::sleep(Duration::from_millis(1000));
     }
     // }
 }

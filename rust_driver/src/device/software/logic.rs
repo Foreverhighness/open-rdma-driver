@@ -407,7 +407,7 @@ fn recv_default_meta(message: &RdmaMessage) -> ToHostWorkRbDescCommon {
         trans: ToHostWorkRbDescTransType::Rc,
         dqpn: crate::types::Qpn::new(message.meta_data.common_meta().dqpn.get()),
         msn: Msn::new(message.meta_data.common_meta().pkey.get()),
-        expected_psn: crate::types::Psn::new(0),
+        expected_psn: Psn::new(0),
     }
 }
 
@@ -503,11 +503,11 @@ impl NetReceiveLogic<'_> for BlueRDMALogic {
                     ToHostWorkRbDescAethCode::Ack => ToHostWorkRbDesc::Ack(ToHostWorkRbDescAck {
                         common,
                         #[allow(clippy::cast_possible_truncation)]
-                        msn: crate::types::Msn::new(header.msn as u16), /* msn is u16 currently.
-                                                                         * So we can just
-                                                                         * truncate it. */
+                        msn: Msn::new(header.msn as u16), /* msn is u16 currently.
+                                                           * So we can just
+                                                           * truncate it. */
                         value: header.aeth_value,
-                        psn: crate::types::Psn::new(header.common_meta.psn.get()),
+                        psn: Psn::new(header.common_meta.psn.get()),
                         code: ToHostWorkRbDescAethCode::Ack,
                         retry_psn: Psn::default(),
                     }),

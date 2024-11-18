@@ -150,11 +150,11 @@ impl Device for BasicNicDeivce {
             Ok(mut notification) => {
                 let buf = notification.buf.as_mut_slice();
                 let len = notification.len as usize;
-                return Some((
+                Some((
                     NicRxToken(&mut buf[..len], self), /* the length is guaranteed to be less
                                                         * than the buffer size */
                     NicTxToken(&self.device, &self.tx_buf),
-                ));
+                ))
             }
             Err(TryRecvError::Disconnected) => {
                 panic!("The receiver is disconnected");

@@ -160,7 +160,7 @@ use nic::NicInterface;
 use op_ctx::{CtrlOpCtx, OpCtx};
 use parking_lot::{Mutex, RwLock};
 use qp::QpContext;
-use retry::{RetryMap, RetryMonitor, RetryMonitorContext, RetryRecord};
+use retry::{RetryMap, RetryMonitor, RetryMonitorContext};
 use thiserror::Error;
 use types::{Key, Msn, Psn, Qpn, RdmaDeviceNetworkParam, Sge, WorkReqSendFlag};
 use utils::{calculate_packet_cnt, Buffer};
@@ -661,7 +661,7 @@ impl Device {
             user_op_ctx_map: Arc::clone(&self.0.user_op_ctx_map),
             device: Arc::new(self.clone()),
         };
-        let retry_monitor = retry::RetryMonitor::new(retry_context);
+        let retry_monitor = RetryMonitor::new(retry_context);
         self.0
             .retry_monitor
             .set(retry_monitor)

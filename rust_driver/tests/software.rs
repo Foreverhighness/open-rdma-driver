@@ -12,7 +12,6 @@ use open_rdma_driver::types::{
 use open_rdma_driver::{
     AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig, RoundRobinStrategy,
 };
-use serial_test::serial;
 
 const BUFFER_LENGTH: usize = 1024 * 128;
 const SEND_CNT: usize = 1024 * 64;

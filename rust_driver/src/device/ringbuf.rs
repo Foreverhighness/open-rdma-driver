@@ -202,7 +202,7 @@ impl<'a, T: CsrWriterAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_S
                 if timeout_in_millis > 0 && start.elapsed().as_millis() > timeout_in_millis {
                     return Err(DeviceError::Timeout);
                 }
-                std::thread::sleep(std::time::Duration::from_millis(1));
+                std::thread::sleep(Duration::from_millis(1));
             }
         }
 
@@ -576,7 +576,7 @@ mod test {
         }));
         let thread_proxy = adaptor.clone();
         let _ = spawn(move || loop {
-            sleep(std::time::Duration::from_millis(100));
+            sleep(Duration::from_millis(100));
             thread_proxy.consume();
             thread_proxy.check(MAX_VALUE);
         });
@@ -600,7 +600,7 @@ mod test {
             .next_timeout(Some(Duration::from_millis(10)))
             .is_err());
         drop(writer);
-        sleep(std::time::Duration::from_millis(100));
+        sleep(Duration::from_millis(100));
         assert!(adaptor.head() == 128);
         assert!(adaptor.tail() == 128);
         // test if blocking?
@@ -628,11 +628,11 @@ mod test {
         let thread_proxy = adaptor.clone();
         let _ = spawn(move || {
             let mut rng = rand::thread_rng();
-            sleep(std::time::Duration::from_millis(10));
+            sleep(Duration::from_millis(10));
             loop {
                 // periodically and randomly consume the ringbuf
                 let sleep_time: u64 = rng.gen_range(1..10);
-                sleep(std::time::Duration::from_millis(sleep_time));
+                sleep(Duration::from_millis(sleep_time));
                 thread_proxy.consume();
                 thread_proxy.check(MAX_VALUE);
             }
@@ -661,14 +661,14 @@ mod test {
         let thread_proxy = adaptor.clone();
         let _ = spawn(move || loop {
             thread_proxy.produce::<128>(128);
-            sleep(std::time::Duration::from_millis(10));
+            sleep(Duration::from_millis(10));
             thread_proxy.check(MAX_VALUE);
         });
         let buffer = vec![0u8; PAGE_SIZE];
         let mut ringbuf =
             Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
         let mut reader = ringbuf.read();
-        sleep(std::time::Duration::from_millis(100));
+        sleep(Duration::from_millis(100));
         for _i in 0..128 {
             let _desc = reader.next().unwrap();
         }
@@ -700,7 +700,7 @@ mod test {
                 thread_proxy.check(MAX_VALUE);
                 let produce: u8 = rng.gen_range(1..128);
                 thread_proxy.produce::<MAX_DEPTH>(produce.into());
-                sleep(std::time::Duration::from_millis(10));
+                sleep(Duration::from_millis(10));
             }
         });
         let mut buffer = vec![0u8; PAGE_SIZE];

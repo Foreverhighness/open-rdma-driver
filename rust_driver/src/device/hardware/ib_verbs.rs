@@ -1,8 +1,7 @@
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io;
 use std::mem::size_of;
 use std::os::fd::AsRawFd;
-use std::path::Path;
 
 const RDMA_IOCTL_CMD: u64 = 0xc018_1b01;
 #[repr(C)]

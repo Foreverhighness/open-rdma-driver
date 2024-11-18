@@ -9,7 +9,7 @@ use crate::device::{
     ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
 };
 use crate::qp::QpContext;
-use crate::types::{Key, Msn, Psn, Qpn};
+use crate::types::{Key, Psn, Qpn};
 use crate::work_poller::{WorkDescPoller, WorkDescPollerContext};
 
 struct MockToHostRb {
