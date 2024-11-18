@@ -9,8 +9,7 @@ use log::{debug, error, info};
 use crate::buf::Slot;
 use crate::checker::PacketCheckEvent;
 use crate::device::{
-    DeviceError, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescRaw, ToHostWorkRbDescStatus,
-    ToHostWorkRbDescWriteWithImm,
+    DeviceError, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescRaw, ToHostWorkRbDescStatus, ToHostWorkRbDescWriteWithImm,
 };
 use crate::nic::NicRecvNotification;
 use crate::Error;
@@ -37,10 +36,7 @@ impl WorkDescPoller {
         let thread = std::thread::spawn(move || {
             if let Some(core_id) = core_id {
                 if !core_affinity::set_for_current(core_id) {
-                    log::error!(
-                        "failed to set core_affinity {:?} in work queue poller",
-                        core_id
-                    );
+                    log::error!("failed to set core_affinity {:?} in work queue poller", core_id);
                 } else {
                     log::info!("set core_affinity in work queue poller successfully");
                 }
@@ -99,10 +95,7 @@ impl WorkDescPollerContext {
             .map_err(|_| Error::PipeBroken("work polling thread to checker"))
     }
 
-    fn handle_work_desc_write_with_imm(
-        &self,
-        _desc: &ToHostWorkRbDescWriteWithImm,
-    ) -> Result<(), Error> {
+    fn handle_work_desc_write_with_imm(&self, _desc: &ToHostWorkRbDescWriteWithImm) -> Result<(), Error> {
         todo!()
     }
 

@@ -10,9 +10,8 @@ use parking_lot::RwLock;
 
 use crate::buf::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE};
 use crate::device::{
-    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescUpdateErrPsnRecoverPoint,
-    ToHostWorkRbDescAck, ToHostWorkRbDescAethCode, ToHostWorkRbDescRead,
-    ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
+    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescUpdateErrPsnRecoverPoint, ToHostWorkRbDescAck,
+    ToHostWorkRbDescAethCode, ToHostWorkRbDescRead, ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
 };
 use crate::op_ctx::OpCtx;
 use crate::qp::QpContext;
@@ -136,10 +135,10 @@ impl PacketCheckerContext {
                         wakeup_user_op_ctx(&self.user_op_ctx_map, qpn, msn);
                     }
                     ToHostWorkRbDescAethCode::Nak => {
-                        if let Ok(Some(desc)) = self.retry_map.get_descritpor(
-                            (qpn, msn),
-                            Some((event.psn.get(), event.common.expected_psn.get())),
-                        ) {
+                        if let Ok(Some(desc)) = self
+                            .retry_map
+                            .get_descritpor((qpn, msn), Some((event.psn.get(), event.common.expected_psn.get())))
+                        {
                             if let Err(e) = self.work_desc_sender.send_work_desc(desc) {
                                 error!("Failed to send retry {:?}", e);
                             }
@@ -275,18 +274,17 @@ impl PacketCheckerContext {
     #[allow(clippy::unwrap_used)]
     fn check_completed_and_try_recover(&self, qpn: Qpn, msn: Msn) {
         let mut perqp_map = self.recv_ctx_map.get_per_qp_ctx_mut(qpn).unwrap();
-        let (is_read_resp, is_completed, last_psn, recover_psn) =
-            if let Some(ctx) = perqp_map.map.get_mut(&msn) {
-                let recv_map = ctx.recv_map.as_ref().unwrap();
-                (
-                    ctx.is_read_resp,
-                    recv_map.is_complete(),
-                    recv_map.last_psn(),
-                    recv_map.try_get_recover_psn(),
-                )
-            } else {
-                (false, false, Psn::default(), None)
-            };
+        let (is_read_resp, is_completed, last_psn, recover_psn) = if let Some(ctx) = perqp_map.map.get_mut(&msn) {
+            let recv_map = ctx.recv_map.as_ref().unwrap();
+            (
+                ctx.is_read_resp,
+                recv_map.is_complete(),
+                recv_map.last_psn(),
+                recv_map.try_get_recover_psn(),
+            )
+        } else {
+            (false, false, Psn::default(), None)
+        };
 
         // decrease borrow
         drop(perqp_map);
@@ -331,15 +329,12 @@ impl PacketCheckerContext {
     fn enter_qp_error_status(&self, qpn: Qpn, pmtu: Pmtu, expected_psn: Psn, recved_psn: Psn) {
         if let Some(qp) = self.qp_table.read().get(&qpn) {
             // set flag
-            qp.status
-                .store(crate::qp::QpStatus::OutOfOrder, Ordering::Release);
+            qp.status.store(crate::qp::QpStatus::OutOfOrder, Ordering::Release);
             log::error!("enter error");
         };
 
         // create context for all msn
-        let mut per_qp_map = self
-            .recv_ctx_map
-            .get_or_create_per_qp_ctx_mut(qpn, recved_psn);
+        let mut per_qp_map = self.recv_ctx_map.get_or_create_per_qp_ctx_mut(qpn, recved_psn);
         // we know that if we are previous in the normal status,
         // we should have only one or not recv context left.
         debug_assert!(per_qp_map.map.len() <= 1, "Not in normal status");
@@ -352,11 +347,7 @@ impl PacketCheckerContext {
     }
 }
 
-fn wakeup_user_op_ctx(
-    user_op_ctx_map: &RwLock<HashMap<(Qpn, Msn), OpCtx<()>>>,
-    qpn: Qpn,
-    msn: Msn,
-) {
+fn wakeup_user_op_ctx(user_op_ctx_map: &RwLock<HashMap<(Qpn, Msn), OpCtx<()>>>, qpn: Qpn, msn: Msn) {
     if let Some(ctx) = user_op_ctx_map.read().get(&(qpn, msn)) {
         if let Err(e) = ctx.set_result(()) {
             error!("Set result failed {:?}", e);
@@ -372,19 +363,16 @@ fn try_recover(
     qpn: Qpn,
     recover_psn: Psn,
 ) {
-    let desc =
-        ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(ToCardCtrlRbDescUpdateErrPsnRecoverPoint {
-            common: ToCardCtrlRbDescCommon::default(),
-            qpn,
-            recover_psn,
-        });
+    let desc = ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(ToCardCtrlRbDescUpdateErrPsnRecoverPoint {
+        common: ToCardCtrlRbDescCommon::default(),
+        qpn,
+        recover_psn,
+    });
     if let Ok(ctrl_ctx) = ctrl_desc_sender.send_ctrl_desc(desc) {
         ctrl_ctx.set_handler(Box::new(move |is_succ| {
             if is_succ {
                 if let Some(qp_ctx) = qp_table.read().get(&qpn) {
-                    qp_ctx
-                        .status
-                        .store(crate::qp::QpStatus::Normal, Ordering::Release);
+                    qp_ctx.status.store(crate::qp::QpStatus::Normal, Ordering::Release);
                 }
             }
         }))
@@ -417,8 +405,7 @@ impl PerQpContextMap {
         Self {
             map: BTreeMap::new(),
             largest_psn_recved,
-            recent_msn_finished: [(Msn::default(), RecentQpMsnStatus::default());
-                MAX_MSN_WINDOW_PER_QP],
+            recent_msn_finished: [(Msn::default(), RecentQpMsnStatus::default()); MAX_MSN_WINDOW_PER_QP],
         }
     }
 
@@ -464,9 +451,7 @@ impl RecvContextMap {
     fn insert_ctx(&self, qpn: Qpn, msn: Msn, ctx: RecvContext) {
         // the `per qp context` might leak here?
         let mut inner = self.0.borrow_mut();
-        let per_qp_map = inner
-            .entry(qpn)
-            .or_insert(PerQpContextMap::new(Psn::default()));
+        let per_qp_map = inner.entry(qpn).or_insert(PerQpContextMap::new(Psn::default()));
         if per_qp_map.map.insert(msn, ctx).is_some() {
             log::error!("create duplicate msn({:?}) record for qpn={:?}", msn, qpn);
         } else {
@@ -508,18 +493,12 @@ impl RecvContextMap {
         }
     }
 
-    pub(crate) fn get_or_create_per_qp_ctx_mut(
-        &self,
-        qpn: Qpn,
-        psn: Psn,
-    ) -> RefMut<PerQpContextMap> {
+    pub(crate) fn get_or_create_per_qp_ctx_mut(&self, qpn: Qpn, psn: Psn) -> RefMut<PerQpContextMap> {
         let mut inner = self.0.borrow_mut();
         let _per_qp_map = inner.entry(qpn).or_insert(PerQpContextMap::new(psn));
         drop(inner);
         #[allow(clippy::unwrap_used)] // value is create above.
-        RefMut::map(self.0.borrow_mut(), |inner_mut| {
-            inner_mut.get_mut(&qpn).unwrap()
-        })
+        RefMut::map(self.0.borrow_mut(), |inner_mut| inner_mut.get_mut(&qpn).unwrap())
     }
 
     pub(crate) fn get_per_qp_ctx_mut(&self, qpn: Qpn) -> Option<RefMut<PerQpContextMap>> {
@@ -531,9 +510,7 @@ impl RecvContextMap {
         if !should_ret_none {
             None
         } else {
-            Some(RefMut::map(self.0.borrow_mut(), |inner| {
-                inner.get_mut(&qpn).unwrap()
-            }))
+            Some(RefMut::map(self.0.borrow_mut(), |inner| inner.get_mut(&qpn).unwrap()))
         }
     }
 
@@ -577,12 +554,7 @@ impl RecvContext {
         }
     }
 
-    pub(crate) fn create_map_on_psn(
-        &mut self,
-        last_continous_psn: Psn,
-        recved_psn: Psn,
-        pmtu: Pmtu,
-    ) {
+    pub(crate) fn create_map_on_psn(&mut self, last_continous_psn: Psn, recved_psn: Psn, pmtu: Pmtu) {
         let pkt_len = calculate_packet_cnt(pmtu, self.start_addr, self.len_in_bytes);
         let mut map = Box::new(SlidingWindow::new(self.start_psn, pkt_len));
         map.insert((self.start_psn, last_continous_psn));
@@ -635,10 +607,7 @@ impl SlidingWindow {
         let left = *last_left;
         let right = *second_last_right;
         assert!(left.wrapping_add(1) != right, "Invalid gap");
-        Some((
-            Psn::new(left.wrapping_add(1)),
-            Psn::new(right.wrapping_sub(1)),
-        ))
+        Some((Psn::new(left.wrapping_add(1)), Psn::new(right.wrapping_sub(1))))
     }
 
     #[allow(clippy::arithmetic_side_effects, clippy::unwrap_used)]

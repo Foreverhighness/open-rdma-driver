@@ -9,8 +9,8 @@ use log::debug;
 use self::net_agent::udp_agent::{UDPReceiveAgent, UDPSendAgent};
 use super::scheduler::DescriptorScheduler;
 use super::{
-    DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc, ToHostCtrlRbDesc,
-    ToHostRb, ToHostWorkRbDesc,
+    DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostRb,
+    ToHostWorkRbDesc,
 };
 use crate::SchedulerStrategy;
 
@@ -47,20 +47,11 @@ struct ToHostCtrlRb(Receiver<ToHostCtrlRbDesc>);
 
 impl<Strat: SchedulerStrategy> SoftwareDevice<Strat> {
     /// Initializing an software device.
-    pub(crate) fn new(
-        addr: Ipv4Addr,
-        port: u16,
-        strategy: Strat,
-        scheduler_size: u32,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub(crate) fn new(addr: Ipv4Addr, port: u16, strategy: Strat, scheduler_size: u32) -> Result<Self, Box<dyn Error>> {
         let send_agent = UDPSendAgent::new(addr, port)?;
         let (ctrl_sender, ctrl_receiver) = unbounded();
         let (work_sender, work_receiver) = unbounded();
-        let device = Arc::new(BlueRDMALogic::new(
-            Arc::new(send_agent),
-            ctrl_sender,
-            work_sender,
-        ));
+        let device = Arc::new(BlueRDMALogic::new(Arc::new(send_agent), ctrl_sender, work_sender));
         let recv_agent = UDPReceiveAgent::new(Arc::<BlueRDMALogic>::clone(&device), addr, port)?;
 
         let this_device = Arc::<BlueRDMALogic>::clone(&device);
@@ -119,25 +110,20 @@ impl<Strat: SchedulerStrategy> DeviceAdaptor for SoftwareDevice<Strat> {
 
 impl ToCardRb<ToCardCtrlRbDesc> for BlueRDMALogic {
     fn push(&self, desc: ToCardCtrlRbDesc) -> Result<(), DeviceError> {
-        self.update(desc)
-            .map_err(|e| DeviceError::Device(e.to_string()))?;
+        self.update(desc).map_err(|e| DeviceError::Device(e.to_string()))?;
         Ok(())
     }
 }
 
 impl ToHostRb<ToHostCtrlRbDesc> for ToHostCtrlRb {
     fn pop(&self) -> Result<ToHostCtrlRbDesc, DeviceError> {
-        self.0
-            .recv()
-            .map_err(|e| DeviceError::Device(e.to_string()))
+        self.0.recv().map_err(|e| DeviceError::Device(e.to_string()))
     }
 }
 
 impl ToHostRb<ToHostWorkRbDesc> for ToHostWorkRb {
     fn pop(&self) -> Result<ToHostWorkRbDesc, DeviceError> {
-        self.0
-            .recv()
-            .map_err(|e| DeviceError::Device(e.to_string()))
+        self.0.recv().map_err(|e| DeviceError::Device(e.to_string()))
     }
 }
 

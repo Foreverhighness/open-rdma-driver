@@ -40,9 +40,7 @@ struct OpCtxWrapper<Payload> {
 
 impl<Payload> Debug for OpCtxWrapper<Payload> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("OpCtxWrapper")
-            .field("inner", &self.inner)
-            .finish()
+        f.debug_struct("OpCtxWrapper").field("inner", &self.inner).finish()
     }
 }
 
@@ -95,10 +93,7 @@ impl<Payload> OpCtx<Payload> {
     }
 
     pub(crate) fn set_result(&self, result: Payload) -> Result<(), Error> {
-        self.0
-            .payload
-            .set(result)
-            .map_err(|_| Error::SetCtxResultFailed)?;
+        self.0.payload.set(result).map_err(|_| Error::SetCtxResultFailed)?;
         // set only once
         let mut guard = self.0.inner.lock();
         guard.status = CtxStatus::Finished;

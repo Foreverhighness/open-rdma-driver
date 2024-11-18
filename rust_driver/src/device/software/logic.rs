@@ -6,16 +6,14 @@ use thiserror::Error;
 
 use super::net_agent::{NetAgentError, NetReceiveLogic, NetSendAgent};
 use super::types::{
-    Key, Metadata, PDHandle, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage,
-    RdmaMessageMetaCommon, RethHeader, ToCardDescriptor, ToCardReadDescriptor,
-    ToCardWriteDescriptor,
+    Key, Metadata, PDHandle, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon, RethHeader,
+    ToCardDescriptor, ToCardReadDescriptor, ToCardWriteDescriptor,
 };
 use crate::device::{
-    CtrlRbDescOpcode, ToCardCtrlRbDesc, ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostCtrlRbDescCommon,
-    ToHostWorkRbDesc, ToHostWorkRbDescAck, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon,
-    ToHostWorkRbDescOpcode, ToHostWorkRbDescRead, ToHostWorkRbDescStatus,
-    ToHostWorkRbDescTransType, ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
-    ToHostWorkRbDescWriteWithImm,
+    CtrlRbDescOpcode, ToCardCtrlRbDesc, ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostCtrlRbDescCommon, ToHostWorkRbDesc,
+    ToHostWorkRbDescAck, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon, ToHostWorkRbDescOpcode,
+    ToHostWorkRbDescRead, ToHostWorkRbDescStatus, ToHostWorkRbDescTransType, ToHostWorkRbDescWriteOrReadResp,
+    ToHostWorkRbDescWriteType, ToHostWorkRbDescWriteWithImm,
 };
 use crate::types::{MemAccessTypeFlag, Msn, Pmtu, Psn, QpType};
 use crate::utils::get_first_packet_max_length;
@@ -100,10 +98,7 @@ impl BlueRDMALogic {
         let total_length = common.total_len;
         let pmtu = u32::from(&common.pmtu);
         if total_length > pmtu {
-            return Err(BlueRdmaLogicError::RawPacketLengthTooLong(
-                pmtu,
-                total_length,
-            ));
+            return Err(BlueRdmaLogicError::RawPacketLengthTooLong(pmtu, total_length));
         }
         let dqp_ip = common.dqp_ip;
         let payload = desc.first_sge_mut().cut(total_length)?;
@@ -255,8 +250,7 @@ impl BlueRDMALogic {
                     cur_len -= pmtu;
                     psn = psn.wrapping_add(1);
                     cur_va = cur_va.wrapping_add(u64::from(pmtu));
-                    self.net_send_agent
-                        .send(req.common.dqp_ip, 4791, &middle_msg)?;
+                    self.net_send_agent.send(req.common.dqp_ip, 4791, &middle_msg)?;
                 }
 
                 // cur_len <= pmtu, send last packet
@@ -273,8 +267,7 @@ impl BlueRDMALogic {
                     meta_data: Metadata::General(meta_data),
                     payload: last_payload,
                 };
-                self.net_send_agent
-                    .send(req.common.dqp_ip, 4791, &last_msg)?;
+                self.net_send_agent.send(req.common.dqp_ip, 4791, &last_msg)?;
             }
             ToCardDescriptor::Read(req) => {
                 self.send_read_packet(&req, common_meta)?;
@@ -388,8 +381,7 @@ impl BlueRDMALogic {
 
         // check if the va and length are valid.
         if read_guard.addr > va
-            || read_guard.addr.wrapping_add(read_guard.len as u64)
-                < va.wrapping_add(u64::from(length))
+            || read_guard.addr.wrapping_add(read_guard.len as u64) < va.wrapping_add(u64::from(length))
         {
             return Ok(ToHostWorkRbDescStatus::InvMrRegion);
         }
@@ -511,9 +503,7 @@ impl NetReceiveLogic<'_> for BlueRDMALogic {
                         code: ToHostWorkRbDescAethCode::Ack,
                         retry_psn: Psn::default(),
                     }),
-                    ToHostWorkRbDescAethCode::Rnr
-                    | ToHostWorkRbDescAethCode::Rsvd
-                    | ToHostWorkRbDescAethCode::Nak => {
+                    ToHostWorkRbDescAethCode::Rnr | ToHostWorkRbDescAethCode::Rsvd | ToHostWorkRbDescAethCode::Nak => {
                         // just ignore
                         unimplemented!()
                     }
@@ -536,9 +526,7 @@ fn to_host_ctrl_opcode(desc: &ToCardCtrlRbDesc) -> CtrlRbDescOpcode {
         ToCardCtrlRbDesc::QpManagement(_) => CtrlRbDescOpcode::QpManagement,
         ToCardCtrlRbDesc::SetNetworkParam(_) => CtrlRbDescOpcode::SetNetworkParam,
         ToCardCtrlRbDesc::SetRawPacketReceiveMeta(_) => CtrlRbDescOpcode::SetRawPacketReceiveMeta,
-        ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(_) => {
-            CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint
-        }
+        ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(_) => CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint,
     }
 }
 
@@ -553,8 +541,7 @@ mod tests {
     use crate::device::software::net_agent::{NetAgentError, NetSendAgent};
     use crate::device::software::types::{Key, PayloadInfo, Qpn, RdmaMessage};
     use crate::device::{
-        ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement,
-        ToCardCtrlRbDescUpdateMrTable,
+        ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement, ToCardCtrlRbDescUpdateMrTable,
     };
     use crate::types::{MemAccessTypeFlag, Pmtu, QpType};
 
@@ -565,21 +552,11 @@ mod tests {
         struct DummpyProxy;
 
         impl NetSendAgent for DummpyProxy {
-            fn send(
-                &self,
-                _: Ipv4Addr,
-                _: u16,
-                _message: &RdmaMessage,
-            ) -> Result<(), NetAgentError> {
+            fn send(&self, _: Ipv4Addr, _: u16, _message: &RdmaMessage) -> Result<(), NetAgentError> {
                 Ok(())
             }
 
-            fn send_raw(
-                &self,
-                _: Ipv4Addr,
-                _: u16,
-                _payload: &PayloadInfo,
-            ) -> Result<(), NetAgentError> {
+            fn send_raw(&self, _: Ipv4Addr, _: u16, _payload: &PayloadInfo) -> Result<(), NetAgentError> {
                 Ok(())
             }
         }
@@ -606,9 +583,7 @@ mod tests {
                 let inner = &qp_context.inner;
                 assert!(matches!(inner.pmtu, Pmtu::Mtu1024));
                 assert!(matches!(inner.qp_type, QpType::Rc));
-                assert!(inner
-                    .qp_access_flags
-                    .contains(MemAccessTypeFlag::IbvAccessRemoteWrite));
+                assert!(inner.qp_access_flags.contains(MemAccessTypeFlag::IbvAccessRemoteWrite));
             }
 
             // write again
@@ -629,9 +604,7 @@ mod tests {
                 let inner = &qp_context.inner;
                 assert!(matches!(inner.pmtu, Pmtu::Mtu2048));
                 assert!(matches!(inner.qp_type, QpType::Rc));
-                assert!(inner
-                    .qp_access_flags
-                    .contains(MemAccessTypeFlag::IbvAccessRemoteWrite));
+                assert!(inner.qp_access_flags.contains(MemAccessTypeFlag::IbvAccessRemoteWrite));
             }
         }
 
@@ -654,9 +627,7 @@ mod tests {
                 assert_eq!(read_guard.addr, 0x1234567812345678);
                 assert_eq!(read_guard.len, 1024 * 16);
                 assert_eq!(read_guard.pdkey.get(), 0);
-                assert!(read_guard
-                    .acc_flags
-                    .contains(MemAccessTypeFlag::IbvAccessRemoteWrite));
+                assert!(read_guard.acc_flags.contains(MemAccessTypeFlag::IbvAccessRemoteWrite));
                 assert_eq!(read_guard.pgt_offset, 0);
             }
 
@@ -667,8 +638,7 @@ mod tests {
                 len: 1024 * 24,
                 key: crate::types::Key::new(1234),
                 pd_hdl: 0,
-                acc_flags: (MemAccessTypeFlag::IbvAccessRemoteWrite
-                    | MemAccessTypeFlag::IbvAccessRemoteRead),
+                acc_flags: (MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead),
                 pgt_offset: 0,
             });
             logic.update(desc).unwrap();
@@ -679,12 +649,8 @@ mod tests {
                 assert_eq!(read_guard.addr, 0x1234567812345678);
                 assert_eq!(read_guard.len, 1024 * 24);
                 assert_eq!(read_guard.pdkey.get(), 0);
-                assert!(read_guard
-                    .acc_flags
-                    .contains(MemAccessTypeFlag::IbvAccessRemoteWrite));
-                assert!(read_guard
-                    .acc_flags
-                    .contains(MemAccessTypeFlag::IbvAccessRemoteRead));
+                assert!(read_guard.acc_flags.contains(MemAccessTypeFlag::IbvAccessRemoteWrite));
+                assert!(read_guard.acc_flags.contains(MemAccessTypeFlag::IbvAccessRemoteRead));
                 assert_eq!(read_guard.pgt_offset, 0);
             }
         }

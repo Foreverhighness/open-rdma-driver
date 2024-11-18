@@ -8,15 +8,14 @@ use log::debug;
 use parking_lot::Mutex;
 
 use self::csr_cli::{
-    CsrClient, ToCardCtrlRbCsrProxy, ToCardWorkRbCsrProxy, ToHostCtrlRbCsrProxy,
-    ToHostWorkRbCsrProxy,
+    CsrClient, ToCardCtrlRbCsrProxy, ToCardWorkRbCsrProxy, ToHostCtrlRbCsrProxy, ToHostWorkRbCsrProxy,
 };
 use self::phys_addr_resolver::PhysAddrResolver;
 use super::ringbuf::Ringbuf;
 use super::scheduler::DescriptorScheduler;
 use super::{
-    constants, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc,
-    ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError,
+    constants, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostRb,
+    ToHostWorkRbDesc, ToHostWorkRbDescError,
 };
 use crate::utils::Buffer;
 use crate::{MmapMemory, SchedulerStrategy};
@@ -80,54 +79,35 @@ impl<Strat: SchedulerStrategy> HardwareDevice<Strat> {
         core_id: Option<CoreId>,
         scheduler_size: u32,
     ) -> Result<Self, DeviceError> {
-        let device_file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(device_path)?;
+        let device_file = OpenOptions::new().read(true).write(true).open(device_path)?;
         let ucontext = ib_verbs::new_ucontext(&device_file)?;
         let csr_buf = MmapMemory::new_ringbuf::<CSR_LENGTH>(&device_file, ucontext.csr)?;
         let csr_cli = CsrClient::new(csr_buf).map_err(|e| DeviceError::Device(e.to_string()))?;
 
-        let to_card_ctrl_rb_buffer = MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(
-            &device_file,
-            ucontext.cmdq_sq,
-        )
-        .map_err(|e| DeviceError::Device(e.to_string()))?;
-        let to_card_ctrl_rb = ToCardCtrlRb::new(
-            ToCardCtrlRbCsrProxy::new(csr_cli.clone()),
-            to_card_ctrl_rb_buffer,
-        );
+        let to_card_ctrl_rb_buffer =
+            MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(&device_file, ucontext.cmdq_sq)
+                .map_err(|e| DeviceError::Device(e.to_string()))?;
+        let to_card_ctrl_rb = ToCardCtrlRb::new(ToCardCtrlRbCsrProxy::new(csr_cli.clone()), to_card_ctrl_rb_buffer);
 
-        let to_host_ctrl_rb = MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(
-            &device_file,
-            ucontext.cmdq_rq,
-        )
-        .map_err(|e| DeviceError::Device(e.to_string()))?;
         let to_host_ctrl_rb =
-            ToHostCtrlRb::new(ToHostCtrlRbCsrProxy::new(csr_cli.clone()), to_host_ctrl_rb);
+            MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(&device_file, ucontext.cmdq_rq)
+                .map_err(|e| DeviceError::Device(e.to_string()))?;
+        let to_host_ctrl_rb = ToHostCtrlRb::new(ToHostCtrlRbCsrProxy::new(csr_cli.clone()), to_host_ctrl_rb);
 
-        let to_card_work_rb_buffer = MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(
-            &device_file,
-            ucontext.workq_sq,
-        )
-        .map_err(|e| DeviceError::Device(e.to_string()))?;
+        let to_card_work_rb_buffer =
+            MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(&device_file, ucontext.workq_sq)
+                .map_err(|e| DeviceError::Device(e.to_string()))?;
         let to_card_work_rb = ToCardWorkRb::new(
             ToCardWorkRbCsrProxy::new(csr_cli.clone()),
             Buffer::DmaBuffer(to_card_work_rb_buffer),
         );
 
-        let to_host_work_rb_buffer = MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(
-            &device_file,
-            ucontext.workq_rq,
-        )
-        .map_err(|e| DeviceError::Device(e.to_string()))?;
-        let to_host_work_rb = ToHostWorkRb::new(
-            ToHostWorkRbCsrProxy::new(csr_cli.clone()),
-            to_host_work_rb_buffer,
-        );
+        let to_host_work_rb_buffer =
+            MmapMemory::new_ringbuf::<{ constants::RINGBUF_PAGE_SIZE }>(&device_file, ucontext.workq_rq)
+                .map_err(|e| DeviceError::Device(e.to_string()))?;
+        let to_host_work_rb = ToHostWorkRb::new(ToHostWorkRbCsrProxy::new(csr_cli.clone()), to_host_work_rb_buffer);
 
-        let phys_addr_resolver =
-            PhysAddrResolver::new().map_err(|e| DeviceError::Device(e.to_string()))?;
+        let phys_addr_resolver = PhysAddrResolver::new().map_err(|e| DeviceError::Device(e.to_string()))?;
         let scheduler = Arc::new(DescriptorScheduler::new(
             strategy,
             Mutex::new(to_card_work_rb),

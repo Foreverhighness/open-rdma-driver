@@ -4,10 +4,9 @@ use std::net::Ipv4Addr;
 use thiserror::Error;
 
 use super::packet::{
-    CommonPacketHeader, IpUdpHeaders, Ipv4Header, PacketError, RdmaAcknowledgeHeader,
-    RdmaPacketHeader, RdmaReadRequestHeader, RdmaReadResponseFirstHeader,
-    RdmaReadResponseLastHeader, RdmaReadResponseMiddleHeader, RdmaReadResponseOnlyHeader,
-    RdmaWriteFirstHeader, RdmaWriteLastHeader, RdmaWriteLastWithImmediateHeader,
+    CommonPacketHeader, IpUdpHeaders, Ipv4Header, PacketError, RdmaAcknowledgeHeader, RdmaPacketHeader,
+    RdmaReadRequestHeader, RdmaReadResponseFirstHeader, RdmaReadResponseLastHeader, RdmaReadResponseMiddleHeader,
+    RdmaReadResponseOnlyHeader, RdmaWriteFirstHeader, RdmaWriteLastHeader, RdmaWriteLastWithImmediateHeader,
     RdmaWriteMiddleHeader, RdmaWriteOnlyHeader, RdmaWriteOnlyWithImmediateHeader, BTH, ICRC_SIZE,
 };
 use super::types::RdmaMessage;
@@ -71,10 +70,7 @@ impl PacketProcessor {
         }
     }
 
-    pub(crate) fn set_from_rdma_message(
-        buf: &mut [u8],
-        message: &RdmaMessage,
-    ) -> Result<usize, PacketError> {
+    pub(crate) fn set_from_rdma_message(buf: &mut [u8], message: &RdmaMessage) -> Result<usize, PacketError> {
         match message.meta_data.get_opcode() {
             ToHostWorkRbDescOpcode::RdmaWriteFirst => {
                 let header = RdmaWriteFirstHeader::from_bytes(buf);
@@ -216,9 +212,10 @@ impl<'buf, 'message> PacketWriter<'buf, 'message> {
         let net_packet_offset = size_of::<IpUdpHeaders>();
         let message = self.message.ok_or(PacketProcessorError::MissingMessage)?;
         // write the rdma header
-        let rdma_header_buf = self.buf.get_mut(net_packet_offset..).ok_or(
-            PacketProcessorError::BufferNotLargeEnough(net_packet_offset),
-        )?;
+        let rdma_header_buf = self
+            .buf
+            .get_mut(net_packet_offset..)
+            .ok_or(PacketProcessorError::BufferNotLargeEnough(net_packet_offset))?;
         let rdma_header_length = PacketProcessor::set_from_rdma_message(rdma_header_buf, message)?;
 
         // get the total length(include the ip,udp header and the icrc)
@@ -226,29 +223,23 @@ impl<'buf, 'message> PacketWriter<'buf, 'message> {
             .wrapping_add(rdma_header_length)
             .wrapping_add(message.payload.with_pad_length())
             .wrapping_add(ICRC_SIZE);
-        let total_length_in_u16 = u16::try_from(total_length)
-            .map_err(|_| PacketProcessorError::LengthTooLong(total_length))?;
+        let total_length_in_u16 =
+            u16::try_from(total_length).map_err(|_| PacketProcessorError::LengthTooLong(total_length))?;
 
         // write the payload
         let header_offset = size_of::<IpUdpHeaders>().wrapping_add(rdma_header_length);
-        let header_buf =
-            self.buf
-                .get_mut(header_offset..)
-                .ok_or(PacketProcessorError::BufferNotLargeEnough(
-                    net_packet_offset,
-                ))?;
+        let header_buf = self
+            .buf
+            .get_mut(header_offset..)
+            .ok_or(PacketProcessorError::BufferNotLargeEnough(net_packet_offset))?;
         message.payload.copy_to(header_buf.as_mut_ptr());
 
         // write the ip,udp header
         let ip_id = self.ip_id.ok_or(PacketProcessorError::MissingIpId)?;
         let src_addr = self.src_addr.ok_or(PacketProcessorError::MissingSrcAddr)?;
         let src_port = self.src_port.ok_or(PacketProcessorError::MissingSrcPort)?;
-        let dest_addr = self
-            .dest_addr
-            .ok_or(PacketProcessorError::MissingDestAddr)?;
-        let dest_port = self
-            .dest_port
-            .ok_or(PacketProcessorError::MissingDestPort)?;
+        let dest_addr = self.dest_addr.ok_or(PacketProcessorError::MissingDestAddr)?;
+        let dest_port = self.dest_port.ok_or(PacketProcessorError::MissingDestPort)?;
         write_ip_udp_header(
             self.buf,
             src_addr,
@@ -350,8 +341,7 @@ pub(crate) fn write_ip_udp_header(
 pub(crate) fn is_icrc_valid(received_data: &mut [u8]) -> Result<bool, PacketProcessorError> {
     let length = received_data.len();
     // chcek the icrc
-    let icrc_array: [u8; 4] = match received_data[length.wrapping_sub(ICRC_SIZE)..length].try_into()
-    {
+    let icrc_array: [u8; 4] = match received_data[length.wrapping_sub(ICRC_SIZE)..length].try_into() {
         Ok(arr) => arr,
         #[allow(clippy::cast_possible_truncation)]
         Err(_) => return Err(PacketProcessorError::BufferNotLargeEnough(ICRC_SIZE)),
@@ -375,32 +365,24 @@ mod tests {
         //     BTH(opcode='RC_RDMA_WRITE_MIDDLE',pkey=0x1, dqpn=3, psn=0)/ \
         //     Raw(bytes([0]*64))
         let buf = [
-            0x45, 0x00, 0x00, 0xbc, 0x00, 0x01, 0x00, 0x00, 0x40, 0x11, 0xf8, 0xda, 0xc0, 0xa8,
-            0x00, 0x02, 0xc0, 0xa8, 0x00, 0x03, 0x12, 0xb7, 0x12, 0xb7, 0x00, 0xa8, 0x00, 0x00,
-            0x0a, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x7f, 0x7e, 0x91, 0x00, 0x00, 0x00, 0x01, 0x70, 0x9a, 0x33, 0x00, 0x00, 0x00, 0x80,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xc6, 0x87, 0x22, 0x98,
+            0x45, 0x00, 0x00, 0xbc, 0x00, 0x01, 0x00, 0x00, 0x40, 0x11, 0xf8, 0xda, 0xc0, 0xa8, 0x00, 0x02, 0xc0, 0xa8,
+            0x00, 0x03, 0x12, 0xb7, 0x12, 0xb7, 0x00, 0xa8, 0x00, 0x00, 0x0a, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+            0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0x7e, 0x91, 0x00, 0x00, 0x00, 0x01, 0x70, 0x9a, 0x33, 0x00, 0x00,
+            0x00, 0x80, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xc6, 0x87, 0x22, 0x98,
         ];
         let icrc = compute_icrc(&buf);
-        assert!(
-            icrc == u32::from_le_bytes([0xc6, 0x87, 0x22, 0x98]),
-            "icrc: {:x}",
-            icrc
-        );
+        assert!(icrc == u32::from_le_bytes([0xc6, 0x87, 0x22, 0x98]), "icrc: {:x}", icrc);
 
         let buf = [
-            69, 0, 0, 0, 0, 0, 0, 0, 64, 17, 124, 232, 127, 0, 0, 3, 127, 0, 0, 2, 18, 183, 18,
-            183, 0, 32, 0, 0, 17, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0,
+            69, 0, 0, 0, 0, 0, 0, 0, 64, 17, 124, 232, 127, 0, 0, 3, 127, 0, 0, 2, 18, 183, 18, 183, 0, 32, 0, 0, 17,
+            0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
         let icrc = compute_icrc(&buf);
         assert_eq!(icrc, u32::from_le_bytes([64, 33, 163, 207]));

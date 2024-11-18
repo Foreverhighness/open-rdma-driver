@@ -31,10 +31,7 @@ fn test_helper_cut_from_sgl() {
         assert_eq!(sgl.data[0].len, 0);
         assert_eq!(sgl.cur_level, 1);
         assert_eq!(payload1.get_sg_list().first().unwrap().data as u64, 0x1000);
-        assert_eq!(
-            payload2.get_sg_list().first().unwrap().data as u64,
-            0x1000 + 512
-        );
+        assert_eq!(payload2.get_sg_list().first().unwrap().data as u64, 0x1000 + 512);
     }
 
     // test has [1024,2048,1124,100], require [100,2048,2048,100]

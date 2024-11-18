@@ -6,8 +6,8 @@ use eui48::MacAddress;
 use log::info;
 use open_rdma_driver::qp::QpManager;
 use open_rdma_driver::types::{
-    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
-    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
+    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam, RdmaDeviceNetworkParamBuilder, Sge,
+    WorkReqSendFlag, PAGE_SIZE,
 };
 use open_rdma_driver::{
     AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig, RoundRobinStrategy,
@@ -97,8 +97,7 @@ fn test_software_write_and_read() {
     let qp_manager = QpManager::new();
     let qpn = qp_manager.alloc().unwrap();
     let (dev_a, _pd_a, mr_a, mut mr_buffer_a) = create_and_init_card(0, qpn, a_network, &b_network);
-    let (_dev_b, _pd_b, mr_b, mut mr_buffer_b) =
-        create_and_init_card(1, qpn, b_network, &a_network);
+    let (_dev_b, _pd_b, mr_b, mut mr_buffer_b) = create_and_init_card(1, qpn, b_network, &a_network);
     let dpqn = qpn;
     for (idx, item) in mr_buffer_a.as_mut().iter_mut().enumerate() {
         *item = idx as u8;
@@ -145,12 +144,7 @@ fn test_software_write_and_read() {
     if mr_buffer_a.as_ref()[0..SEND_CNT * 2] != mr_buffer_b.as_ref()[0..SEND_CNT * 2] {
         for i in 0..SEND_CNT * 2 {
             if mr_buffer_a.as_ref()[i] != mr_buffer_b.as_ref()[i] {
-                panic!(
-                    "{}: {} != {}",
-                    i,
-                    mr_buffer_a.as_ref()[i],
-                    mr_buffer_b.as_ref()[i]
-                );
+                panic!("{}: {} != {}", i, mr_buffer_a.as_ref()[i], mr_buffer_b.as_ref()[i]);
             }
         }
     }

@@ -34,13 +34,7 @@ pub(super) trait CsrReaderAdaptor {
 /// `PAGE_SIZE` is the size of the page. In real hardware, the buffer should be aligned to
 /// `PAGE_SIZE`.
 #[derive(Debug)]
-pub(super) struct Ringbuf<
-    T,
-    BUF,
-    const DEPTH: usize,
-    const ELEM_SIZE: usize,
-    const PAGE_SIZE: usize,
-> {
+pub(super) struct Ringbuf<T, BUF, const DEPTH: usize, const ELEM_SIZE: usize, const PAGE_SIZE: usize> {
     buf: Mutex<BUF>,
     head: usize,
     tail: usize,
@@ -63,18 +57,12 @@ pub(super) struct RingbufWriter<
     adaptor: &'adaptor T,
 }
 
-impl<
-        T,
-        BUF: AsMut<[u8]> + AsRef<[u8]>,
-        const DEPTH: usize,
-        const ELEM_SIZE: usize,
-        const PAGE_SIZE: usize,
-    > Ringbuf<T, BUF, DEPTH, ELEM_SIZE, PAGE_SIZE>
+impl<T, BUF: AsMut<[u8]> + AsRef<[u8]>, const DEPTH: usize, const ELEM_SIZE: usize, const PAGE_SIZE: usize>
+    Ringbuf<T, BUF, DEPTH, ELEM_SIZE, PAGE_SIZE>
 {
     const _IS_DEPTH_POWER_OF_2: () = assert!(_is_power_of_2(DEPTH), "invalid ringbuf depth");
     const _IS_ELEM_SIZE_POWER_OF_2: () = assert!(_is_power_of_2(ELEM_SIZE), "invalid element size");
-    const _IS_RINGBUF_SIZE_VALID: () =
-        assert!(DEPTH * ELEM_SIZE >= PAGE_SIZE, "invalid ringbuf size");
+    const _IS_RINGBUF_SIZE_VALID: () = assert!(DEPTH * ELEM_SIZE >= PAGE_SIZE, "invalid ringbuf size");
 
     /// Return (ringbuf, ringbuf virtual memory address)
     #[allow(clippy::arithmetic_side_effects)] // false positive in assert
@@ -103,13 +91,8 @@ impl<
     }
 }
 
-impl<
-        T: CsrWriterAdaptor,
-        BUF: AsMut<[u8]>,
-        const DEPTH: usize,
-        const ELEM_SIZE: usize,
-        const PAGE_SIZE: usize,
-    > Ringbuf<T, BUF, DEPTH, ELEM_SIZE, PAGE_SIZE>
+impl<T: CsrWriterAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_SIZE: usize, const PAGE_SIZE: usize>
+    Ringbuf<T, BUF, DEPTH, ELEM_SIZE, PAGE_SIZE>
 {
     /// Return a writer to write descriptors to the ring buffer.
     pub(super) fn write(&mut self) -> RingbufWriter<'_, '_, T, BUF, DEPTH, ELEM_SIZE> {
@@ -123,13 +106,8 @@ impl<
     }
 }
 
-impl<
-        T: CsrReaderAdaptor,
-        BUF: AsMut<[u8]>,
-        const DEPTH: usize,
-        const ELEM_SIZE: usize,
-        const PAGE_SIZE: usize,
-    > Ringbuf<T, BUF, DEPTH, ELEM_SIZE, PAGE_SIZE>
+impl<T: CsrReaderAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_SIZE: usize, const PAGE_SIZE: usize>
+    Ringbuf<T, BUF, DEPTH, ELEM_SIZE, PAGE_SIZE>
 {
     /// Get a reader to read descriptors from the ring buffer.
     pub(super) fn read(&mut self) -> RingbufReader<'_, '_, T, BUF, DEPTH, ELEM_SIZE> {
@@ -143,17 +121,10 @@ impl<
     }
 }
 
-impl<
-        T: PollDescriptor,
-        BUF: AsMut<[u8]>,
-        const DEPTH: usize,
-        const ELEM_SIZE: usize,
-        const PAGE_SIZE: usize,
-    > Ringbuf<T, BUF, DEPTH, ELEM_SIZE, PAGE_SIZE>
+impl<T: PollDescriptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_SIZE: usize, const PAGE_SIZE: usize>
+    Ringbuf<T, BUF, DEPTH, ELEM_SIZE, PAGE_SIZE>
 {
-    pub(super) fn read_via_poll_descriptor(
-        &mut self,
-    ) -> RingbufPollDescriptorReader<'_, '_, T, BUF, DEPTH, ELEM_SIZE> {
+    pub(super) fn read_via_poll_descriptor(&mut self) -> RingbufPollDescriptorReader<'_, '_, T, BUF, DEPTH, ELEM_SIZE> {
         RingbufPollDescriptorReader {
             buf: self.buf.lock(),
             adaptor: &self.adaptor,
@@ -183,10 +154,7 @@ impl<'a, T: CsrWriterAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_S
     /// # Errors
     /// `DeviceError::Timeout`: if the timeout is reached.
     /// Other: if the underlying adaptor returns an error.
-    pub(crate) fn next_timeout(
-        &mut self,
-        timeout: Option<Duration>,
-    ) -> Result<&'a mut [u8], DeviceError> {
+    pub(crate) fn next_timeout(&mut self, timeout: Option<Duration>) -> Result<&'a mut [u8], DeviceError> {
         let timeout_in_millis = timeout.map_or(0, |d| d.as_millis());
         let start = std::time::Instant::now();
         let idx = self.next_head_idx();
@@ -206,8 +174,7 @@ impl<'a, T: CsrWriterAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_S
             }
         }
 
-        let buf =
-            get_descriptor_mut_helper(self.buf.as_mut(), idx, ELEM_SIZE, Self::MEMORY_IDX_MASK);
+        let buf = get_descriptor_mut_helper(self.buf.as_mut(), idx, ELEM_SIZE, Self::MEMORY_IDX_MASK);
         self.written_cnt = self.written_cnt.wrapping_add(1);
         Ok(buf)
     }
@@ -289,10 +256,7 @@ impl<'a, T: CsrReaderAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_S
     /// # Errors
     /// `DeviceError::Timeout`: if the timeout is reached.
     /// Other: if the underlying adaptor returns an error.
-    pub(crate) fn next_timeout(
-        &mut self,
-        timeout: Option<Duration>,
-    ) -> Result<&'a mut [u8], DeviceError> {
+    pub(crate) fn next_timeout(&mut self, timeout: Option<Duration>) -> Result<&'a mut [u8], DeviceError> {
         let timeout_in_millis = timeout.map_or(0, |d| d.as_millis());
         let start = std::time::Instant::now();
         if self.is_full() {
@@ -312,12 +276,7 @@ impl<'a, T: CsrReaderAdaptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_S
             }
         }
         self.read_cnt = self.read_cnt.wrapping_add(1);
-        let buf = get_descriptor_mut_helper(
-            self.buf.as_mut(),
-            next_tail_idx,
-            ELEM_SIZE,
-            Self::MEMORY_IDX_MASK,
-        );
+        let buf = get_descriptor_mut_helper(self.buf.as_mut(), next_tail_idx, ELEM_SIZE, Self::MEMORY_IDX_MASK);
         Ok(buf)
     }
 
@@ -394,12 +353,7 @@ impl<'a, T: PollDescriptor, BUF: AsMut<[u8]>, const DEPTH: usize, const ELEM_SIZ
         let current = self.current_idx();
 
         loop {
-            let buf = get_descriptor_mut_helper(
-                self.buf.as_mut(),
-                current,
-                ELEM_SIZE,
-                Self::MEMORY_IDX_MASK,
-            );
+            let buf = get_descriptor_mut_helper(self.buf.as_mut(), current, ELEM_SIZE, Self::MEMORY_IDX_MASK);
             if self.adaptor.poll(buf)? {
                 self.advance_idx();
                 return Ok(buf);
@@ -425,12 +379,7 @@ const fn _is_power_of_2(v: usize) -> bool {
     (v & (v.wrapping_sub(1))) == 0
 }
 
-fn is_full_helper(
-    head: usize,
-    tail: usize,
-    memory_idx_mask: usize,
-    hardware_idx_guard_mask: usize,
-) -> bool {
+fn is_full_helper(head: usize, tail: usize, memory_idx_mask: usize, hardware_idx_guard_mask: usize) -> bool {
     // Since the highest bit stands for two times of the DEPTH in bineary, if the head and tail have
     // different highest bit and the rest bits are the same, it means the ringbuf is full.
     // In hardware we use like `(head.idx == tail.idx) && (head.guard != tail.guard)`
@@ -464,24 +413,14 @@ const fn gen_memory_idx_mask(depth: usize) -> usize {
 }
 
 #[allow(unsafe_code)]
-fn get_descriptor_mut_helper(
-    buf: &mut [u8],
-    idx: usize,
-    element_size: usize,
-    idx_mask: usize,
-) -> &'static mut [u8] {
+fn get_descriptor_mut_helper(buf: &mut [u8], idx: usize, element_size: usize, idx_mask: usize) -> &'static mut [u8] {
     let offset = (idx & idx_mask).wrapping_mul(element_size);
     let ptr = unsafe { buf.as_mut_ptr().add(offset) };
     unsafe { std::slice::from_raw_parts_mut(ptr, element_size) }
 }
 
 #[allow(unsafe_code)]
-fn get_descriptor_helper(
-    buf: &[u8],
-    idx: usize,
-    element_size: usize,
-    idx_mask: usize,
-) -> &'static [u8] {
+fn get_descriptor_helper(buf: &[u8], idx: usize, element_size: usize, idx_mask: usize) -> &'static [u8] {
     let offset = (idx & idx_mask).wrapping_mul(element_size);
     let ptr = unsafe { buf.as_ptr().add(offset) };
     unsafe { std::slice::from_raw_parts(ptr, element_size) }
@@ -581,8 +520,7 @@ mod test {
             thread_proxy.check(MAX_VALUE);
         });
         let buffer = vec![0u8; PAGE_SIZE];
-        let mut ringbuf =
-            Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
+        let mut ringbuf = Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
         let mut writer = ringbuf.write();
 
         for i in 0..128 {
@@ -593,12 +531,8 @@ mod test {
         assert!(adaptor.head() == 128);
         assert!(adaptor.tail() == 0);
         let mut writer = ringbuf.write();
-        assert!(writer
-            .next_timeout(Some(Duration::from_millis(10)))
-            .is_err());
-        assert!(writer
-            .next_timeout(Some(Duration::from_millis(10)))
-            .is_err());
+        assert!(writer.next_timeout(Some(Duration::from_millis(10))).is_err());
+        assert!(writer.next_timeout(Some(Duration::from_millis(10))).is_err());
         drop(writer);
         sleep(Duration::from_millis(100));
         assert!(adaptor.head() == 128);
@@ -623,8 +557,7 @@ mod test {
             tail: AtomicU32::new(0),
         }));
         let buffer = vec![0u8; PAGE_SIZE];
-        let mut ringbuf =
-            Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
+        let mut ringbuf = Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
         let thread_proxy = adaptor.clone();
         let _ = spawn(move || {
             let mut rng = rand::thread_rng();
@@ -665,8 +598,7 @@ mod test {
             thread_proxy.check(MAX_VALUE);
         });
         let buffer = vec![0u8; PAGE_SIZE];
-        let mut ringbuf =
-            Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
+        let mut ringbuf = Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
         let mut reader = ringbuf.read();
         sleep(Duration::from_millis(100));
         for _i in 0..128 {
@@ -710,8 +642,7 @@ mod test {
                 buffer[i * 32 + j] = i as u8;
             }
         }
-        let mut ringbuf =
-            Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
+        let mut ringbuf = Ringbuf::<Adaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor.clone(), buffer);
         let mut reader = ringbuf.read();
         for i in 0..4096 {
             let desc = reader.next().unwrap();
@@ -771,8 +702,7 @@ mod test {
         let mut dma = MockDma::new(dma_buf);
 
         let adaptor = PollingAdaptor;
-        let mut ringbuf =
-            Ringbuf::<PollingAdaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor, buffer);
+        let mut ringbuf = Ringbuf::<PollingAdaptor, Vec<u8>, MAX_DEPTH, 32, 4096>::new(adaptor, buffer);
         let mut reader = ringbuf.read_via_poll_descriptor();
         dma.move_head(64, MAX_DEPTH.try_into().unwrap(), 32);
         for i in 0..64 {

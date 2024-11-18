@@ -4,9 +4,8 @@ use eui48::MacAddress;
 
 use super::types::{Key, SGList, SGListElementWithKey};
 use crate::device::{
-    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement,
-    ToCardCtrlRbDescUpdateMrTable, ToCardWorkRbDesc, ToCardWorkRbDescCommon,
-    ToCardWorkRbDescOpcode, ToCardWorkRbDescRead, ToCardWorkRbDescWrite,
+    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescQpManagement, ToCardCtrlRbDescUpdateMrTable,
+    ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescOpcode, ToCardWorkRbDescRead, ToCardWorkRbDescWrite,
     ToCardWorkRbDescWriteWithImm,
 };
 use crate::types::{MemAccessTypeFlag, Pmtu, QpType, WorkReqSendFlag};
@@ -22,9 +21,7 @@ pub(crate) struct SGListBuilder {
 
 impl SGListBuilder {
     pub(crate) fn new() -> Self {
-        SGListBuilder {
-            sg_list: Vec::new(),
-        }
+        SGListBuilder { sg_list: Vec::new() }
     }
 
     pub(crate) fn with_sge(&mut self, addr: u64, len: u32, key: u32) -> &mut Self {
@@ -175,9 +172,7 @@ impl ToCardWorkRbDescBuilder {
                 sge2,
                 sge3,
             }),
-            ToCardWorkRbDescOpcode::Read => {
-                ToCardWorkRbDesc::Read(ToCardWorkRbDescRead { common, sge: sge0 })
-            }
+            ToCardWorkRbDescOpcode::Read => ToCardWorkRbDesc::Read(ToCardWorkRbDescRead { common, sge: sge0 }),
             ToCardWorkRbDescOpcode::WriteWithImm => {
                 let imm = if matches!(common.qp_type, QpType::RawPacket) {
                     0
@@ -325,18 +320,16 @@ impl ToCardCtrlRbDescBuilder {
                     pgt_offset: self.pgt_offset.unwrap(),
                 })
             }
-            ToCardCtrlRbDescBuilderType::QpManagement => {
-                ToCardCtrlRbDesc::QpManagement(ToCardCtrlRbDescQpManagement {
-                    common,
-                    is_valid: self.is_valid.unwrap(),
-                    qpn: crate::Qpn::new(self.qpn.unwrap()),
-                    pd_hdl: self.pd_hdl.unwrap(),
-                    qp_type: self.qp_type.unwrap(),
-                    rq_acc_flags: self.rq_acc_flags.unwrap(),
-                    pmtu: self.pmtu.unwrap(),
-                    peer_qpn: crate::Qpn::new(1234),
-                })
-            }
+            ToCardCtrlRbDescBuilderType::QpManagement => ToCardCtrlRbDesc::QpManagement(ToCardCtrlRbDescQpManagement {
+                common,
+                is_valid: self.is_valid.unwrap(),
+                qpn: crate::Qpn::new(self.qpn.unwrap()),
+                pd_hdl: self.pd_hdl.unwrap(),
+                qp_type: self.qp_type.unwrap(),
+                rq_acc_flags: self.rq_acc_flags.unwrap(),
+                pmtu: self.pmtu.unwrap(),
+                peer_qpn: crate::Qpn::new(1234),
+            }),
         }
     }
 }

@@ -13,8 +13,7 @@ use crate::device::software::logic::BlueRDMALogic;
 use crate::device::software::net_agent::udp_agent::{UDPReceiveAgent, UDPSendAgent};
 use crate::device::software::tests::ToCardWorkRbDescBuilder;
 use crate::device::{
-    DeviceAdaptor, SoftwareDevice, ToCardWorkRbDescOpcode, ToHostWorkRbDesc,
-    ToHostWorkRbDescWriteType,
+    DeviceAdaptor, SoftwareDevice, ToCardWorkRbDescOpcode, ToHostWorkRbDesc, ToHostWorkRbDescWriteType,
 };
 use crate::types::{MemAccessTypeFlag, Pmtu, QpType, WorkReqSendFlag};
 
@@ -24,17 +23,8 @@ fn test_loopback_software_device_write_and_read() {
     let send_agent = UDPSendAgent::new(Ipv4Addr::LOCALHOST, 4791).unwrap();
     let (ctrl_sender, _ctrl_receiver) = unbounded();
     let (work_sender, work_receiver) = unbounded();
-    let device = Arc::new(BlueRDMALogic::new(
-        Arc::new(send_agent),
-        ctrl_sender,
-        work_sender,
-    ));
-    let _recv_agent = UDPReceiveAgent::new(
-        Arc::<BlueRDMALogic>::clone(&device),
-        Ipv4Addr::LOCALHOST,
-        4791,
-    )
-    .unwrap();
+    let device = Arc::new(BlueRDMALogic::new(Arc::new(send_agent), ctrl_sender, work_sender));
+    let _recv_agent = UDPReceiveAgent::new(Arc::<BlueRDMALogic>::clone(&device), Ipv4Addr::LOCALHOST, 4791).unwrap();
     let mr1_rkey = 1234_u32;
     let mr2_rkey = 4321_u32;
     let dqpn = 5;
@@ -54,9 +44,7 @@ fn test_loopback_software_device_write_and_read() {
             .with_len(2048)
             .with_key(mr1_rkey)
             .with_pd_hdl(0)
-            .with_acc_flags(
-                MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead,
-            )
+            .with_acc_flags(MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead)
             .with_pgt_offset(0)
             .build();
         device.update(mr_desc).unwrap();
@@ -66,9 +54,7 @@ fn test_loopback_software_device_write_and_read() {
             .with_len(2048)
             .with_key(mr2_rkey)
             .with_pd_hdl(0)
-            .with_acc_flags(
-                MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead,
-            )
+            .with_acc_flags(MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead)
             .with_pgt_offset(0)
             .build();
         device.update(mr_desc).unwrap();
@@ -204,8 +190,8 @@ fn test_loopback_software_device_write_and_read() {
         }
         // assert!(work_receiver.receiver_count() == 0);
         assert_eq!(
-            dest_buffer[dest_offset + testing_dest_addr_offset
-                ..dest_offset + testing_dest_addr_offset + send_length as usize],
+            dest_buffer
+                [dest_offset + testing_dest_addr_offset..dest_offset + testing_dest_addr_offset + send_length as usize],
             src_buf[..send_length as usize]
         );
 
@@ -219,13 +205,7 @@ fn test_loopback_software_device_write_and_read() {
 #[test]
 #[serial]
 fn test_loopback_software_device_with_scheudler() {
-    let device = SoftwareDevice::new(
-        Ipv4Addr::LOCALHOST,
-        4791,
-        RoundRobinStrategy::new(),
-        1024 * 32,
-    )
-    .unwrap();
+    let device = SoftwareDevice::new(Ipv4Addr::LOCALHOST, 4791, RoundRobinStrategy::new(), 1024 * 32).unwrap();
     let mr1_rkey = 1234_u32;
     let mr2_rkey = 4321_u32;
     let dqpn = 5;
@@ -246,9 +226,7 @@ fn test_loopback_software_device_with_scheudler() {
             .with_len(2048)
             .with_key(mr1_rkey)
             .with_pd_hdl(0)
-            .with_acc_flags(
-                MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead,
-            )
+            .with_acc_flags(MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead)
             .with_pgt_offset(0)
             .build();
 
@@ -259,9 +237,7 @@ fn test_loopback_software_device_with_scheudler() {
             .with_len(2048)
             .with_key(mr2_rkey)
             .with_pd_hdl(0)
-            .with_acc_flags(
-                MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead,
-            )
+            .with_acc_flags(MemAccessTypeFlag::IbvAccessRemoteWrite | MemAccessTypeFlag::IbvAccessRemoteRead)
             .with_pgt_offset(0)
             .build();
         ctrl_rb.push(mr_desc).unwrap();
@@ -398,8 +374,8 @@ fn test_loopback_software_device_with_scheudler() {
         }
         // assert!(device.get_to_host_descriptor_queue().is_empty());
         assert_eq!(
-            dest_buffer[dest_offset + testing_dest_addr_offset
-                ..dest_offset + testing_dest_addr_offset + send_length as usize],
+            dest_buffer
+                [dest_offset + testing_dest_addr_offset..dest_offset + testing_dest_addr_offset + send_length as usize],
             src_buf[..send_length as usize]
         );
 

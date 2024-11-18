@@ -28,10 +28,7 @@ impl ControlPoller {
         let thread = std::thread::spawn(move || {
             if let Some(core_id) = core_id {
                 if !core_affinity::set_for_current(core_id) {
-                    log::error!(
-                        "failed to set core_affinity {:?} in cmd queue poller",
-                        core_id
-                    );
+                    log::error!("failed to set core_affinity {:?} in cmd queue poller", core_id);
                 } else {
                     log::info!("set core_affinity in cmd queue poller successfully");
                 }
@@ -55,10 +52,7 @@ impl ControlPollerContext {
                     return;
                 }
             };
-            if matches!(
-                desc.common.opcode,
-                CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint
-            ) {
+            if matches!(desc.common.opcode, CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint) {
             } else {
                 ctx.handle_ctrl_desc_resp(&desc);
             }

@@ -15,19 +15,9 @@ pub(crate) trait NetReceiveLogic<'a>: Send + Sync + Debug {
 }
 
 pub(crate) trait NetSendAgent: Debug {
-    fn send(
-        &self,
-        dest_addr: Ipv4Addr,
-        dest_port: u16,
-        message: &RdmaMessage,
-    ) -> Result<(), NetAgentError>;
+    fn send(&self, dest_addr: Ipv4Addr, dest_port: u16, message: &RdmaMessage) -> Result<(), NetAgentError>;
 
-    fn send_raw(
-        &self,
-        dest_addr: Ipv4Addr,
-        dest_port: u16,
-        payload: &PayloadInfo,
-    ) -> Result<(), NetAgentError>;
+    fn send_raw(&self, dest_addr: Ipv4Addr, dest_port: u16, payload: &PayloadInfo) -> Result<(), NetAgentError>;
 }
 
 #[derive(Error, Debug)]

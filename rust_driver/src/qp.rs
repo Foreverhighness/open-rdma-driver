@@ -117,15 +117,9 @@ impl Device {
         let mut qp_pool = self.0.qp_table.write();
         let mut pd_pool = self.0.pd.lock();
         let pd = &qp.pd;
-        let pd_ctx = pd_pool
-            .get_mut(pd)
-            .ok_or(Error::Invalid(format!("PD :{pd:?}")))?;
+        let pd_ctx = pd_pool.get_mut(pd).ok_or(Error::Invalid(format!("PD :{pd:?}")))?;
 
-        let qpc = QpContext::new(
-            qp,
-            self.0.local_network.ipaddr,
-            self.0.local_network.macaddr,
-        );
+        let qpc = QpContext::new(qp, self.0.local_network.ipaddr, self.0.local_network.macaddr);
         let op_id = self.get_ctrl_op_id();
 
         let desc = ToCardCtrlRbDesc::QpManagement(ToCardCtrlRbDescQpManagement {
@@ -237,8 +231,7 @@ impl QpManager {
     /// create a QP manager
     #[must_use]
     pub fn new() -> Self {
-        let qp_availability: Vec<AtomicBool> =
-            (0..QP_MAX_CNT).map(|_| AtomicBool::new(true)).collect();
+        let qp_availability: Vec<AtomicBool> = (0..QP_MAX_CNT).map(|_| AtomicBool::new(true)).collect();
 
         // by IB spec, QP0 and QP1 are reserved, so qpn should start with 2
         #[allow(clippy::indexing_slicing)]
@@ -264,10 +257,7 @@ impl QpManager {
         self.qp_availability
             .iter()
             .enumerate()
-            .find_map(|(idx, n)| {
-                n.swap(false, Ordering::AcqRel)
-                    .then_some(Qpn::new(idx as u32))
-            })
+            .find_map(|(idx, n)| n.swap(false, Ordering::AcqRel).then_some(Qpn::new(idx as u32)))
             .ok_or_else(|| Error::ResourceNoAvailable("QP".to_owned()))
     }
 

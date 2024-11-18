@@ -54,12 +54,7 @@ impl RetryMap {
         }
     }
 
-    pub(crate) fn add(
-        &self,
-        key: (Qpn, Msn),
-        descriptor: Box<ToCardWorkRbDesc>,
-        is_initiative: bool,
-    ) -> bool {
+    pub(crate) fn add(&self, key: (Qpn, Msn), descriptor: Box<ToCardWorkRbDesc>, is_initiative: bool) -> bool {
         let mut guard = self.map.write();
         let next_timeout = get_current_time().wrapping_add(self.retry_timeout);
         if let Entry::Vacant(entry) = guard.entry(key) {
@@ -98,11 +93,7 @@ impl RetryMap {
         if let Some((from, to)) = range {
             if let ToCardWorkRbDesc::Write(ref mut write_desc) = *desc {
                 let pmtu = write_desc.common.pmtu;
-                let max_pkt = calculate_packet_cnt(
-                    pmtu,
-                    write_desc.common.raddr,
-                    write_desc.common.total_len,
-                );
+                let max_pkt = calculate_packet_cnt(pmtu, write_desc.common.raddr, write_desc.common.total_len);
                 if from > to || from >= max_pkt || to >= max_pkt {
                     return Err(Error::Invalid("Invalid psn range".to_owned()));
                 }
@@ -153,12 +144,7 @@ pub struct RetryConfig {
 
 impl RetryConfig {
     /// Create a new retry config
-    pub fn new(
-        is_enable: bool,
-        max_retry: u32,
-        retry_timeout: Duration,
-        checking_interval: Duration,
-    ) -> Self {
+    pub fn new(is_enable: bool, max_retry: u32, retry_timeout: Duration, checking_interval: Duration) -> Self {
         Self {
             is_enable,
             max_retry,
@@ -178,12 +164,7 @@ pub(crate) struct RetryRecord {
 
 impl RetryRecord {
     ///
-    pub(crate) fn new(
-        descriptor: Box<ToCardWorkRbDesc>,
-        qpn: Qpn,
-        msn: Msn,
-        initiative: bool,
-    ) -> Self {
+    pub(crate) fn new(descriptor: Box<ToCardWorkRbDesc>, qpn: Qpn, msn: Msn, initiative: bool) -> Self {
         Self {
             descriptor,
             qpn,
@@ -203,10 +184,7 @@ pub(crate) struct RetryMonitorContext {
 /// get current time in ms
 #[allow(clippy::unwrap_used)]
 fn get_current_time() -> u128 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis()
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
 }
 
 #[derive(Debug)]
@@ -242,11 +220,7 @@ impl RetryMonitorContext {
                 if guard.retry_counter > 0 {
                     guard.retry_counter -= 1;
                     guard.next_timeout = now + self.config.retry_timeout.as_millis();
-                    if self
-                        .device
-                        .send_work_desc(guard.descriptor.clone())
-                        .is_err()
-                    {
+                    if self.device.send_work_desc(guard.descriptor.clone()).is_err() {
                         log::error!("Retry send work descriptor failed")
                     } else {
                         log::warn!("Retry desc:{:?}", guard.descriptor);
@@ -319,25 +293,14 @@ mod test {
         let context = RetryMonitorContext {
             map: retry_map.clone(),
             device: Arc::<MockDevice>::clone(&device),
-            user_op_ctx_map: Arc::<
-                RwLock<RawRwLock, HashMap<(ThreeBytesStruct, Msn), op_ctx::OpCtx<()>>>,
-            >::clone(&map),
-            config: RetryConfig::new(
-                true,
-                3,
-                Duration::from_millis(1000),
-                Duration::from_millis(10),
-            ),
+            user_op_ctx_map: Arc::<RwLock<RawRwLock, HashMap<(ThreeBytesStruct, Msn), op_ctx::OpCtx<()>>>>::clone(&map),
+            config: RetryConfig::new(true, 3, Duration::from_millis(1000), Duration::from_millis(10)),
         };
-        map.write().insert(
-            (Qpn::default(), Msn::default()),
-            op_ctx::OpCtx::new_running(),
-        );
+        map.write()
+            .insert((Qpn::default(), Msn::default()), op_ctx::OpCtx::new_running());
         let _monitor = super::RetryMonitor::new(context);
         let desc = Box::new(ToCardWorkRbDesc::Write(ToCardWorkRbDescWrite {
-            common: ToCardWorkRbDescCommon {
-                ..Default::default()
-            },
+            common: ToCardWorkRbDescCommon { ..Default::default() },
             is_last: true,
             is_first: true,
             sge0: DescSge {
@@ -365,10 +328,7 @@ mod test {
         std::thread::sleep(Duration::from_millis(1020));
         // should remove the record
         matches!(
-            map.read()
-                .get(&(Qpn::default(), Msn::default()))
-                .unwrap()
-                .status(),
+            map.read().get(&(Qpn::default(), Msn::default())).unwrap().status(),
             CtxStatus::Failed(_)
         );
         device.0.lock().clear();

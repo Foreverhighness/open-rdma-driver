@@ -4,9 +4,8 @@ use std::{collections::HashMap, sync::Arc, thread::sleep};
 use parking_lot::{Mutex, RwLock};
 
 use crate::device::{
-    DeviceError, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescAck, ToHostWorkRbDescAethCode,
-    ToHostWorkRbDescCommon, ToHostWorkRbDescRaw, ToHostWorkRbDescRead,
-    ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
+    DeviceError, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescAck, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon,
+    ToHostWorkRbDescRaw, ToHostWorkRbDescRead, ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
 };
 use crate::qp::QpContext;
 use crate::types::{Key, Psn, Qpn};

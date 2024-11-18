@@ -56,10 +56,7 @@ impl RpcClient {
         };
 
         let send_buf = serde_json::to_vec(&msg).map_err(|e| DeviceError::Device(e.to_string()))?;
-        let _: usize = self
-            .0
-            .send(&send_buf)
-            .map_err(|e| DeviceError::Device(e.to_string()))?;
+        let _: usize = self.0.send(&send_buf).map_err(|e| DeviceError::Device(e.to_string()))?;
         Ok(())
     }
 }

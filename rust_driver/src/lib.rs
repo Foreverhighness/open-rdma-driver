@@ -150,9 +150,8 @@ use core_affinity::CoreId;
 use ctrl_poller::{ControlPoller, ControlPollerContext};
 use derive_builder::Builder;
 use device::{
-    ToCardCtrlRbDescCommon, ToCardCtrlRbDescSetNetworkParam,
-    ToCardCtrlRbDescSetRawPacketReceiveMeta, ToCardWorkRbDesc, ToCardWorkRbDescBuilder,
-    ToCardWorkRbDescOpcode,
+    ToCardCtrlRbDescCommon, ToCardCtrlRbDescSetNetworkParam, ToCardCtrlRbDescSetRawPacketReceiveMeta, ToCardWorkRbDesc,
+    ToCardWorkRbDescBuilder, ToCardWorkRbDescOpcode,
 };
 use eui48::MacAddress;
 use flume::unbounded;
@@ -167,8 +166,7 @@ use utils::{calculate_packet_cnt, Buffer};
 use work_poller::{WorkDescPoller, WorkDescPollerContext};
 
 use crate::device::{
-    DeviceAdaptor, EmulatedDevice, HardwareDevice, SoftwareDevice, ToCardCtrlRbDesc,
-    ToCardWorkRbDescCommon,
+    DeviceAdaptor, EmulatedDevice, HardwareDevice, SoftwareDevice, ToCardCtrlRbDesc, ToCardWorkRbDescCommon,
 };
 use crate::mr::{MrCtx, MrPgt, ACKNOWLEDGE_BUFFER_SIZE, NIC_BUFFER_SIZE};
 use crate::pd::PdCtx;
@@ -330,13 +328,8 @@ impl Device {
         let scheduler_core = core_ids.as_mut().and_then(|v| v.pop());
         let dev = match config.device_type {
             DeviceType::Hardware { device_path } => {
-                let adaptor = HardwareDevice::new(
-                    device_path,
-                    config.strategy,
-                    scheduler_core,
-                    config.scheduler_size,
-                )
-                .map_err(|e| Error::Device(Box::new(e)))?;
+                let adaptor = HardwareDevice::new(device_path, config.strategy, scheduler_core, config.scheduler_size)
+                    .map_err(|e| Error::Device(Box::new(e)))?;
                 let use_hugepage = adaptor.use_hugepage();
                 let pg_table_buf = Buffer::new(MR_PGT_LENGTH * MR_PGT_ENTRY_SIZE, use_hugepage)
                     .map_err(|e| Error::ResourceNoAvailable(format!("hugepage {e}")))?;
@@ -356,10 +349,7 @@ impl Device {
                     nic_device: Mutex::new(None),
                     buffer_keeper: Vec::new().into(),
                     local_network: config.network_config,
-                    retry_map: RetryMap::new(
-                        config.retry_config.max_retry,
-                        config.retry_config.retry_timeout,
-                    ),
+                    retry_map: RetryMap::new(config.retry_config.max_retry, config.retry_config.retry_timeout),
                 }))
             }
             DeviceType::Emulated {
@@ -392,10 +382,7 @@ impl Device {
                     nic_device: Mutex::new(None),
                     buffer_keeper: Vec::new().into(),
                     local_network: config.network_config,
-                    retry_map: RetryMap::new(
-                        config.retry_config.max_retry,
-                        config.retry_config.retry_timeout,
-                    ),
+                    retry_map: RetryMap::new(config.retry_config.max_retry, config.retry_config.retry_timeout),
                 }))
             }
             DeviceType::Software => {
@@ -425,10 +412,7 @@ impl Device {
                     nic_device: Mutex::new(None),
                     buffer_keeper: Vec::new().into(),
                     local_network: config.network_config,
-                    retry_map: RetryMap::new(
-                        config.retry_config.max_retry,
-                        config.retry_config.retry_timeout,
-                    ),
+                    retry_map: RetryMap::new(config.retry_config.max_retry, config.retry_config.retry_timeout),
                 }))
             }
         };
@@ -449,9 +433,7 @@ impl Device {
         let (common, key) = {
             let total_len = sge0.len;
             let qp_guard = self.0.qp_table.read();
-            let qp = qp_guard
-                .get(&dqpn)
-                .ok_or(Error::Invalid(format!("Qpn :{dqpn:?}")))?;
+            let qp = qp_guard.get(&dqpn).ok_or(Error::Invalid(format!("Qpn :{dqpn:?}")))?;
             let msn = qp.next_msn();
             let mut common = ToCardWorkRbDescCommon {
                 total_len,
@@ -533,14 +515,7 @@ impl Device {
     /// * failed to create a read descriptor
     /// * failed to send a read descriptor
     /// * failed to create a operation context
-    pub fn read(
-        &self,
-        dqpn: Qpn,
-        raddr: u64,
-        rkey: Key,
-        flags: WorkReqSendFlag,
-        sge: Sge,
-    ) -> Result<OpCtx<()>, Error> {
+    pub fn read(&self, dqpn: Qpn, raddr: u64, rkey: Key, flags: WorkReqSendFlag, sge: Sge) -> Result<OpCtx<()>, Error> {
         self.write_or_read(dqpn, raddr, rkey, flags, sge, true)
     }
 
@@ -548,13 +523,10 @@ impl Device {
     pub fn query_mac_address(&self, ip: Ipv4Addr) -> Result<MacAddress, Error> {
         let guard = self.0.nic_device.lock();
         if let Some(nic) = guard.as_ref() {
-            nic.query_mac_addr(ip).ok_or(Error::ResourceNoAvailable(
-                "query mac address failed".to_owned(),
-            ))
+            nic.query_mac_addr(ip)
+                .ok_or(Error::ResourceNoAvailable("query mac address failed".to_owned()))
         } else {
-            Err(Error::ResourceNoAvailable(
-                "nic device not ready".to_owned(),
-            ))
+            Err(Error::ResourceNoAvailable("nic device not ready".to_owned()))
         }
     }
 
@@ -586,11 +558,7 @@ impl Device {
     }
 
     #[allow(clippy::expect_used, clippy::unwrap_in_result)]
-    fn init(
-        &self,
-        retry_config: RetryConfig,
-        mut core_ids: Option<Vec<CoreId>>,
-    ) -> Result<(), Error> {
+    fn init(&self, retry_config: RetryConfig, mut core_ids: Option<Vec<CoreId>>) -> Result<(), Error> {
         // enable ctrl desc poller module
         let ctrl_thread_ctx = ControlPollerContext {
             to_host_ctrl_rb: self.0.adaptor.to_host_ctrl_rb(),
@@ -630,12 +598,7 @@ impl Device {
             .map_err(|e| Error::ResourceNoAvailable(format!("hugepage {e}")))?;
         let tx_buf = self.init_buf(&mut tx_slot_buf, NIC_BUFFER_SIZE)?;
         let self_device = self.clone();
-        let nic_interface = NicInterface::new(
-            self_device,
-            tx_buf,
-            nic_notify_recv_queue,
-            self.0.local_network.macaddr,
-        );
+        let nic_interface = NicInterface::new(self_device, tx_buf, nic_notify_recv_queue, self.0.local_network.macaddr);
         let mut guard = self.0.nic_device.lock();
         *guard = Some(nic_interface);
 
@@ -664,10 +627,7 @@ impl Device {
             device: Arc::new(self.clone()),
         };
         let retry_monitor = RetryMonitor::new(retry_context);
-        self.0
-            .retry_monitor
-            .set(retry_monitor)
-            .expect("double init");
+        self.0.retry_monitor.set(retry_monitor).expect("double init");
 
         // set card network
         self.set_network(&self.0.local_network)?;
@@ -684,9 +644,7 @@ impl Device {
             self.prepare_nic_recv_buf(use_hugepage)?;
             Ok(())
         } else {
-            Err(Error::ResourceNoAvailable(
-                "nic device not ready".to_owned(),
-            ))
+            Err(Error::ResourceNoAvailable("nic device not ready".to_owned()))
         }
     }
 
@@ -696,21 +654,17 @@ impl Device {
         let op_id = self.get_ctrl_op_id();
         let mut buf = Buffer::new(NIC_BUFFER_SIZE, use_huge_page)
             .map_err(|e| Error::ResourceNoAvailable(format!("hugepage {e}")))?;
-        let recv_buf: PacketBuf<NIC_PACKET_BUFFER_SLOT_SIZE> =
-            self.init_buf(&mut buf, NIC_BUFFER_SIZE)?;
+        let recv_buf: PacketBuf<NIC_PACKET_BUFFER_SLOT_SIZE> = self.init_buf(&mut buf, NIC_BUFFER_SIZE)?;
         self.0.buffer_keeper.lock().push(buf);
 
         let (start_va, lkey) = recv_buf.get_register_params();
-        let set_raw_desc =
-            ToCardCtrlRbDesc::SetRawPacketReceiveMeta(ToCardCtrlRbDescSetRawPacketReceiveMeta {
-                common: ToCardCtrlRbDescCommon { op_id },
-                base_write_addr: start_va as u64,
-                key: lkey,
-            });
+        let set_raw_desc = ToCardCtrlRbDesc::SetRawPacketReceiveMeta(ToCardCtrlRbDescSetRawPacketReceiveMeta {
+            common: ToCardCtrlRbDescCommon { op_id },
+            base_write_addr: start_va as u64,
+            key: lkey,
+        });
         let set_raw_ctx = self.do_ctrl_op(op_id, set_raw_desc)?;
-        let is_set_raw_success = set_raw_ctx
-            .wait_result()?
-            .ok_or_else(|| Error::SetCtxResultFailed)?;
+        let is_set_raw_success = set_raw_ctx.wait_result()?.ok_or_else(|| Error::SetCtxResultFailed)?;
         if !is_set_raw_success {
             return Err(Error::DeviceReturnFailed("Network param"));
         };
@@ -727,9 +681,7 @@ impl Device {
             macaddr: network.macaddr,
         });
         let ctx = self.send_ctrl_desc(desc)?;
-        let is_success = ctx
-            .wait_result()?
-            .ok_or_else(|| Error::SetCtxResultFailed)?;
+        let is_success = ctx.wait_result()?.ok_or_else(|| Error::SetCtxResultFailed)?;
         if !is_success {
             return Err(Error::DeviceReturnFailed("Network param"));
         };

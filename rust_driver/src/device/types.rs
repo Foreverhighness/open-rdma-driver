@@ -6,18 +6,16 @@ use eui48::MacAddress;
 use num_enum::TryFromPrimitive;
 
 use super::layout::{
-    CmdQueueDescCommonHead, MetaReportQueueDescBthReth, MetaReportQueueDescFragAETH,
-    MetaReportQueueDescFragBTH, MetaReportQueueDescFragImmDT, MetaReportQueueDescFragRETH,
-    SendQueueDescCommonHead, SendQueueReqDescFragSGE, SendQueueReqDescSeg0, SendQueueReqDescSeg1,
+    CmdQueueDescCommonHead, MetaReportQueueDescBthReth, MetaReportQueueDescFragAETH, MetaReportQueueDescFragBTH,
+    MetaReportQueueDescFragImmDT, MetaReportQueueDescFragRETH, SendQueueDescCommonHead, SendQueueReqDescFragSGE,
+    SendQueueReqDescSeg0, SendQueueReqDescSeg1,
 };
 use crate::device::layout::{
-    CmdQueueReqDescQpManagementSeg0, CmdQueueReqDescSetNetworkParam,
-    CmdQueueReqDescSetRawPacketReceiveMeta, CmdQueueReqDescUpdateErrRecoverPoint,
-    CmdQueueReqDescUpdateMrTable, CmdQueueReqDescUpdatePGT, MetaReportQueueDescFragSecondaryRETH,
+    CmdQueueReqDescQpManagementSeg0, CmdQueueReqDescSetNetworkParam, CmdQueueReqDescSetRawPacketReceiveMeta,
+    CmdQueueReqDescUpdateErrRecoverPoint, CmdQueueReqDescUpdateMrTable, CmdQueueReqDescUpdatePGT,
+    MetaReportQueueDescFragSecondaryRETH,
 };
-use crate::types::{
-    Imm, Key, MemAccessTypeFlag, Msn, Pmtu, Psn, QpType, Qpn, Sge, WorkReqSendFlag,
-};
+use crate::types::{Imm, Key, MemAccessTypeFlag, Msn, Pmtu, Psn, QpType, Qpn, Sge, WorkReqSendFlag};
 use crate::utils::u8_slice_to_u64;
 use crate::Error;
 
@@ -433,8 +431,7 @@ pub(crate) enum ToHostWorkRbDescOpcode {
 impl ToHostWorkRbDescOpcode {
     pub(crate) fn is_first(&self) -> bool {
         match self {
-            ToHostWorkRbDescOpcode::RdmaWriteFirst
-            | ToHostWorkRbDescOpcode::RdmaReadResponseFirst => true,
+            ToHostWorkRbDescOpcode::RdmaWriteFirst | ToHostWorkRbDescOpcode::RdmaReadResponseFirst => true,
             ToHostWorkRbDescOpcode::RdmaWriteMiddle
             | ToHostWorkRbDescOpcode::RdmaWriteLast
             | ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate
@@ -470,12 +467,10 @@ impl ToHostWorkRbDescOpcode {
 
     pub(crate) fn write_type(&self) -> Option<ToHostWorkRbDescWriteType> {
         match self {
-            ToHostWorkRbDescOpcode::RdmaWriteFirst
-            | ToHostWorkRbDescOpcode::RdmaReadResponseFirst => {
+            ToHostWorkRbDescOpcode::RdmaWriteFirst | ToHostWorkRbDescOpcode::RdmaReadResponseFirst => {
                 Some(ToHostWorkRbDescWriteType::First)
             }
-            ToHostWorkRbDescOpcode::RdmaWriteMiddle
-            | ToHostWorkRbDescOpcode::RdmaReadResponseMiddle => {
+            ToHostWorkRbDescOpcode::RdmaWriteMiddle | ToHostWorkRbDescOpcode::RdmaReadResponseMiddle => {
                 Some(ToHostWorkRbDescWriteType::Middle)
             }
             ToHostWorkRbDescOpcode::RdmaWriteLast
@@ -606,19 +601,13 @@ impl ToCardCtrlRbDesc {
             network_params.set_ip_netmask(u8_slice_to_u64(&desc.netmask.octets()));
         }
 
-        fn write_set_raw_packet_receive_meta(
-            dst: &mut [u8],
-            desc: &ToCardCtrlRbDescSetRawPacketReceiveMeta,
-        ) {
+        fn write_set_raw_packet_receive_meta(dst: &mut [u8], desc: &ToCardCtrlRbDescSetRawPacketReceiveMeta) {
             let mut raw_packet_recv_meta = CmdQueueReqDescSetRawPacketReceiveMeta(dst);
             raw_packet_recv_meta.set_write_base_addr(desc.base_write_addr);
             raw_packet_recv_meta.set_write_mr_key(u64::from(desc.key.get()));
         }
 
-        fn write_update_err_psn_recover_point(
-            dst: &mut [u8],
-            desc: &ToCardCtrlRbDescUpdateErrPsnRecoverPoint,
-        ) {
+        fn write_update_err_psn_recover_point(dst: &mut [u8], desc: &ToCardCtrlRbDescUpdateErrPsnRecoverPoint) {
             let mut raw_packet_recv_meta = CmdQueueReqDescUpdateErrRecoverPoint(dst);
             raw_packet_recv_meta.set_qpn(desc.qpn.get());
             raw_packet_recv_meta.set_psn(desc.recover_psn.get());
@@ -642,19 +631,11 @@ impl ToCardCtrlRbDesc {
                 write_set_network_param(dst, desc);
             }
             ToCardCtrlRbDesc::SetRawPacketReceiveMeta(desc) => {
-                write_common_header(
-                    dst,
-                    CtrlRbDescOpcode::SetRawPacketReceiveMeta,
-                    desc.common.op_id,
-                );
+                write_common_header(dst, CtrlRbDescOpcode::SetRawPacketReceiveMeta, desc.common.op_id);
                 write_set_raw_packet_receive_meta(dst, desc);
             }
             ToCardCtrlRbDesc::UpdateErrorPsnRecoverPoint(desc) => {
-                write_common_header(
-                    dst,
-                    CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint,
-                    desc.common.op_id,
-                );
+                write_common_header(dst, CtrlRbDescOpcode::UpdateErrorPsnRecoverPoint, desc.common.op_id);
                 write_update_err_psn_recover_point(dst, desc);
             }
         }
@@ -677,10 +658,7 @@ impl ToHostCtrlRbDesc {
         assert!(valid, "Invalid CmdQueueDescCommonHead");
 
         let extra_segment_cnt = head.get_extra_segment_cnt();
-        assert!(
-            extra_segment_cnt == 0,
-            "extra_segment_cnt: {extra_segment_cnt}"
-        );
+        assert!(extra_segment_cnt == 0, "extra_segment_cnt: {extra_segment_cnt}");
 
         let is_success = head.get_is_success_or_need_signal_cplt();
         // bitfield restricts the field is not longer than 8bits.
@@ -688,9 +666,8 @@ impl ToHostCtrlRbDesc {
         #[allow(clippy::cast_possible_truncation)]
         let opcode_raw = head.get_op_code() as u8;
 
-        let opcode = CtrlRbDescOpcode::try_from(opcode_raw).map_err(|_| {
-            DeviceError::ParseDesc(format!("CtrlRbDescOpcode = {opcode_raw} can not be parsed"))
-        })?;
+        let opcode = CtrlRbDescOpcode::try_from(opcode_raw)
+            .map_err(|_| DeviceError::ParseDesc(format!("CtrlRbDescOpcode = {opcode_raw} can not be parsed")))?;
         let op_id = head.get_user_data().to_le();
 
         let common = ToHostCtrlRbDescCommon {
@@ -707,15 +684,8 @@ impl ToHostCtrlRbDesc {
 impl ToCardWorkRbDesc {
     pub(super) fn write_0(&self, dst: &mut [u8]) {
         let (common, opcode, is_first, is_last) = match self {
-            ToCardWorkRbDesc::Read(desc) => {
-                (&desc.common, ToCardWorkRbDescOpcode::Read, true, true)
-            }
-            ToCardWorkRbDesc::Write(desc) => (
-                &desc.common,
-                ToCardWorkRbDescOpcode::Write,
-                desc.is_first,
-                desc.is_last,
-            ),
+            ToCardWorkRbDesc::Read(desc) => (&desc.common, ToCardWorkRbDescOpcode::Read, true, true),
+            ToCardWorkRbDesc::Write(desc) => (&desc.common, ToCardWorkRbDescOpcode::Write, desc.is_first, desc.is_last),
             ToCardWorkRbDesc::WriteWithImm(desc) => (
                 &desc.common,
                 ToCardWorkRbDescOpcode::WriteWithImm,
@@ -792,15 +762,11 @@ impl ToCardWorkRbDesc {
             ToCardWorkRbDesc::Read(desc) => (&desc.common, 1),
             ToCardWorkRbDesc::Write(desc) | ToCardWorkRbDesc::ReadResp(desc) => (
                 &desc.common,
-                1 + u8::from(desc.sge1.is_some())
-                    + u8::from(desc.sge2.is_some())
-                    + u8::from(desc.sge3.is_some()),
+                1 + u8::from(desc.sge1.is_some()) + u8::from(desc.sge2.is_some()) + u8::from(desc.sge3.is_some()),
             ),
             ToCardWorkRbDesc::WriteWithImm(desc) => (
                 &desc.common,
-                1 + u8::from(desc.sge1.is_some())
-                    + u8::from(desc.sge2.is_some())
-                    + u8::from(desc.sge3.is_some()),
+                1 + u8::from(desc.sge1.is_some()) + u8::from(desc.sge2.is_some()) + u8::from(desc.sge3.is_some()),
             ),
         };
         let mut desc_common = SendQueueReqDescSeg1(dst);
@@ -835,9 +801,7 @@ impl ToCardWorkRbDesc {
 
         let (sge0, sge1) = match self {
             ToCardWorkRbDesc::Read(desc) => (&desc.sge, None),
-            ToCardWorkRbDesc::Write(desc) | ToCardWorkRbDesc::ReadResp(desc) => {
-                (&desc.sge0, desc.sge1.as_ref())
-            }
+            ToCardWorkRbDesc::Write(desc) | ToCardWorkRbDesc::ReadResp(desc) => (&desc.sge0, desc.sge1.as_ref()),
             ToCardWorkRbDesc::WriteWithImm(desc) => (&desc.sge0, desc.sge1.as_ref()),
         };
         // Note that the order of the sges is reversed in the struct
@@ -904,9 +868,7 @@ impl ToCardWorkRbDesc {
     pub(super) fn serialized_desc_cnt(&self) -> u32 {
         let sge_desc_cnt = match self {
             ToCardWorkRbDesc::Read(_) => 1,
-            ToCardWorkRbDesc::Write(desc) | ToCardWorkRbDesc::ReadResp(desc) => {
-                1 + u32::from(desc.sge2.is_some())
-            }
+            ToCardWorkRbDesc::Write(desc) | ToCardWorkRbDesc::ReadResp(desc) => 1 + u32::from(desc.sge2.is_some()),
             ToCardWorkRbDesc::WriteWithImm(desc) => 1 + u32::from(desc.sge2.is_some()),
         };
 
@@ -967,20 +929,13 @@ impl ToHostWorkRbDesc {
         let msg_seq_number = Msn::new(frag_aeth.get_msn() as u16);
         let value = frag_aeth.get_aeth_value() as u8;
         let code = frag_aeth.get_aeth_code() as u8;
-        let code = ToHostWorkRbDescAethCode::try_from(code).map_err(|_| {
-            DeviceError::ParseDesc(format!(
-                "ToHostWorkRbDescAethCode = {code} can not be parsed"
-            ))
-        })?;
+        let code = ToHostWorkRbDescAethCode::try_from(code)
+            .map_err(|_| DeviceError::ParseDesc(format!("ToHostWorkRbDescAethCode = {code} can not be parsed")))?;
 
         Ok((psn, msg_seq_number, value, code))
     }
 
-    #[allow(
-        clippy::cast_possible_truncation,
-        clippy::indexing_slicing,
-        clippy::too_many_lines
-    )]
+    #[allow(clippy::cast_possible_truncation, clippy::indexing_slicing, clippy::too_many_lines)]
     pub(super) fn read(src: &mut [u8]) -> Result<ToHostWorkRbDesc, ToHostWorkRbDescError> {
         // typedef struct {
         //     ReservedZero#(8)                reserved1;      // 8
@@ -1024,20 +979,18 @@ impl ToHostWorkRbDesc {
         // } MetaReportQueueDescFragBTH deriving(Bits, FShow);
 
         let desc_frag_bth = MetaReportQueueDescFragBTH(&src[4..12]);
-        let trans = ToHostWorkRbDescTransType::try_from(desc_frag_bth.get_trans_type() as u8)
-            .map_err(|_| {
-                ToHostWorkRbDescError::DeviceError(DeviceError::ParseDesc(format!(
-                    "ToHostWorkRbDescTransType = {} can not be parsed",
-                    desc_frag_bth.get_trans_type()
-                )))
-            })?;
-        let opcode =
-            ToHostWorkRbDescOpcode::try_from(desc_frag_bth.get_opcode() as u8).map_err(|_| {
-                ToHostWorkRbDescError::DeviceError(DeviceError::ParseDesc(format!(
-                    "ToHostWorkRbDescOpcode = {} can not be parsed",
-                    desc_frag_bth.get_opcode()
-                )))
-            })?;
+        let trans = ToHostWorkRbDescTransType::try_from(desc_frag_bth.get_trans_type() as u8).map_err(|_| {
+            ToHostWorkRbDescError::DeviceError(DeviceError::ParseDesc(format!(
+                "ToHostWorkRbDescTransType = {} can not be parsed",
+                desc_frag_bth.get_trans_type()
+            )))
+        })?;
+        let opcode = ToHostWorkRbDescOpcode::try_from(desc_frag_bth.get_opcode() as u8).map_err(|_| {
+            ToHostWorkRbDescError::DeviceError(DeviceError::ParseDesc(format!(
+                "ToHostWorkRbDescOpcode = {} can not be parsed",
+                desc_frag_bth.get_opcode()
+            )))
+        })?;
         let dqpn = Qpn::new(desc_frag_bth.get_qpn());
         let psn = Psn::new(desc_frag_bth.get_psn());
 
@@ -1051,9 +1004,7 @@ impl ToHostWorkRbDesc {
         let is_read_resp = opcode.is_read_resp();
         // The default value will not be used since the `write_type` will only appear
         // in those write related opcodes.
-        let write_type = opcode
-            .write_type()
-            .unwrap_or(ToHostWorkRbDescWriteType::Only);
+        let write_type = opcode.write_type().unwrap_or(ToHostWorkRbDescWriteType::Only);
         match opcode {
             ToHostWorkRbDescOpcode::RdmaWriteFirst
             | ToHostWorkRbDescOpcode::RdmaWriteMiddle
@@ -1064,64 +1015,50 @@ impl ToHostWorkRbDesc {
             | ToHostWorkRbDescOpcode::RdmaReadResponseLast
             | ToHostWorkRbDescOpcode::RdmaReadResponseOnly => {
                 let (addr, _, len) = Self::read_reth(src);
-                Ok(ToHostWorkRbDesc::WriteOrReadResp(
-                    ToHostWorkRbDescWriteOrReadResp {
-                        common,
-                        is_read_resp,
-                        write_type,
-                        psn,
-                        addr,
-                        len,
-                        can_auto_ack,
-                    },
-                ))
+                Ok(ToHostWorkRbDesc::WriteOrReadResp(ToHostWorkRbDescWriteOrReadResp {
+                    common,
+                    is_read_resp,
+                    write_type,
+                    psn,
+                    addr,
+                    len,
+                    can_auto_ack,
+                }))
             }
-            ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate
-            | ToHostWorkRbDescOpcode::RdmaWriteOnlyWithImmediate => {
+            ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate | ToHostWorkRbDescOpcode::RdmaWriteOnlyWithImmediate => {
                 let (addr, key, len) = Self::read_reth(src);
                 if matches!(common.trans, ToHostWorkRbDescTransType::DtldExtended) {
-                    Err(ToHostWorkRbDescError::Incomplete(
-                        IncompleteToHostWorkRbDesc {
-                            parsed: ToHostWorkRbDesc::Raw(ToHostWorkRbDescRaw {
-                                common,
-                                addr,
-                                len,
-                                key,
-                            }),
-                            parsed_cnt: 1,
-                        },
-                    ))
+                    Err(ToHostWorkRbDescError::Incomplete(IncompleteToHostWorkRbDesc {
+                        parsed: ToHostWorkRbDesc::Raw(ToHostWorkRbDescRaw { common, addr, len, key }),
+                        parsed_cnt: 1,
+                    }))
                 } else {
                     let imm = Self::read_imm(src);
-                    Ok(ToHostWorkRbDesc::WriteWithImm(
-                        ToHostWorkRbDescWriteWithImm {
-                            common,
-                            write_type,
-                            psn,
-                            imm,
-                            addr,
-                            len,
-                            key,
-                        },
-                    ))
+                    Ok(ToHostWorkRbDesc::WriteWithImm(ToHostWorkRbDescWriteWithImm {
+                        common,
+                        write_type,
+                        psn,
+                        imm,
+                        addr,
+                        len,
+                        key,
+                    }))
                 }
             }
             ToHostWorkRbDescOpcode::RdmaReadRequest => {
                 let (addr, key, len) = Self::read_reth(src);
 
-                Err(ToHostWorkRbDescError::Incomplete(
-                    IncompleteToHostWorkRbDesc {
-                        parsed: ToHostWorkRbDesc::Read(ToHostWorkRbDescRead {
-                            common,
-                            len,
-                            laddr: addr,
-                            lkey: key,
-                            raddr: 0,
-                            rkey: Key::default(),
-                        }),
-                        parsed_cnt: 1,
-                    },
-                ))
+                Err(ToHostWorkRbDescError::Incomplete(IncompleteToHostWorkRbDesc {
+                    parsed: ToHostWorkRbDesc::Read(ToHostWorkRbDescRead {
+                        common,
+                        len,
+                        laddr: addr,
+                        lkey: key,
+                        raddr: 0,
+                        rkey: Key::default(),
+                    }),
+                    parsed_cnt: 1,
+                }))
             }
             ToHostWorkRbDescOpcode::Acknowledge => {
                 let (retry_psn, msn_in_ack, value, code) =
@@ -1163,9 +1100,9 @@ impl IncompleteToHostWorkRbDesc {
             }
             ToHostWorkRbDesc::Raw(desc) => Ok(ToHostWorkRbDesc::Raw(desc)), // ignore the
             // redundant imm
-            ToHostWorkRbDesc::WriteOrReadResp(_)
-            | ToHostWorkRbDesc::WriteWithImm(_)
-            | ToHostWorkRbDesc::Ack(_) => unreachable!(),
+            ToHostWorkRbDesc::WriteOrReadResp(_) | ToHostWorkRbDesc::WriteWithImm(_) | ToHostWorkRbDesc::Ack(_) => {
+                unreachable!()
+            }
         }
     }
 }
@@ -1203,15 +1140,10 @@ impl ToCardWorkRbDescBuilder {
     }
 
     pub(crate) fn build(mut self) -> Result<Box<ToCardWorkRbDesc>, Error> {
-        let common = self
-            .common
-            .ok_or_else(|| Error::BuildDescFailed("common"))?;
+        let common = self.common.ok_or_else(|| Error::BuildDescFailed("common"))?;
         let desc = match self.type_ {
             ToCardWorkRbDescOpcode::Write => {
-                let sge0 = self
-                    .seg_list
-                    .pop()
-                    .ok_or_else(|| Error::BuildDescFailed("sge"))?;
+                let sge0 = self.seg_list.pop().ok_or_else(|| Error::BuildDescFailed("sge"))?;
                 let sge1 = self.seg_list.pop();
                 let sge2 = self.seg_list.pop();
                 let sge3 = self.seg_list.pop();
@@ -1226,10 +1158,7 @@ impl ToCardWorkRbDescBuilder {
                 })
             }
             ToCardWorkRbDescOpcode::WriteWithImm => {
-                let sge0 = self
-                    .seg_list
-                    .pop()
-                    .ok_or_else(|| Error::BuildDescFailed("sge"))?;
+                let sge0 = self.seg_list.pop().ok_or_else(|| Error::BuildDescFailed("sge"))?;
                 let sge1 = self.seg_list.pop();
                 let sge2 = self.seg_list.pop();
                 let sge3 = self.seg_list.pop();
@@ -1246,20 +1175,14 @@ impl ToCardWorkRbDescBuilder {
                 })
             }
             ToCardWorkRbDescOpcode::Read => {
-                let sge0 = self
-                    .seg_list
-                    .pop()
-                    .ok_or_else(|| Error::BuildDescFailed("sge"))?;
+                let sge0 = self.seg_list.pop().ok_or_else(|| Error::BuildDescFailed("sge"))?;
                 ToCardWorkRbDesc::Read(ToCardWorkRbDescRead {
                     common,
                     sge: sge0.into(),
                 })
             }
             ToCardWorkRbDescOpcode::ReadResp => {
-                let sge0 = self
-                    .seg_list
-                    .pop()
-                    .ok_or_else(|| Error::BuildDescFailed("sge"))?;
+                let sge0 = self.seg_list.pop().ok_or_else(|| Error::BuildDescFailed("sge"))?;
                 let sge1 = self.seg_list.pop();
                 let sge2 = self.seg_list.pop();
                 let sge3 = self.seg_list.pop();

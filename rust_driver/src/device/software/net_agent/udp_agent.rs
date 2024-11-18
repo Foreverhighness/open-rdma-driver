@@ -93,9 +93,8 @@ impl UDPReceiveAgent {
                         continue;
                     }
                     // SAFETY: `recv_from` ensures that the buffer is filled with `length` bytes.
-                    let received_data = unsafe {
-                        std::slice::from_raw_parts_mut(buf.as_mut_ptr().cast::<u8>(), length)
-                    };
+                    let received_data =
+                        unsafe { std::slice::from_raw_parts_mut(buf.as_mut_ptr().cast::<u8>(), length) };
 
                     match is_icrc_valid(received_data) {
                         Ok(is_valid) => {
@@ -140,12 +139,7 @@ impl Drop for UDPReceiveAgent {
 }
 
 impl NetSendAgent for UDPSendAgent {
-    fn send(
-        &self,
-        dest_addr: Ipv4Addr,
-        dest_port: u16,
-        message: &RdmaMessage,
-    ) -> Result<(), NetAgentError> {
+    fn send(&self, dest_addr: Ipv4Addr, dest_port: u16, message: &RdmaMessage) -> Result<(), NetAgentError> {
         let mut buf = [0u8; NET_SERVER_BUF_SIZE];
         let src_addr = self.src_addr;
         let src_port = self.src_port;
@@ -161,27 +155,19 @@ impl NetSendAgent for UDPSendAgent {
             .write()?;
         #[allow(clippy::indexing_slicing)]
         // We are sure that the total_length is less than the buffer size.
-        let sended_size = self.sender.send_to(
-            &buf[0..total_length],
-            &SocketAddrV4::new(dest_addr, dest_port).into(),
-        )?;
+        let sended_size = self
+            .sender
+            .send_to(&buf[0..total_length], &SocketAddrV4::new(dest_addr, dest_port).into())?;
         if total_length != sended_size {
             return Err(NetAgentError::WrongBytesSending(total_length, sended_size));
         }
         Ok(())
     }
 
-    fn send_raw(
-        &self,
-        dest_addr: Ipv4Addr,
-        dest_port: u16,
-        payload: &PayloadInfo,
-    ) -> Result<(), NetAgentError> {
-        let buf = payload
-            .direct_data_ptr(true)
-            .ok_or(NetAgentError::InvalidRdmaMessage(
-                "PayloadInfo should have at least one item".to_owned(),
-            ))?;
+    fn send_raw(&self, dest_addr: Ipv4Addr, dest_port: u16, payload: &PayloadInfo) -> Result<(), NetAgentError> {
+        let buf = payload.direct_data_ptr(true).ok_or(NetAgentError::InvalidRdmaMessage(
+            "PayloadInfo should have at least one item".to_owned(),
+        ))?;
         let sended_size = self
             .sender
             .send_to(buf, &SocketAddrV4::new(dest_addr, dest_port).into())?;

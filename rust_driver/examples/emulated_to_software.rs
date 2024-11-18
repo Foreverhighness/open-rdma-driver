@@ -8,8 +8,8 @@ use libc::c_void;
 use log::info;
 use open_rdma_driver::qp::QpManager;
 use open_rdma_driver::types::{
-    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
-    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
+    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam, RdmaDeviceNetworkParamBuilder, Sge,
+    WorkReqSendFlag, PAGE_SIZE,
 };
 use open_rdma_driver::{
     AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig, RoundRobinStrategy,
@@ -33,11 +33,7 @@ const BUFFER_LENGTH: usize = 1024 * 128;
 #[ctor]
 fn init_global_allocator() {
     unsafe {
-        let shm_fd = libc::shm_open(
-            SHM_PATH.as_ptr() as *const libc::c_char,
-            libc::O_RDWR,
-            0o600,
-        );
+        let shm_fd = libc::shm_open(SHM_PATH.as_ptr() as *const libc::c_char, libc::O_RDWR, 0o600);
 
         let heap = libc::mmap(
             0x7f7e8e600000 as *mut c_void,
@@ -210,8 +206,7 @@ fn main() {
         .unwrap();
     let (dev_a, _pd_a, mr_a, mut mr_buffer_a) =
         create_and_init_emulated_card(0, "0.0.0.0:9873", qpn, a_network, &b_network);
-    let (dev_b, _pd_b, mr_b, mut mr_buffer_b) =
-        create_and_init_software_card(1, qpn, b_network, &a_network);
+    let (dev_b, _pd_b, mr_b, mut mr_buffer_b) = create_and_init_software_card(1, qpn, b_network, &a_network);
     let dpqn = qpn;
 
     // emulator write to software
@@ -240,10 +235,7 @@ fn main() {
             .unwrap();
 
         let _ = ctx1.wait();
-        assert_eq!(
-            mr_buffer_a.as_ref()[0..SEND_CNT],
-            mr_buffer_b.as_ref()[0..SEND_CNT]
-        );
+        assert_eq!(mr_buffer_a.as_ref()[0..SEND_CNT], mr_buffer_b.as_ref()[0..SEND_CNT]);
         info!("Emulator write to software success");
     }
 
@@ -273,10 +265,7 @@ fn main() {
             .unwrap();
 
         let _ = ctx1.wait();
-        assert_eq!(
-            mr_buffer_a.as_ref()[0..SEND_CNT],
-            mr_buffer_b.as_ref()[0..SEND_CNT]
-        );
+        assert_eq!(mr_buffer_a.as_ref()[0..SEND_CNT], mr_buffer_b.as_ref()[0..SEND_CNT]);
         info!("Emulator read from software success");
     }
 
@@ -305,10 +294,7 @@ fn main() {
             .unwrap();
 
         let _ = ctx1.wait();
-        assert_eq!(
-            mr_buffer_a.as_ref()[0..SEND_CNT],
-            mr_buffer_b.as_ref()[0..SEND_CNT]
-        );
+        assert_eq!(mr_buffer_a.as_ref()[0..SEND_CNT], mr_buffer_b.as_ref()[0..SEND_CNT]);
         info!("Software write to emulator success");
     }
 
@@ -337,10 +323,7 @@ fn main() {
             .unwrap();
 
         let _ = ctx1.wait();
-        assert_eq!(
-            mr_buffer_a.as_ref()[0..SEND_CNT],
-            mr_buffer_b.as_ref()[0..SEND_CNT]
-        );
+        assert_eq!(mr_buffer_a.as_ref()[0..SEND_CNT], mr_buffer_b.as_ref()[0..SEND_CNT]);
         info!("Software read from emulator success");
     }
 }

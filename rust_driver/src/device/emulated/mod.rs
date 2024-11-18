@@ -6,14 +6,13 @@ use log::debug;
 use parking_lot::Mutex;
 
 use self::rpc_cli::{
-    RpcClient, ToCardCtrlRbCsrProxy, ToCardWorkRbCsrProxy, ToHostCtrlRbCsrProxy,
-    ToHostWorkRbCsrProxy,
+    RpcClient, ToCardCtrlRbCsrProxy, ToCardWorkRbCsrProxy, ToHostCtrlRbCsrProxy, ToHostWorkRbCsrProxy,
 };
 use super::ringbuf::Ringbuf;
 use super::scheduler::DescriptorScheduler;
 use super::{
-    constants, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc,
-    ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc, ToHostWorkRbDescError,
+    constants, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToCardWorkRbDesc, ToHostCtrlRbDesc, ToHostRb,
+    ToHostWorkRbDesc, ToHostWorkRbDescError,
 };
 use crate::utils::Buffer;
 use crate::SchedulerStrategy;
@@ -77,38 +76,27 @@ impl<Strat: SchedulerStrategy> EmulatedDevice<Strat> {
         strategy: Strat,
         scheduler_size: u32,
     ) -> Result<Arc<Self>, DeviceError> {
-        let rpc_cli =
-            RpcClient::new(rpc_server_addr).map_err(|e| DeviceError::Device(e.to_string()))?;
+        let rpc_cli = RpcClient::new(rpc_server_addr).map_err(|e| DeviceError::Device(e.to_string()))?;
 
-        let to_card_ctrl_rb_buffer = Buffer::new(constants::RINGBUF_PAGE_SIZE, false)
-            .map_err(|e| DeviceError::Device(e.to_string()))?;
+        let to_card_ctrl_rb_buffer =
+            Buffer::new(constants::RINGBUF_PAGE_SIZE, false).map_err(|e| DeviceError::Device(e.to_string()))?;
         let to_card_ctrl_rb_addr = to_card_ctrl_rb_buffer.as_ref().as_ptr() as usize;
-        let to_card_ctrl_rb = ToCardCtrlRb::new(
-            ToCardCtrlRbCsrProxy::new(rpc_cli.clone()),
-            to_card_ctrl_rb_buffer,
-        );
+        let to_card_ctrl_rb = ToCardCtrlRb::new(ToCardCtrlRbCsrProxy::new(rpc_cli.clone()), to_card_ctrl_rb_buffer);
 
-        let to_host_ctrl_rb = Buffer::new(constants::RINGBUF_PAGE_SIZE, false)
-            .map_err(|e| DeviceError::Device(e.to_string()))?;
-        let to_host_ctrl_rb_addr = to_host_ctrl_rb.as_ref().as_ptr() as usize;
         let to_host_ctrl_rb =
-            ToHostCtrlRb::new(ToHostCtrlRbCsrProxy::new(rpc_cli.clone()), to_host_ctrl_rb);
+            Buffer::new(constants::RINGBUF_PAGE_SIZE, false).map_err(|e| DeviceError::Device(e.to_string()))?;
+        let to_host_ctrl_rb_addr = to_host_ctrl_rb.as_ref().as_ptr() as usize;
+        let to_host_ctrl_rb = ToHostCtrlRb::new(ToHostCtrlRbCsrProxy::new(rpc_cli.clone()), to_host_ctrl_rb);
 
-        let to_card_work_rb_buffer = Buffer::new(constants::RINGBUF_PAGE_SIZE, false)
-            .map_err(|e| DeviceError::Device(e.to_string()))?;
+        let to_card_work_rb_buffer =
+            Buffer::new(constants::RINGBUF_PAGE_SIZE, false).map_err(|e| DeviceError::Device(e.to_string()))?;
         let to_card_work_rb_addr = to_card_work_rb_buffer.as_ref().as_ptr() as usize;
-        let to_card_work_rb = ToCardWorkRb::new(
-            ToCardWorkRbCsrProxy::new(rpc_cli.clone()),
-            to_card_work_rb_buffer,
-        );
+        let to_card_work_rb = ToCardWorkRb::new(ToCardWorkRbCsrProxy::new(rpc_cli.clone()), to_card_work_rb_buffer);
 
-        let to_host_work_rb_buffer = Buffer::new(constants::RINGBUF_PAGE_SIZE, false)
-            .map_err(|e| DeviceError::Device(e.to_string()))?;
+        let to_host_work_rb_buffer =
+            Buffer::new(constants::RINGBUF_PAGE_SIZE, false).map_err(|e| DeviceError::Device(e.to_string()))?;
         let to_host_work_rb_addr = to_host_work_rb_buffer.as_ref().as_ptr() as usize;
-        let to_host_work_rb = ToHostWorkRb::new(
-            ToHostWorkRbCsrProxy::new(rpc_cli.clone()),
-            to_host_work_rb_buffer,
-        );
+        let to_host_work_rb = ToHostWorkRb::new(ToHostWorkRbCsrProxy::new(rpc_cli.clone()), to_host_work_rb_buffer);
 
         let scheduler = Arc::new(DescriptorScheduler::new(
             strategy,

@@ -47,10 +47,7 @@ impl<const SLOT_SIZE: usize> PacketBuf<SLOT_SIZE> {
     /// Create a new acknowledge buffer
     #[allow(clippy::arithmetic_side_effects, clippy::cast_possible_truncation)]
     pub(crate) fn new(start_va: usize, length: usize, lkey: Key) -> Self {
-        assert!(
-            length % SLOT_SIZE == 0,
-            "The length should be multiple of SLOT_SIZE"
-        );
+        assert!(length % SLOT_SIZE == 0, "The length should be multiple of SLOT_SIZE");
         let slot_length = (length / SLOT_SIZE) as u16;
         Self {
             head: AtomicU16::default(),
@@ -73,10 +70,7 @@ impl<const SLOT_SIZE: usize> PacketBuf<SLOT_SIZE> {
                 Err(x) => prev = x,
             }
         }
-        Slot(
-            (self.start_va + prev as usize * SLOT_SIZE) as *mut u8,
-            self.lkey,
-        )
+        Slot((self.start_va + prev as usize * SLOT_SIZE) as *mut u8, self.lkey)
     }
 
     pub(crate) fn get_register_params(&self) -> (usize, Key) {

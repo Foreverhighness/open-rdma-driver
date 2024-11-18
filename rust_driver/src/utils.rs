@@ -152,8 +152,7 @@ impl Drop for MmapMemory {
 }
 
 fn allocate_aligned_memory(size: usize) -> io::Result<&'static mut [u8]> {
-    let layout =
-        Layout::from_size_align(size, PAGE_SIZE).map_err(|_| io::Error::last_os_error())?;
+    let layout = Layout::from_size_align(size, PAGE_SIZE).map_err(|_| io::Error::last_os_error())?;
     let ptr = unsafe { alloc(layout) };
     Ok(unsafe { from_raw_parts_mut(ptr, size) })
 }
@@ -228,11 +227,7 @@ impl Buffer {
 impl Index<usize> for Buffer {
     type Output = u64;
 
-    #[allow(
-        clippy::ptr_as_ptr,
-        clippy::cast_ptr_alignment,
-        clippy::arithmetic_side_effects
-    )]
+    #[allow(clippy::ptr_as_ptr, clippy::cast_ptr_alignment, clippy::arithmetic_side_effects)]
     fn index(&self, index: usize) -> &u64 {
         match self {
             Buffer::DmaBuffer(buffer) => {
@@ -240,12 +235,7 @@ impl Index<usize> for Buffer {
                 unsafe { &*ptr }
             }
             Buffer::AlignedMemory(aligned_memory) => {
-                let ptr = unsafe {
-                    aligned_memory
-                        .as_ref()
-                        .as_ptr()
-                        .add(index * size_of::<u64>()) as *const u64
-                };
+                let ptr = unsafe { aligned_memory.as_ref().as_ptr().add(index * size_of::<u64>()) as *const u64 };
                 unsafe { &*ptr }
             }
         }
@@ -253,11 +243,7 @@ impl Index<usize> for Buffer {
 }
 
 impl IndexMut<usize> for Buffer {
-    #[allow(
-        clippy::ptr_as_ptr,
-        clippy::cast_ptr_alignment,
-        clippy::arithmetic_side_effects
-    )]
+    #[allow(clippy::ptr_as_ptr, clippy::cast_ptr_alignment, clippy::arithmetic_side_effects)]
     fn index_mut(&mut self, index: usize) -> &mut u64 {
         match self {
             Buffer::DmaBuffer(buffer) => {
@@ -265,12 +251,7 @@ impl IndexMut<usize> for Buffer {
                 unsafe { &mut *ptr }
             }
             Buffer::AlignedMemory(aligned_memory) => {
-                let ptr = unsafe {
-                    aligned_memory
-                        .as_mut()
-                        .as_mut_ptr()
-                        .add(index * size_of::<u64>()) as *mut u64
-                };
+                let ptr = unsafe { aligned_memory.as_mut().as_mut_ptr().add(index * size_of::<u64>()) as *mut u64 };
                 unsafe { &mut *ptr }
             }
         }

@@ -3,8 +3,7 @@ use std::mem::size_of;
 use crate::device::software::packet::{Immediate, AETH, BTH, RETH};
 use crate::device::software::packet_processor::PacketProcessor;
 use crate::device::software::types::{
-    Key, Metadata, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon,
-    RethHeader,
+    Key, Metadata, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon, RethHeader,
 };
 use crate::device::{ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType};
 use crate::types::Psn;
@@ -18,10 +17,7 @@ const IMM_SIZE: usize = size_of::<Immediate>();
 fn test_header_bth_reth() {
     let buf = [0u8; BTH_SIZE + RETH_SIZE + 512];
     let bth = BTH::from_bytes(&buf);
-    bth.set_opcode_and_type(
-        ToHostWorkRbDescOpcode::RdmaWriteFirst,
-        ToHostWorkRbDescTransType::Rc,
-    );
+    bth.set_opcode_and_type(ToHostWorkRbDescOpcode::RdmaWriteFirst, ToHostWorkRbDescTransType::Rc);
     bth.set_destination_qpn(1);
     bth.set_psn(1);
     bth.set_ack_req(false);
@@ -36,10 +32,7 @@ fn test_header_bth_reth() {
     let meta = &message.meta_data;
     match meta {
         Metadata::General(header) => {
-            assert_eq!(
-                header.common_meta.tran_type as u8,
-                ToHostWorkRbDescTransType::Rc as u8
-            );
+            assert_eq!(header.common_meta.tran_type as u8, ToHostWorkRbDescTransType::Rc as u8);
             assert_eq!(
                 header.common_meta.opcode.clone() as u8,
                 ToHostWorkRbDescOpcode::RdmaWriteFirst as u8
@@ -85,10 +78,7 @@ fn test_header_bth_reth_imm() {
     let meta = &message.meta_data;
     match meta {
         Metadata::General(header) => {
-            assert_eq!(
-                header.common_meta.tran_type as u8,
-                ToHostWorkRbDescTransType::Rc as u8
-            );
+            assert_eq!(header.common_meta.tran_type as u8, ToHostWorkRbDescTransType::Rc as u8);
             assert_eq!(
                 header.common_meta.opcode.clone() as u8,
                 ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate as u8
@@ -116,10 +106,7 @@ fn test_header_bth_reth_imm() {
 fn test_header_bth_reth_reth() {
     let buf = [0u8; BTH_SIZE + RETH_SIZE + RETH_SIZE];
     let bth = BTH::from_bytes(&buf);
-    bth.set_opcode_and_type(
-        ToHostWorkRbDescOpcode::RdmaReadRequest,
-        ToHostWorkRbDescTransType::Rc,
-    );
+    bth.set_opcode_and_type(ToHostWorkRbDescOpcode::RdmaReadRequest, ToHostWorkRbDescTransType::Rc);
     bth.set_destination_qpn(1);
     bth.set_psn(1);
     bth.set_ack_req(false);
@@ -137,10 +124,7 @@ fn test_header_bth_reth_reth() {
     let meta = &message.meta_data;
     match meta {
         Metadata::General(header) => {
-            assert_eq!(
-                header.common_meta.tran_type as u8,
-                ToHostWorkRbDescTransType::Rc as u8
-            );
+            assert_eq!(header.common_meta.tran_type as u8, ToHostWorkRbDescTransType::Rc as u8);
             assert_eq!(
                 header.common_meta.opcode.clone() as u8,
                 ToHostWorkRbDescOpcode::RdmaReadRequest as u8
@@ -171,10 +155,7 @@ fn test_header_bth_reth_reth() {
 fn test_header_bth_aeth() {
     let buf = [0u8; BTH_SIZE + AETH_SIZE];
     let bth = BTH::from_bytes(&buf);
-    bth.set_opcode_and_type(
-        ToHostWorkRbDescOpcode::Acknowledge,
-        ToHostWorkRbDescTransType::Rc,
-    );
+    bth.set_opcode_and_type(ToHostWorkRbDescOpcode::Acknowledge, ToHostWorkRbDescTransType::Rc);
     bth.set_destination_qpn(1);
     bth.set_psn(1);
     bth.set_ack_req(false);
@@ -187,10 +168,7 @@ fn test_header_bth_aeth() {
     let meta = &message.meta_data;
     match meta {
         Metadata::Acknowledge(header) => {
-            assert_eq!(
-                header.common_meta.tran_type as u8,
-                ToHostWorkRbDescTransType::Rc as u8
-            );
+            assert_eq!(header.common_meta.tran_type as u8, ToHostWorkRbDescTransType::Rc as u8);
             assert_eq!(
                 header.common_meta.opcode.clone() as u8,
                 ToHostWorkRbDescOpcode::Acknowledge as u8
@@ -276,10 +254,7 @@ fn test_pkt_processor_to_buf() {
     assert!(size == BTH_SIZE + RETH_SIZE);
     // read bth
     let bth = BTH::from_bytes(&buf);
-    assert_eq!(
-        bth.get_opcode(),
-        ToHostWorkRbDescOpcode::RdmaWriteFirst as u8
-    );
+    assert_eq!(bth.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteFirst as u8);
     assert_eq!(bth.get_destination_qpn(), 3);
     assert_eq!(bth.get_psn(), 0x123456);
     assert!(!bth.get_ack_req());

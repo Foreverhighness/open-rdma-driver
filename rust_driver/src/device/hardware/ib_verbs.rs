@@ -37,7 +37,8 @@ impl RDMAGetUContextSyscallReq {
     #[allow(clippy::arithmetic_side_effects, clippy::cast_possible_truncation)]
     pub(crate) fn new_get_context(resp: &RDMAGetUContextSyscallResp) -> Self {
         let req = RDMASyscallReq {
-            length: (size_of::<RDMASyscallReq>() + size_of::<RDMASyscallReqAttr>()) as u16, /* 40, this will never overflow */
+            length: (size_of::<RDMASyscallReq>() + size_of::<RDMASyscallReqAttr>()) as u16, /* 40, this will never
+                                                                                             * overflow */
             object_id: 0,
             method_id: 3, // get context
             num_attrs: 1,
@@ -77,13 +78,7 @@ pub(crate) fn new_ucontext(device: &File) -> io::Result<RDMAGetUContextSyscallRe
     let resp = RDMAGetUContextSyscallResp::default();
     let req = RDMAGetUContextSyscallReq::new_get_context(&resp);
     let device_file_fd = device.as_raw_fd();
-    let ret_val = unsafe {
-        libc::ioctl(
-            device_file_fd,
-            RDMA_IOCTL_CMD,
-            std::ptr::addr_of!(req) as *mut u8,
-        )
-    };
+    let ret_val = unsafe { libc::ioctl(device_file_fd, RDMA_IOCTL_CMD, std::ptr::addr_of!(req) as *mut u8) };
 
     if ret_val != 0_i32 {
         return Err(io::Error::last_os_error());

@@ -5,8 +5,7 @@ use rand::RngCore as _;
 
 use crate::buf::PacketBuf;
 use crate::device::{
-    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescUpdateMrTable,
-    ToCardCtrlRbDescUpdatePageTable,
+    ToCardCtrlRbDesc, ToCardCtrlRbDescCommon, ToCardCtrlRbDescUpdateMrTable, ToCardCtrlRbDescUpdatePageTable,
 };
 use crate::types::{Key, MemAccessTypeFlag, PAGE_SIZE};
 use crate::utils::Buffer;
@@ -61,8 +60,7 @@ impl Device {
         for pgt_idx in 0..pgte_cnt {
             let va = addr.wrapping_add(((pg_size as usize).wrapping_mul(pgt_idx)) as u64);
             // Should we support 32 bit system?
-            let va_in_usize =
-                usize::try_from(va).map_err(|_| Error::NotSupport("32 bit System"))?;
+            let va_in_usize = usize::try_from(va).map_err(|_| Error::NotSupport("32 bit System"))?;
             let pa = self
                 .0
                 .adaptor
@@ -95,17 +93,14 @@ impl Device {
                 .0
                 .adaptor
                 .get_phys_addr(mr_pgt.table.as_ref().as_ptr() as usize)
-                .map_err(|e| Error::GetPhysAddrFailed(e.to_string()))?
-                as u64,
+                .map_err(|e| Error::GetPhysAddrFailed(e.to_string()))? as u64,
             pgt_idx: pgt_offset as u32,
             pgte_cnt: pgte_cnt as u32,
         });
 
         let update_pgt_ctx = self.do_ctrl_op(update_pgt_op_id, update_pgt_desc)?;
 
-        let update_pgt_result = update_pgt_ctx
-            .wait_result()?
-            .ok_or(Error::SetCtxResultFailed)?;
+        let update_pgt_result = update_pgt_ctx.wait_result()?.ok_or(Error::SetCtxResultFailed)?;
 
         if !update_pgt_result {
             mr_pgt.dealloc(pgt_offset, pgte_cnt);
@@ -118,9 +113,7 @@ impl Device {
         let mut mr_pgt = self.0.mr_pgt.lock();
         mr_pgt.dealloc(
             pgt_offset,
-            length
-                .try_into()
-                .map_err(|_| Error::NotSupport("Not 64 bit System"))?,
+            length.try_into().map_err(|_| Error::NotSupport("Not 64 bit System"))?,
         );
         Ok(())
     }
@@ -134,14 +127,7 @@ impl Device {
     /// * not have enough resouce to allocate a new pagetable
     /// * invalid pd
     /// * failed to communicate with card(including creating page table and creating mr)
-    pub fn reg_mr(
-        &self,
-        pd: Pd,
-        addr: u64,
-        len: u32,
-        pg_size: u32,
-        acc_flags: MemAccessTypeFlag,
-    ) -> Result<Mr, Error> {
+    pub fn reg_mr(&self, pd: Pd, addr: u64, len: u32, pg_size: u32, acc_flags: MemAccessTypeFlag) -> Result<Mr, Error> {
         let mut mr_table = self.0.mr_table.lock();
 
         let mut pd_pool = self.0.pd.lock();
@@ -154,9 +140,7 @@ impl Device {
             return Err(Error::ResourceNoAvailable("MR".to_owned()));
         };
 
-        let pd_ctx = pd_pool
-            .get_mut(&pd)
-            .ok_or(Error::Invalid(format!("PD :{pd:?}")))?;
+        let pd_ctx = pd_pool.get_mut(&pd).ok_or(Error::Invalid(format!("PD :{pd:?}")))?;
 
         let pgt_offset = self.register_page_table(addr, len, pg_size)?;
 
@@ -179,9 +163,7 @@ impl Device {
 
         #[allow(clippy::cast_possible_truncation)]
         let update_mr_desc = ToCardCtrlRbDesc::UpdateMrTable(ToCardCtrlRbDescUpdateMrTable {
-            common: ToCardCtrlRbDescCommon {
-                op_id: update_mr_op_id,
-            },
+            common: ToCardCtrlRbDescCommon { op_id: update_mr_op_id },
             addr,
             len,
             key,
@@ -192,9 +174,7 @@ impl Device {
 
         let update_mr_ctx = self.do_ctrl_op(update_mr_op_id, update_mr_desc)?;
 
-        let update_mr_result = update_mr_ctx
-            .wait_result()?
-            .ok_or(Error::SetCtxResultFailed)?;
+        let update_mr_result = update_mr_ctx.wait_result()?.ok_or(Error::SetCtxResultFailed)?;
 
         if !update_mr_result {
             return Err(Error::DeviceReturnFailed("register mr table"));

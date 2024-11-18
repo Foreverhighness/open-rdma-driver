@@ -9,11 +9,7 @@ pub struct SimpleLogger {
 
 impl SimpleLogger {
     pub fn new(file_path: &str) -> SimpleLogger {
-        let file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(file_path)
-            .unwrap();
+        let file = OpenOptions::new().write(true).create(true).open(file_path).unwrap();
         SimpleLogger { file }
     }
 }
@@ -34,6 +30,5 @@ impl log::Log for SimpleLogger {
 }
 
 pub fn init_logging(file_path: &str) -> Result<(), SetLoggerError> {
-    log::set_boxed_logger(Box::new(SimpleLogger::new(file_path)))
-        .map(|()| log::set_max_level(LevelFilter::Info))
+    log::set_boxed_logger(Box::new(SimpleLogger::new(file_path))).map(|()| log::set_max_level(LevelFilter::Info))
 }

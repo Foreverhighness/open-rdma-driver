@@ -15,32 +15,22 @@ const fn generate_csr_addr(is_h2c: bool, queue_index: usize, reg_index: CsrIndex
     a
 }
 
-pub(super) const CSR_ADDR_CMD_REQ_QUEUE_ADDR_LOW: usize =
-    generate_csr_addr(true, 0, CsrIndex::BaseAddrLow);
-pub(super) const CSR_ADDR_CMD_REQ_QUEUE_ADDR_HIGH: usize =
-    generate_csr_addr(true, 0, CsrIndex::BaseAddrHigh);
+pub(super) const CSR_ADDR_CMD_REQ_QUEUE_ADDR_LOW: usize = generate_csr_addr(true, 0, CsrIndex::BaseAddrLow);
+pub(super) const CSR_ADDR_CMD_REQ_QUEUE_ADDR_HIGH: usize = generate_csr_addr(true, 0, CsrIndex::BaseAddrHigh);
 pub(super) const CSR_ADDR_CMD_REQ_QUEUE_HEAD: usize = generate_csr_addr(true, 0, CsrIndex::Head);
 pub(super) const CSR_ADDR_CMD_REQ_QUEUE_TAIL: usize = generate_csr_addr(true, 0, CsrIndex::Tail);
 pub(super) const CSR_ADDR_CMD_RESP_QUEUE_HEAD: usize = generate_csr_addr(false, 0, CsrIndex::Head);
 pub(super) const CSR_ADDR_CMD_RESP_QUEUE_TAIL: usize = generate_csr_addr(false, 0, CsrIndex::Tail);
-pub(super) const CSR_ADDR_CMD_RESP_QUEUE_ADDR_LOW: usize =
-    generate_csr_addr(false, 0, CsrIndex::BaseAddrLow);
-pub(super) const CSR_ADDR_CMD_RESP_QUEUE_ADDR_HIGH: usize =
-    generate_csr_addr(false, 0, CsrIndex::BaseAddrHigh);
+pub(super) const CSR_ADDR_CMD_RESP_QUEUE_ADDR_LOW: usize = generate_csr_addr(false, 0, CsrIndex::BaseAddrLow);
+pub(super) const CSR_ADDR_CMD_RESP_QUEUE_ADDR_HIGH: usize = generate_csr_addr(false, 0, CsrIndex::BaseAddrHigh);
 pub(super) const CSR_ADDR_SEND_QUEUE_HEAD: usize = generate_csr_addr(true, 1, CsrIndex::Head);
 pub(super) const CSR_ADDR_SEND_QUEUE_TAIL: usize = generate_csr_addr(true, 1, CsrIndex::Tail);
-pub(super) const CSR_ADDR_SEND_QUEUE_ADDR_LOW: usize =
-    generate_csr_addr(true, 1, CsrIndex::BaseAddrLow);
-pub(super) const CSR_ADDR_SEND_QUEUE_ADDR_HIGH: usize =
-    generate_csr_addr(true, 1, CsrIndex::BaseAddrHigh);
-pub(super) const CSR_ADDR_META_REPORT_QUEUE_HEAD: usize =
-    generate_csr_addr(false, 1, CsrIndex::Head);
-pub(super) const CSR_ADDR_META_REPORT_QUEUE_TAIL: usize =
-    generate_csr_addr(false, 1, CsrIndex::Tail);
-pub(super) const CSR_ADDR_META_REPORT_QUEUE_ADDR_LOW: usize =
-    generate_csr_addr(false, 1, CsrIndex::BaseAddrLow);
-pub(super) const CSR_ADDR_META_REPORT_QUEUE_ADDR_HIGH: usize =
-    generate_csr_addr(false, 1, CsrIndex::BaseAddrHigh);
+pub(super) const CSR_ADDR_SEND_QUEUE_ADDR_LOW: usize = generate_csr_addr(true, 1, CsrIndex::BaseAddrLow);
+pub(super) const CSR_ADDR_SEND_QUEUE_ADDR_HIGH: usize = generate_csr_addr(true, 1, CsrIndex::BaseAddrHigh);
+pub(super) const CSR_ADDR_META_REPORT_QUEUE_HEAD: usize = generate_csr_addr(false, 1, CsrIndex::Head);
+pub(super) const CSR_ADDR_META_REPORT_QUEUE_TAIL: usize = generate_csr_addr(false, 1, CsrIndex::Tail);
+pub(super) const CSR_ADDR_META_REPORT_QUEUE_ADDR_LOW: usize = generate_csr_addr(false, 1, CsrIndex::BaseAddrLow);
+pub(super) const CSR_ADDR_META_REPORT_QUEUE_ADDR_HIGH: usize = generate_csr_addr(false, 1, CsrIndex::BaseAddrHigh);
 
 pub(super) const RINGBUF_DEPTH: usize = 128;
 pub(super) const RINGBUF_ELEM_SIZE: usize = 32;

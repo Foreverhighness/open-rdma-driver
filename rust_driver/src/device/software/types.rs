@@ -1,8 +1,8 @@
 use super::logic::BlueRdmaLogicError;
 use super::packet::{Immediate, PacketError, AETH, BTH, RDMA_PAYLOAD_ALIGNMENT, RETH};
 use crate::device::{
-    DescSge, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescOpcode,
-    ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType,
+    DescSge, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescOpcode, ToHostWorkRbDescAethCode,
+    ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType,
 };
 use crate::types::{MemAccessTypeFlag, Psn, QpType};
 
@@ -277,10 +277,7 @@ impl RdmaGeneralMeta {
     }
 
     pub(crate) fn is_read_request(&self) -> bool {
-        matches!(
-            self.common_meta.opcode,
-            ToHostWorkRbDescOpcode::RdmaReadRequest
-        )
+        matches!(self.common_meta.opcode, ToHostWorkRbDescOpcode::RdmaReadRequest)
     }
 
     pub(crate) fn has_payload(&self) -> bool {
@@ -452,9 +449,7 @@ impl SGList {
             if self.data[current_level].len >= length {
                 let addr = self.data[current_level].addr as *mut u8;
                 payload.add(addr, length as usize);
-                self.data[current_level].addr = self.data[current_level]
-                    .addr
-                    .wrapping_add(u64::from(length));
+                self.data[current_level].addr = self.data[current_level].addr.wrapping_add(u64::from(length));
                 self.data[current_level].len -= length;
                 if self.data[current_level].len == 0 {
                     current_level += 1;
@@ -484,9 +479,7 @@ impl SGList {
     }
 
     #[cfg(test)]
-    pub(crate) fn into_four_sges(
-        self,
-    ) -> (DescSge, Option<DescSge>, Option<DescSge>, Option<DescSge>) {
+    pub(crate) fn into_four_sges(self) -> (DescSge, Option<DescSge>, Option<DescSge>, Option<DescSge>) {
         use crate::types::Key;
 
         let sge1 = (self.len > 1).then(|| DescSge {
@@ -606,7 +599,8 @@ impl ToCardWriteDescriptor {
 
     pub(crate) fn write_last_opcode_with_imm(&self) -> (ToHostWorkRbDescOpcode, Option<u32>) {
         match (self.is_last, self.is_resp(), self.has_imm()) {
-            (true, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseLast, None), /* ignore read response last with imm */
+            (true, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseLast, None), /* ignore read response last
+                                                                                       * with imm */
             (true, false, true) => (ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate, self.imm),
             (true, false, false) => (ToHostWorkRbDescOpcode::RdmaWriteLast, None),
             (false, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseMiddle, None),
@@ -644,16 +638,14 @@ impl From<Box<ToCardWorkRbDesc>> for ToCardDescriptor {
                 common: desc.common,
                 sge: SGList::new_with_sge(desc.sge),
             }),
-            ToCardWorkRbDesc::WriteWithImm(desc) => {
-                ToCardDescriptor::Write(ToCardWriteDescriptor {
-                    opcode: ToCardWorkRbDescOpcode::WriteWithImm,
-                    common: desc.common,
-                    is_first: desc.is_first,
-                    is_last: desc.is_last,
-                    imm: Some(desc.imm),
-                    sg_list: SGList::new_with_sge_list(desc.sge0, desc.sge1, desc.sge2, desc.sge3),
-                })
-            }
+            ToCardWorkRbDesc::WriteWithImm(desc) => ToCardDescriptor::Write(ToCardWriteDescriptor {
+                opcode: ToCardWorkRbDescOpcode::WriteWithImm,
+                common: desc.common,
+                is_first: desc.is_first,
+                is_last: desc.is_last,
+                imm: Some(desc.imm),
+                sg_list: SGList::new_with_sge_list(desc.sge0, desc.sge1, desc.sge2, desc.sge3),
+            }),
             ToCardWorkRbDesc::ReadResp(desc) => ToCardDescriptor::Write(ToCardWriteDescriptor {
                 opcode: ToCardWorkRbDescOpcode::ReadResp,
                 common: desc.common,

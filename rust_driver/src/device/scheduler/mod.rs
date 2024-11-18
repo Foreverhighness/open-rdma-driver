@@ -32,11 +32,7 @@ impl SealedDesc {
     }
 
     /// reorder a descripotr
-    #[allow(
-        clippy::arithmetic_side_effects,
-        clippy::indexing_slicing,
-        clippy::unwrap_used
-    )] // it should only used for testing, so panic is fine
+    #[allow(clippy::arithmetic_side_effects, clippy::indexing_slicing, clippy::unwrap_used)] // it should only used for testing, so panic is fine
     pub fn reorder(&self, idx_map: Vec<i32>) -> Vec<SealedDesc> {
         let mut results = vec![];
         if let ToCardWorkRbDesc::Write(desc) = &*self.0 {
@@ -239,11 +235,7 @@ impl<Strat: SchedulerStrategy> DescriptorScheduler<Strat> {
         }
     }
 
-    pub(crate) fn new_with_software(
-        strategy: Strat,
-        device: Arc<BlueRDMALogic>,
-        scheduler_size: u32,
-    ) -> Self {
+    pub(crate) fn new_with_software(strategy: Strat, device: Arc<BlueRDMALogic>, scheduler_size: u32) -> Self {
         let (sender, receiver) = unbounded();
         let thread_receiver: Receiver<Box<ToCardWorkRbDesc>> = receiver.clone();
         let stop_flag = Arc::new(AtomicBool::new(false));
@@ -293,10 +285,7 @@ impl<Strat: SchedulerStrategy> Drop for DescriptorScheduler<Strat> {
         self.stop_flag.store(true, Ordering::Relaxed);
         if let Some(thread) = self.thread_handler.take() {
             if let Err(e) = thread.join() {
-                panic!(
-                    "{}",
-                    format!("DescriptorScheduler thread join failed: {e:?}")
-                );
+                panic!("{}", format!("DescriptorScheduler thread join failed: {e:?}"));
             }
         }
     }
@@ -358,8 +347,7 @@ fn get_to_card_desc_common(desc: &ToCardWorkRbDesc) -> &ToCardWorkRbDescCommon {
 }
 
 // We allow indexing_slicing because
-// * `new_sgl_level` will always smaller than `origin_sgl` sgl level, which is less than
-//   `MAX_SGL_LENGTH`
+// * `new_sgl_level` will always smaller than `origin_sgl` sgl level, which is less than `MAX_SGL_LENGTH`
 // * `current_level` won't be greater than `origin_sgl.len`, which is less than `MAX_SGL_LENGTH`
 #[allow(clippy::indexing_slicing, clippy::arithmetic_side_effects)]
 fn cut_from_sgl(mut length: u32, origin_sgl: &mut SGList) -> SGList {
@@ -377,11 +365,8 @@ fn cut_from_sgl(mut length: u32, origin_sgl: &mut SGList) -> SGList {
                 key: origin_sgl.data[current_level].key,
             };
             new_sgl.len = new_sgl_level as u32 + 1;
-            origin_sgl.data[current_level].addr = origin_sgl.data[current_level]
-                .addr
-                .wrapping_add(u64::from(length));
-            origin_sgl.data[current_level].len =
-                origin_sgl.data[current_level].len.wrapping_sub(length);
+            origin_sgl.data[current_level].addr = origin_sgl.data[current_level].addr.wrapping_add(u64::from(length));
+            origin_sgl.data[current_level].len = origin_sgl.data[current_level].len.wrapping_sub(length);
             if origin_sgl.data[current_level].len == 0 {
                 current_level += 1;
             }
@@ -413,10 +398,7 @@ fn get_total_len(desc: &ToCardWorkRbDesc) -> u32 {
 
 /// Split the descriptor into multiple descriptors if it is greater than the `scheduler_size` size.
 #[allow(clippy::linkedlist)]
-pub(crate) fn split_descriptor(
-    desc: Box<ToCardWorkRbDesc>,
-    scheduler_size: u32,
-) -> LinkedList<SealedDesc> {
+pub(crate) fn split_descriptor(desc: Box<ToCardWorkRbDesc>, scheduler_size: u32) -> LinkedList<SealedDesc> {
     let is_read = matches!(*desc, ToCardWorkRbDesc::Read(_));
     let total_len = get_total_len(&desc);
     #[allow(clippy::cast_possible_truncation)]
@@ -431,9 +413,7 @@ pub(crate) fn split_descriptor(
         ToCardWorkRbDesc::Write(req) | ToCardWorkRbDesc::ReadResp(req) => {
             (req.common.raddr, req.common.pmtu, req.common.psn, req.sge0)
         }
-        ToCardWorkRbDesc::WriteWithImm(req) => {
-            (req.common.raddr, req.common.pmtu, req.common.psn, req.sge0)
-        }
+        ToCardWorkRbDesc::WriteWithImm(req) => (req.common.raddr, req.common.pmtu, req.common.psn, req.sge0),
     };
 
     let mut sg_list = SGList::new_from_sge(sge);
@@ -538,8 +518,8 @@ mod test {
     use super::{SGList, MAX_SGL_LENGTH};
     use crate::device::ringbuf::{CsrWriterAdaptor, Ringbuf};
     use crate::device::{
-        DescSge, DeviceError, ToCardRb, ToCardWorkRbDesc, ToCardWorkRbDescCommon,
-        ToCardWorkRbDescWrite, ToCardWorkRbDescWriteWithImm,
+        DescSge, DeviceError, ToCardRb, ToCardWorkRbDesc, ToCardWorkRbDescCommon, ToCardWorkRbDescWrite,
+        ToCardWorkRbDescWriteWithImm,
     };
     use crate::types::{Key, Msn, Qpn, WorkReqSendFlag};
     use crate::utils::Buffer;
@@ -551,9 +531,7 @@ mod test {
 
     impl SGListBuilder {
         pub(crate) fn new() -> Self {
-            SGListBuilder {
-                sg_list: Vec::new(),
-            }
+            SGListBuilder { sg_list: Vec::new() }
         }
 
         pub(crate) fn with_sge(&mut self, addr: u64, len: u32, key: Key) -> &mut Self {
@@ -591,9 +569,7 @@ mod test {
 
     #[test]
     fn test_cut_from_sgl() {
-        let mut sgl = SGListBuilder::new()
-            .with_sge(0, 1024, Key::default())
-            .build();
+        let mut sgl = SGListBuilder::new().with_sge(0, 1024, Key::default()).build();
         let new_sgl = super::cut_from_sgl(512, &mut sgl);
         assert_eq!(new_sgl.len, 1);
         assert_eq!(new_sgl.data[0].len, 512);
@@ -635,16 +611,8 @@ mod test {
         let strategy = super::round_robin::RoundRobinStrategy::new();
         let buffer = Buffer::new(4096, false).unwrap();
         let proxy = Proxy::default();
-        let ringbuf = Mutex::new(Ringbuf::<Proxy, Buffer, 128, 32, 4096>::new(
-            proxy.clone(),
-            buffer,
-        ));
-        let scheduler = Arc::new(super::DescriptorScheduler::new(
-            strategy,
-            ringbuf,
-            None,
-            1024 * 32,
-        ));
+        let ringbuf = Mutex::new(Ringbuf::<Proxy, Buffer, 128, 32, 4096>::new(proxy.clone(), buffer));
+        let scheduler = Arc::new(super::DescriptorScheduler::new(strategy, ringbuf, None, 1024 * 32));
         let desc = ToCardWorkRbDesc::Write(ToCardWorkRbDescWrite {
             common: ToCardWorkRbDescCommon {
                 total_len: length,

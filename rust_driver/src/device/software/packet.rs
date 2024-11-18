@@ -6,8 +6,7 @@ use std::net::Ipv4Addr;
 use thiserror::Error;
 
 use super::types::{
-    AethHeader, Metadata, PayloadInfo, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon,
-    RethHeader,
+    AethHeader, Metadata, PayloadInfo, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon, RethHeader,
 };
 use crate::device::{ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescTransType};
 use crate::types::QpType;
@@ -96,13 +95,8 @@ impl BTH {
         u32::from_be_bytes([0, self.psn[1], self.psn[2], self.psn[3]])
     }
 
-    pub(crate) fn set_opcode_and_type(
-        &mut self,
-        opcode: ToHostWorkRbDescOpcode,
-        tran_type: ToHostWorkRbDescTransType,
-    ) {
-        self.tran_type_and_opcode =
-            (tran_type as u8) << BTH_TRANSACTION_TYPE_SHIFT | (opcode as u8);
+    pub(crate) fn set_opcode_and_type(&mut self, opcode: ToHostWorkRbDescOpcode, tran_type: ToHostWorkRbDescTransType) {
+        self.tran_type_and_opcode = (tran_type as u8) << BTH_TRANSACTION_TYPE_SHIFT | (opcode as u8);
     }
 
     pub(crate) fn set_flags_solicited(&mut self, is_solicited: bool) {
@@ -115,8 +109,7 @@ impl BTH {
 
     #[allow(clippy::cast_possible_truncation)]
     pub(crate) fn set_pad_cnt(&mut self, pad_cnt: usize) {
-        self.flags =
-            (self.flags & !BTH_FLAGS_PAD_CNT_MASK) | ((pad_cnt as u8) << BTH_FLAGS_PAD_CNT_SHIFT);
+        self.flags = (self.flags & !BTH_FLAGS_PAD_CNT_MASK) | ((pad_cnt as u8) << BTH_FLAGS_PAD_CNT_SHIFT);
     }
 
     pub(crate) fn set_pkey(&mut self, pkey: u16) {
@@ -147,11 +140,7 @@ impl BTH {
     }
 
     /// convert the &`RdmaMessageMetaCommon` to `BTH`
-    pub(crate) fn set_from_common_meta(
-        &mut self,
-        common_meta: &RdmaMessageMetaCommon,
-        pad_cnt: usize,
-    ) {
+    pub(crate) fn set_from_common_meta(&mut self, common_meta: &RdmaMessageMetaCommon, pad_cnt: usize) {
         self.set_opcode_and_type(common_meta.opcode.clone(), common_meta.tran_type);
         self.set_flags_solicited(common_meta.solicited);
         self.set_pad_cnt(pad_cnt);
@@ -305,9 +294,7 @@ impl RdmaPacketHeader for RdmaHeaderReqBthReth {
             .bth
             .get_packet_real_length(buf_size.wrapping_sub(size_of::<Self>()));
         Ok(RdmaMessage {
-            meta_data: Metadata::General(RdmaGeneralMeta::new_from_packet(
-                &self.bth, &self.reth, None, None,
-            )?),
+            meta_data: Metadata::General(RdmaGeneralMeta::new_from_packet(&self.bth, &self.reth, None, None)?),
             payload: PayloadInfo::new_with_data(self.get_data_ptr(), payload_length),
         })
     }
@@ -355,10 +342,7 @@ impl RdmaPacketHeader for RdmaHeaderReqBthDoubleReth {
                 self.bth
                     .set_from_common_meta(&header.common_meta, message.payload.get_pad_cnt());
                 self.reth.set_from_reth_header(&header.reth);
-                let sec_reth = header
-                    .secondary_reth
-                    .as_ref()
-                    .ok_or(PacketError::InvalidMetadataType)?;
+                let sec_reth = header.secondary_reth.as_ref().ok_or(PacketError::InvalidMetadataType)?;
                 self.secondary_reth.set_from_reth_header(sec_reth);
                 Ok(size_of::<Self>())
             }
@@ -397,8 +381,7 @@ impl RdmaPacketHeader for RdmaHeaderReqBthRethImm {
                 self.bth
                     .set_from_common_meta(&header.common_meta, message.payload.get_pad_cnt());
                 self.reth.set_from_reth_header(&header.reth);
-                self.imm
-                    .set(header.imm.ok_or(PacketError::InvalidMetadataType)?);
+                self.imm.set(header.imm.ok_or(PacketError::InvalidMetadataType)?);
                 Ok(size_of::<Self>())
             }
             Metadata::Acknowledge(_) => Err(PacketError::InvalidMetadataType),

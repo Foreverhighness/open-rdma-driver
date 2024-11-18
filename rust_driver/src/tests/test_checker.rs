@@ -13,8 +13,8 @@ use crate::buf::{PacketBuf, RDMA_ACK_BUFFER_SLOT_SIZE};
 use crate::checker::{PacketCheckEvent, PacketCheckerContext, RecvContextMap};
 use crate::device::layout::Aeth;
 use crate::device::{
-    ToCardCtrlRbDesc, ToCardWorkRbDesc, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon,
-    ToHostWorkRbDescRead, ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
+    ToCardCtrlRbDesc, ToCardWorkRbDesc, ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon, ToHostWorkRbDescRead,
+    ToHostWorkRbDescWriteOrReadResp, ToHostWorkRbDescWriteType,
 };
 use crate::op_ctx::CtrlOpCtx;
 use crate::qp::{QpContext, QpStatus};
@@ -607,24 +607,10 @@ fn test_checker_multiple_later_msn_come_first() {
     // msn = 0, psn = 5,expected_psn=12,last,try_resume,send ack
     construct_context!(context, device, qpn = 0x1234);
 
-    make_ref_packet_event!(
-        packet_ref1,
-        qpn,
-        start_psn = 0,
-        msn = 0,
-        addr = 0u32,
-        len = 4096 * 6
-    );
+    make_ref_packet_event!(packet_ref1, qpn, start_psn = 0, msn = 0, addr = 0u32, len = 4096 * 6);
 
     let mut packets = generate_range_of_packet(packet_ref1, Pmtu::Mtu4096);
-    make_ref_packet_event!(
-        packet_ref2,
-        qpn,
-        start_psn = 6,
-        msn = 1,
-        addr = 0u32,
-        len = 4096 * 6
-    );
+    make_ref_packet_event!(packet_ref2, qpn, start_psn = 6, msn = 1, addr = 0u32, len = 4096 * 6);
     packets.extend(generate_range_of_packet(packet_ref2, Pmtu::Mtu4096));
 
     assert_eq!(packets.len(), 12);
@@ -660,33 +646,12 @@ fn test_checker_multiple_later_msn_come_first() {
 fn test_checker_multiple_msn() {
     construct_context!(context, device, qpn = 0x1234);
 
-    make_ref_packet_event!(
-        packet_ref1,
-        qpn,
-        start_psn = 0,
-        msn = 1,
-        addr = 0u32,
-        len = 4096 * 6
-    );
+    make_ref_packet_event!(packet_ref1, qpn, start_psn = 0, msn = 1, addr = 0u32, len = 4096 * 6);
 
     let mut packets = generate_range_of_packet(packet_ref1, Pmtu::Mtu4096);
-    make_ref_packet_event!(
-        packet_ref2,
-        qpn,
-        start_psn = 6,
-        msn = 2,
-        addr = 0u32,
-        len = 4096 * 6
-    );
+    make_ref_packet_event!(packet_ref2, qpn, start_psn = 6, msn = 2, addr = 0u32, len = 4096 * 6);
     packets.extend(generate_range_of_packet(packet_ref2, Pmtu::Mtu4096));
-    make_ref_packet_event!(
-        packet_ref3,
-        qpn,
-        start_psn = 12,
-        msn = 3,
-        addr = 0u32,
-        len = 4096 * 6
-    );
+    make_ref_packet_event!(packet_ref3, qpn, start_psn = 12, msn = 3, addr = 0u32, len = 4096 * 6);
     packets.extend(generate_range_of_packet(packet_ref3, Pmtu::Mtu4096));
     assert_eq!(packets.len(), 18);
     // msn = 1, psn = 0, expected_psn=0,[first],5 pkts
@@ -767,9 +732,7 @@ impl MockCtrlDescSender {
 
 fn check_aeth_code(desc: &ToCardWorkRbDesc) -> Option<ToHostWorkRbDescAethCode> {
     if let ToCardWorkRbDesc::WriteWithImm(ref raw) = *desc {
-        let buf = &unsafe {
-            from_raw_parts(raw.sge0.addr as *const u8, raw.sge0.len.try_into().unwrap())
-        }[54..];
+        let buf = &unsafe { from_raw_parts(raw.sge0.addr as *const u8, raw.sge0.len.try_into().unwrap()) }[54..];
         let aeth_header = Aeth(buf);
         let code = aeth_header.get_aeth_code() as u8;
         Some(ToHostWorkRbDescAethCode::try_from(code).unwrap())
@@ -864,14 +827,12 @@ fn generate_range_of_packet(ref_pkt: PacketCheckEvent, pmtu: Pmtu) -> Vec<Packet
                 desc.len = length
             } else if i == count - 1 {
                 desc.write_type = ToHostWorkRbDescWriteType::Last;
-                desc.addr =
-                    start_addr - (start_addr % u64::from(&pmtu)) + i as u64 * u64::from(&pmtu);
+                desc.addr = start_addr - (start_addr % u64::from(&pmtu)) + i as u64 * u64::from(&pmtu);
                 let first_pkt_length = get_first_packet_max_length(start_addr, u32::from(&pmtu));
                 desc.len = (length - first_pkt_length) % u32::from(&pmtu);
             } else {
                 desc.write_type = ToHostWorkRbDescWriteType::Middle;
-                desc.addr =
-                    start_addr - (start_addr % u64::from(&pmtu)) + i as u64 * u64::from(&pmtu);
+                desc.addr = start_addr - (start_addr % u64::from(&pmtu)) + i as u64 * u64::from(&pmtu);
                 desc.len = u32::from(&pmtu);
             }
             desc.psn = start_psn.wrapping_add(i);
@@ -884,13 +845,7 @@ fn generate_range_of_packet(ref_pkt: PacketCheckEvent, pmtu: Pmtu) -> Vec<Packet
 }
 
 fn check_qp_status(ctx: &PacketCheckerContext, qpn: Qpn, status: QpStatus) {
-    let qp_status = ctx
-        .qp_table
-        .read()
-        .get(&qpn)
-        .unwrap()
-        .status
-        .load(Ordering::Acquire);
+    let qp_status = ctx.qp_table.read().get(&qpn).unwrap().status.load(Ordering::Acquire);
     assert_eq!(qp_status, status);
 }
 

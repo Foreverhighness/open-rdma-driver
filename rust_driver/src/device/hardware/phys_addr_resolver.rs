@@ -41,14 +41,7 @@ impl PhysAddrResolver {
         if ret < 0 {
             error!("lseek failed :{:?}", io::Error::last_os_error());
         }
-        if unsafe {
-            libc::read(
-                pagemap_fd,
-                &data as *const _ as *mut libc::c_void,
-                size_of::<u64>(),
-            )
-        } != 8
-        {
+        if unsafe { libc::read(pagemap_fd, &data as *const _ as *mut libc::c_void, size_of::<u64>()) } != 8 {
             error!("read failed");
             return None;
         }

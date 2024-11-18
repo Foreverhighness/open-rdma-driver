@@ -8,12 +8,10 @@ use eui48::MacAddress;
 use log::{debug, info};
 use open_rdma_driver::qp::QpManager;
 use open_rdma_driver::types::{
-    Key, MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
-    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
+    Key, MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam, RdmaDeviceNetworkParamBuilder, Sge,
+    WorkReqSendFlag, PAGE_SIZE,
 };
-use open_rdma_driver::{
-    Device, DeviceConfigBuilder, DeviceType, MmapMemory, Mr, Pd, RetryConfig, RoundRobinStrategy,
-};
+use open_rdma_driver::{Device, DeviceConfigBuilder, DeviceType, MmapMemory, Mr, Pd, RetryConfig, RoundRobinStrategy};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
@@ -21,8 +19,8 @@ use crate::common::init_logging;
 
 const BUFFER_LENGTH: usize = 1024 * 1024 * 128;
 const RAND_SEED: [u8; 32] = [
-    0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef,
-    0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef,
+    0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe,
+    0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef, 0xbe, 0xef,
 ];
 
 mod common;

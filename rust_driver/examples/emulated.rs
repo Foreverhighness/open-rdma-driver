@@ -8,8 +8,8 @@ use eui48::MacAddress;
 use log::info;
 use open_rdma_driver::qp::QpManager;
 use open_rdma_driver::types::{
-    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam,
-    RdmaDeviceNetworkParamBuilder, Sge, WorkReqSendFlag, PAGE_SIZE,
+    MemAccessTypeFlag, Pmtu, QpBuilder, QpType, Qpn, RdmaDeviceNetworkParam, RdmaDeviceNetworkParamBuilder, Sge,
+    WorkReqSendFlag, PAGE_SIZE,
 };
 use open_rdma_driver::{
     AlignedMemory, Device, DeviceConfigBuilder, DeviceType, Mr, Pd, RetryConfig, RoundRobinStrategy,
@@ -57,11 +57,7 @@ fn init_global_allocator() {
         }
     }
     unsafe {
-        let shm_fd = libc::shm_open(
-            SHM_PATH.as_ptr() as *const libc::c_char,
-            libc::O_RDWR,
-            0o600,
-        );
+        let shm_fd = libc::shm_open(SHM_PATH.as_ptr() as *const libc::c_char, libc::O_RDWR, 0o600);
         if shm_fd == -1 {
             libc::exit(shm_fd);
         }
@@ -175,10 +171,8 @@ fn main() {
         .macaddr(MacAddress::new([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]))
         .build()
         .unwrap();
-    let (dev_a, _pd_a, mr_a, mut mr_buffer_a) =
-        create_and_init_card(0, "0.0.0.0:9873", qpn, a_network, &b_network);
-    let (_dev_b, _pd_b, mr_b, mut mr_buffer_b) =
-        create_and_init_card(1, "0.0.0.0:9875", qpn, b_network, &a_network);
+    let (dev_a, _pd_a, mr_a, mut mr_buffer_a) = create_and_init_card(0, "0.0.0.0:9873", qpn, a_network, &b_network);
+    let (_dev_b, _pd_b, mr_b, mut mr_buffer_b) = create_and_init_card(1, "0.0.0.0:9875", qpn, b_network, &a_network);
 
     let dpqn = qpn;
     for (idx, item) in mr_buffer_a.as_mut().iter_mut().enumerate() {
@@ -206,10 +200,7 @@ fn main() {
 
     let _ = ctx1.wait();
     sleep(Duration::from_secs(1));
-    assert_eq!(
-        mr_buffer_a.as_ref()[0..SEND_CNT],
-        mr_buffer_b.as_ref()[0..SEND_CNT]
-    );
+    assert_eq!(mr_buffer_a.as_ref()[0..SEND_CNT], mr_buffer_b.as_ref()[0..SEND_CNT]);
     info!("write success");
 
     // // test read

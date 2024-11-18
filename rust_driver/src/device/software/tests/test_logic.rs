@@ -58,20 +58,13 @@ fn test_logic_send() {
             .with_pmtu(Pmtu::Mtu1024)
             .with_psn(1234)
             .with_dqpn(12)
-            .with_sg_list(
-                SGListBuilder::new()
-                    .with_sge(0x1000, 512, 0x1234_u32)
-                    .build(),
-            )
+            .with_sg_list(SGListBuilder::new().with_sge(0x1000, 512, 0x1234_u32).build())
             .build();
 
         logic.send(desc).unwrap();
         assert_eq!(agent.message.borrow().len(), 1);
         let message = agent.message.borrow_mut().pop_front().unwrap();
-        assert_eq!(
-            message.meta_data.get_opcode(),
-            ToHostWorkRbDescOpcode::RdmaWriteOnly
-        );
+        assert_eq!(message.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteOnly);
         assert_eq!(message.payload.get_length(), 512);
         assert_eq!(message.payload.get_sg_list()[0].data as u64, 0x1000);
     }
@@ -96,16 +89,10 @@ fn test_logic_send() {
         logic.send(desc).unwrap();
         assert_eq!(agent.message.borrow().len(), 2);
         let message1 = agent.message.borrow_mut().pop_front().unwrap();
-        assert_eq!(
-            message1.meta_data.get_opcode(),
-            ToHostWorkRbDescOpcode::RdmaWriteFirst
-        );
+        assert_eq!(message1.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteFirst);
         assert_eq!(message1.payload.get_length(), 512);
         let message2 = agent.message.borrow_mut().pop_front().unwrap();
-        assert_eq!(
-            message2.meta_data.get_opcode(),
-            ToHostWorkRbDescOpcode::RdmaWriteLast
-        );
+        assert_eq!(message2.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteLast);
         assert_eq!(message2.payload.get_length(), 512);
     }
 
@@ -120,11 +107,7 @@ fn test_logic_send() {
             .with_pmtu(Pmtu::Mtu1024)
             .with_psn(1234)
             .with_dqpn(12)
-            .with_sg_list(
-                SGListBuilder::new()
-                    .with_sge(0x1000, 4096, 0x1234_u32)
-                    .build(),
-            )
+            .with_sg_list(SGListBuilder::new().with_sge(0x1000, 4096, 0x1234_u32).build())
             .build();
         logic.send(desc).unwrap();
         assert_eq!(agent.message.borrow().len(), 5);
@@ -171,11 +154,7 @@ fn test_logic_send() {
             .with_pmtu(Pmtu::Mtu1024)
             .with_psn(1234)
             .with_dqpn(12)
-            .with_sg_list(
-                SGListBuilder::new()
-                    .with_sge(0x1000, 4096, 0x1234_u32)
-                    .build(),
-            )
+            .with_sg_list(SGListBuilder::new().with_sge(0x1000, 4096, 0x1234_u32).build())
             .build();
         logic.send(desc).unwrap();
         assert_eq!(agent.message.borrow().len(), 5);
@@ -229,11 +208,7 @@ fn test_logic_send() {
             .with_psn(1234)
             .with_imm(0x1234)
             .with_dqpn(12)
-            .with_sg_list(
-                SGListBuilder::new()
-                    .with_sge(0x1000, 20, 0x1234_u32)
-                    .build(),
-            )
+            .with_sg_list(SGListBuilder::new().with_sge(0x1000, 20, 0x1234_u32).build())
             .build();
         logic.send(desc).unwrap();
         assert_eq!(agent.message.borrow().len(), 1);
@@ -260,19 +235,12 @@ fn test_logic_send() {
             .with_pmtu(Pmtu::Mtu1024)
             .with_psn(1234)
             .with_dqpn(12)
-            .with_sg_list(
-                SGListBuilder::new()
-                    .with_sge(0x1000, 1024, 4567_u32)
-                    .build(),
-            )
+            .with_sg_list(SGListBuilder::new().with_sge(0x1000, 1024, 4567_u32).build())
             .build();
         logic.send(desc).unwrap();
         assert_eq!(agent.message.borrow().len(), 1);
         let message = agent.message.borrow_mut().pop_front().unwrap();
-        assert_eq!(
-            message.meta_data.get_opcode(),
-            ToHostWorkRbDescOpcode::RdmaReadRequest
-        );
+        assert_eq!(message.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaReadRequest);
         match message.meta_data {
             Metadata::General(meta) => {
                 assert_eq!(meta.reth.va, 0);
@@ -298,11 +266,7 @@ fn test_logic_send() {
             .with_psn(0)
             .with_dqpn(12)
             .with_is_last(false)
-            .with_sg_list(
-                SGListBuilder::new()
-                    .with_sge(0, 1024 * 32, 0x1234_u32)
-                    .build(),
-            )
+            .with_sg_list(SGListBuilder::new().with_sge(0, 1024 * 32, 0x1234_u32).build())
             .build();
         let desc2 = ToCardWorkRbDescBuilder::default()
             .with_opcode(ToCardWorkRbDescOpcode::Write)
@@ -313,21 +277,14 @@ fn test_logic_send() {
             .with_psn(8)
             .with_dqpn(12)
             .with_is_first(false)
-            .with_sg_list(
-                SGListBuilder::new()
-                    .with_sge(0, 1024 * 32, 0x1234_u32)
-                    .build(),
-            )
+            .with_sg_list(SGListBuilder::new().with_sge(0, 1024 * 32, 0x1234_u32).build())
             .build();
         logic.send(desc1).unwrap();
         logic.send(desc2).unwrap();
         assert_eq!(agent.message.borrow().len(), 16);
 
         let message = agent.message.borrow_mut().pop_front().unwrap();
-        assert_eq!(
-            message.meta_data.get_opcode(),
-            ToHostWorkRbDescOpcode::RdmaWriteFirst
-        );
+        assert_eq!(message.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteFirst);
         assert_eq!(message.payload.get_length(), 4096);
         let meta = match message.meta_data {
             Metadata::General(meta) => meta,
@@ -339,19 +296,13 @@ fn test_logic_send() {
         assert_eq!(meta.reth.rkey.get(), 1234);
         for i in 1..15 {
             let message = agent.message.borrow_mut().pop_front().unwrap();
-            assert_eq!(
-                message.meta_data.get_opcode(),
-                ToHostWorkRbDescOpcode::RdmaWriteMiddle
-            );
+            assert_eq!(message.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteMiddle);
             assert_eq!(message.meta_data.common_meta().psn.get(), i,);
             assert_eq!(message.payload.get_length(), 4096);
         }
 
         let message = agent.message.borrow_mut().pop_front().unwrap();
-        assert_eq!(
-            message.meta_data.get_opcode(),
-            ToHostWorkRbDescOpcode::RdmaWriteLast
-        );
+        assert_eq!(message.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteLast);
         assert_eq!(message.meta_data.common_meta().psn.get(), 15,);
         assert_eq!(message.payload.get_length(), 1024 * 4);
     }
@@ -377,20 +328,13 @@ fn test_logic_send() {
             .with_psn(1)
             .with_dqpn(12)
             .with_is_first(false)
-            .with_sg_list(
-                SGListBuilder::new()
-                    .with_sge(1024 * 32, 1024 * 32, 0x1234_u32)
-                    .build(),
-            )
+            .with_sg_list(SGListBuilder::new().with_sge(1024 * 32, 1024 * 32, 0x1234_u32).build())
             .build();
         logic.send(desc1).unwrap();
         logic.send(desc2).unwrap();
         assert_eq!(agent.message.borrow().len(), 9);
         let message = agent.message.borrow_mut().pop_front().unwrap();
-        assert_eq!(
-            message.meta_data.get_opcode(),
-            ToHostWorkRbDescOpcode::RdmaWriteFirst
-        );
+        assert_eq!(message.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteFirst);
         assert_eq!(message.meta_data.common_meta().psn.get(), 0,);
         assert_eq!(message.payload.get_length(), 1024);
         let meta = match message.meta_data {
@@ -402,19 +346,13 @@ fn test_logic_send() {
         assert_eq!(meta.reth.rkey.get(), 1234);
         for i in 1..8 {
             let message = agent.message.borrow_mut().pop_front().unwrap();
-            assert_eq!(
-                message.meta_data.get_opcode(),
-                ToHostWorkRbDescOpcode::RdmaWriteMiddle
-            );
+            assert_eq!(message.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteMiddle);
             assert_eq!(message.meta_data.common_meta().psn.get(), i,);
             assert_eq!(message.payload.get_length(), 4096);
         }
 
         let message = agent.message.borrow_mut().pop_front().unwrap();
-        assert_eq!(
-            message.meta_data.get_opcode(),
-            ToHostWorkRbDescOpcode::RdmaWriteLast
-        );
+        assert_eq!(message.meta_data.get_opcode(), ToHostWorkRbDescOpcode::RdmaWriteLast);
         assert_eq!(message.meta_data.common_meta().psn.get(), 8);
         assert_eq!(message.payload.get_length(), 1024 * 4);
     }
