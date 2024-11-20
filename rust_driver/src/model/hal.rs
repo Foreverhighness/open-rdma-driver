@@ -5,7 +5,7 @@
 //! For conceptional model, we may not need this.
 
 use super::address::{BlueRdmaPhysicalAddress, CPUVirtualAddress, HardwareAddress};
-pub(super) unsafe trait BlueHal<HA: HardwareAddress = BlueRdmaPhysicalAddress>
+pub(super) unsafe trait KernelFunctional<HA: HardwareAddress = BlueRdmaPhysicalAddress>
 where
     Self: Sized,
 {

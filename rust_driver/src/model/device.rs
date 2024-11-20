@@ -18,6 +18,10 @@ pub(super) trait NicDevice {}
 ///
 /// Hide enough hardware details while providing a simple and stable interface to the `Driver` layer.
 ///
+/// I want hide
+///     1. protocol detail: how packet assembled
+///     2. DMA access: I want device layer to use `HardwareAddress`, `Driver` layer only see `CPUVirtualAddress`
+///
 /// # Design options
 ///
 /// 1. Design the interface by using hardware knowledge.
@@ -27,17 +31,20 @@ pub(super) trait NicDevice {}
 /// 2. Design the hierarchy by separate dependencies.
 ///   For example, only one of the `Driver` or `Device` layers should be directly dependent on `Scheduler` module, and
 /// the same for the `DMAAllocator` module.
-
 /// Is `NicDevice` need? for `RoCEv2` device, maybe we just need an `UdpAgent`.
 /// trait BlueRdmaDevice<HAL: BlueHal, NIC: UdpAgent> {}
 pub(super) trait BlueRdmaDevice<NIC: NicDevice> {}
 
-/// An blue RDMA device instance.
-pub(super) struct BlueRdmaDeviceInstance;
-/// Assume this instance can support `NicDevice` functionality.
-impl NicDevice for BlueRdmaDeviceInstance {}
-/// This instance rely on itself's `NicDevice` functionality.
-impl BlueRdmaDevice<Self> for BlueRdmaDeviceInstance {}
+mod example {
+    use super::*;
+
+    /// An blue RDMA device instance.
+    pub(super) struct BlueRdmaDeviceInstance;
+    /// Assume this instance can support `NicDevice` functionality.
+    impl NicDevice for BlueRdmaDeviceInstance {}
+    /// This instance rely on itself's `NicDevice` functionality.
+    impl BlueRdmaDevice<Self> for BlueRdmaDeviceInstance {}
+}
 
 /// Telemetry for further research
 pub(super) struct BlueRdmaDeviceTelemetry<NIC: NicDevice, DEV: BlueRdmaDevice<NIC>> {
