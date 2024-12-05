@@ -32,45 +32,33 @@ pub(super) trait NicDevice {}
 ///   For example, only one of the `Driver` or `Device` layers should be directly dependent on `Scheduler` module, and
 /// the same for the `DMAAllocator` module.
 /// Is `NicDevice` need? for `RoCEv2` device, maybe we just need an `UdpAgent`.
-/// trait BlueRdmaDevice<HAL: BlueHal, NIC: UdpAgent> {}
-pub(super) trait BlueRdmaDevice<NIC: NicDevice> {}
-
-mod example {
-    use super::*;
-
-    /// An blue RDMA device instance.
-    pub(super) struct BlueRdmaDeviceInstance;
-    /// Assume this instance can support `NicDevice` functionality.
-    impl NicDevice for BlueRdmaDeviceInstance {}
-    /// This instance rely on itself's `NicDevice` functionality.
-    impl BlueRdmaDevice<Self> for BlueRdmaDeviceInstance {}
-}
+/// Answer: `NicDevice` is not necessary, `NicDevice` could be an optional field in struct definition.
+pub(super) trait BlueRdmaDevice {}
 
 mod instance {
     use super::*;
 
     /// Hardware device
     struct Hardware;
-    /// Question: Is it really necessary for the hardware to implement NIC functionality?
-    impl NicDevice for Hardware {}
-    impl BlueRdmaDevice<Self> for Hardware {}
+    impl BlueRdmaDevice for Hardware {}
 
     /// Simulator device
     struct Simulator;
-    /// Question: Same as hardware, simulator may not contains NIC functionality.
-    impl NicDevice for Simulator {}
-    impl BlueRdmaDevice<Self> for Simulator {}
+    impl BlueRdmaDevice for Simulator {}
 
     /// Emulated device
-    struct Emulator;
+    struct Emulator<Nic: NicDevice> {
+        _udp_agent: Nic,
+    }
     /// Only emulator need nic support.
-    struct UpdSender;
-    impl NicDevice for UpdSender {}
-    impl BlueRdmaDevice<UpdSender> for Emulator {}
+    impl BlueRdmaDevice for Emulator<UdpAgent> {}
+
+    /// Support `NicDevice`
+    struct UdpAgent;
+    impl NicDevice for UdpAgent {}
 }
 
 /// Telemetry for further research
-pub(super) struct BlueRdmaDeviceTelemetry<NIC: NicDevice, DEV: BlueRdmaDevice<NIC>> {
-    _nic: PhantomData<NIC>,
-    _rdma_device: PhantomData<DEV>,
+pub(super) struct BlueRdmaDeviceTelemetry<Dev: BlueRdmaDevice> {
+    _rdma_device: PhantomData<Dev>,
 }
