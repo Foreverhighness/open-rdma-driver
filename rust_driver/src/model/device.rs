@@ -46,6 +46,29 @@ mod example {
     impl BlueRdmaDevice<Self> for BlueRdmaDeviceInstance {}
 }
 
+mod instance {
+    use super::*;
+
+    /// Hardware device
+    struct Hardware;
+    /// Question: Is it really necessary for the hardware to implement NIC functionality?
+    impl NicDevice for Hardware {}
+    impl BlueRdmaDevice<Self> for Hardware {}
+
+    /// Simulator device
+    struct Simulator;
+    /// Question: Same as hardware, simulator may not contains NIC functionality.
+    impl NicDevice for Simulator {}
+    impl BlueRdmaDevice<Self> for Simulator {}
+
+    /// Emulated device
+    struct Emulator;
+    /// Only emulator need nic support.
+    struct UpdSender;
+    impl NicDevice for UpdSender {}
+    impl BlueRdmaDevice<UpdSender> for Emulator {}
+}
+
 /// Telemetry for further research
 pub(super) struct BlueRdmaDeviceTelemetry<NIC: NicDevice, DEV: BlueRdmaDevice<NIC>> {
     _nic: PhantomData<NIC>,
