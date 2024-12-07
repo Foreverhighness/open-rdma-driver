@@ -1,5 +1,7 @@
 //! Network components
 
+use thiserror::Error;
+
 pub mod simulator;
 pub mod socket;
 
@@ -21,7 +23,7 @@ pub trait UdpAgent {
     /// This will return an error if `buf.len()` excess the MTU.
     ///
     /// This will return an error when the IP version of the local socket
-    /// does not match that returned from [`ToSocketAddrs`].
+    /// does not match the destination ip address
     fn send_to(&self, buf: &[u8], addr: core::net::IpAddr) -> Result<usize>;
 
     /// Receives a single datagram message. On success, returns the number of bytes read and the origin.
@@ -31,5 +33,8 @@ pub trait UdpAgent {
     fn recv_from(&self, buf: &mut [u8]) -> Result<(usize, core::net::IpAddr)>;
 }
 
-// TODO(fh): fill with `thiserror` crate
-pub enum Error {}
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Ethernet frame is malformed")]
+    MalformedFrame(#[from] smoltcp::wire::Error),
+}

@@ -1,3 +1,7 @@
+//! `Python Server` RPC call wrapper
+
+use core::mem::transmute;
+
 // gcc -O3 -D_FILE_OFFSET_BITS=64 -fPIC -shared -o /usr/lib/libMockHost.so /blue-rdma/src/third_party/MockHost.c
 #[link(name = "MockHost")]
 extern "C" {
@@ -17,7 +21,7 @@ extern "C" {
 pub struct RpcNetIfcRxTxPayload {
     // change type u8 -> u32, so it can be serialize and remain 32 bit align
     pub data: [u32; 16],
-    pub byte_en: [u32; 2],
+    pub byte_en: [u8; 8],
 
     pub reserved: u8, // align to 32 bit
 
@@ -31,12 +35,47 @@ impl RpcNetIfcRxTxPayload {
     pub const fn new() -> Self {
         Self {
             data: [0; 16],
-            byte_en: [0; 2],
+            byte_en: [0; 8],
             reserved: 0,
             _is_first: 0,
             is_last: 0,
             is_valid: 0,
         }
+    }
+
+    /// new request, return generated request and remained buffer
+    pub fn request(buf: &[u8]) -> (Self, &[u8]) {
+        assert!(!buf.is_empty());
+
+        let len = buf.len().min(64);
+        let remainder = &buf[len..];
+        let is_last = if remainder.is_empty() { 1 } else { 0 };
+
+        let mut data = [0; 16];
+
+        // Safety: 32 * 16 == 8 * 64
+        let data_u8 = unsafe { transmute::<_, &mut [u8; 64]>(&mut data) };
+        assert_eq!(core::mem::size_of_val(data_u8), core::mem::size_of_val(&data));
+
+        data_u8[..len].copy_from_slice(&buf[..len]);
+
+        let byte_en = if len == 64 {
+            [u8::MAX; 8]
+        } else {
+            let byte_en: u64 = (1 << len) - 1;
+            byte_en.to_ne_bytes()
+        };
+
+        let request = Self {
+            data,
+            byte_en,
+            reserved: 0,
+            _is_first: 0,
+            is_last,
+            is_valid: 1,
+        };
+
+        (request, remainder)
     }
 }
 
