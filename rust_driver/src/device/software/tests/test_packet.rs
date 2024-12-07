@@ -265,3 +265,25 @@ fn test_pkt_processor_to_buf() {
     assert_eq!(reth.get_rkey(), 0x12345678);
     assert_eq!(reth.get_dlen(), 0x12345678);
 }
+
+#[test]
+fn test_packet_parse() {
+    use smoltcp::wire::pretty_print::PrettyPrinter;
+    use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
+
+    for i in 0..=1 {
+        let filename = &format!("ethernet-frame-{i}.bin");
+        let buffer = std::fs::read(filename).unwrap();
+
+        let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
+        let ipv4_packet = Ipv4Packet::new_checked(eth_frame.payload()).unwrap();
+        let udp_packet = UdpPacket::new_checked(ipv4_packet.payload()).unwrap();
+        println!("{}", PrettyPrinter::print(&eth_frame));
+
+        let payload = udp_packet.payload();
+
+        let msg = PacketProcessor::to_rdma_message(payload).unwrap();
+
+        println!("msg: {msg:?}");
+    }
+}

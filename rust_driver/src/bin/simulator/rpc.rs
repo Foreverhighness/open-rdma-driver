@@ -13,13 +13,16 @@ extern "C" {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, Eq, PartialEq)]
 pub struct RpcNetIfcRxTxPayload {
-    pub data: [u8; 64],
-    pub byte_en: [u8; 8],
+    // change type u8 -> u32, so it can be serialize and remain 32 bit align
+    pub data: [u32; 16],
+    pub byte_en: [u32; 2],
 
     pub reserved: u8, // align to 32 bit
-    pub is_fisrt: u8,
+
+    // `is_first` field is unused, according to <https://github.com/datenlord/blue-rdma/blob/next/src/third_party/MockHost.bsv#L204>
+    pub _is_first: u8,
     pub is_last: u8,
     pub is_valid: u8,
 }
@@ -27,10 +30,10 @@ pub struct RpcNetIfcRxTxPayload {
 impl RpcNetIfcRxTxPayload {
     pub const fn new() -> Self {
         Self {
-            data: [0; 64],
-            byte_en: [0; 8],
+            data: [0; 16],
+            byte_en: [0; 2],
             reserved: 0,
-            is_fisrt: 0,
+            _is_first: 0,
             is_last: 0,
             is_valid: 0,
         }
