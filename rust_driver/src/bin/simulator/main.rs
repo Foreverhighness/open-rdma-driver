@@ -1,5 +1,6 @@
 use core::time::Duration;
 
+mod net;
 mod rpc;
 
 use rpc::*;
