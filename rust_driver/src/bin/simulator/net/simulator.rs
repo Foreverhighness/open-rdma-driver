@@ -9,19 +9,27 @@ use smoltcp::phy::ChecksumCapabilities;
 use smoltcp::wire::{EthernetFrame, EthernetProtocol, Ipv4Packet, Ipv6Packet, UdpPacket, UdpRepr};
 
 use super::{Result, UdpAgent, RDMA_PROT};
-use crate::{c_netIfcGetRxData, RpcNetIfcRxTxPayload};
+use crate::rpc::agent::RpcAgent;
+use crate::rpc::RpcNetIfcRxTxPayload;
 
 /// UdpAgent by using RPC call to communicate with peers
-pub struct Agent {
+pub struct Agent<R: RpcAgent> {
     client_id: u64,
     mac: MacAddress,
     ip: IpAddr,
+
+    rpc: R,
 }
 
-impl Agent {
+impl<R: RpcAgent> Agent<R> {
     /// Create a UDP agent
-    pub const fn new(client_id: u64, mac: MacAddress, ip: IpAddr) -> Self {
-        Self { client_id, mac, ip }
+    pub const fn new(client_id: u64, mac: MacAddress, ip: IpAddr, rpc: R) -> Self {
+        Self {
+            client_id,
+            mac,
+            ip,
+            rpc,
+        }
     }
 
     /// Receive a single ethernet frame buffer from NIC
@@ -31,7 +39,7 @@ impl Agent {
 
         loop {
             unsafe {
-                c_netIfcGetRxData(&raw mut request, self.client_id, 0);
+                self.rpc.c_netIfcGetRxData(&raw mut request, self.client_id, 0);
             }
             let invalid_fragment = request.is_valid == 0;
             if invalid_fragment {
@@ -118,7 +126,7 @@ impl Agent {
     }
 }
 
-impl UdpAgent for Agent {
+impl<R: RpcAgent> UdpAgent for Agent<R> {
     fn send_to(&self, buf: &[u8], addr: IpAddr) -> Result<usize> {
         todo!()
     }

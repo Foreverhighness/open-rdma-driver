@@ -3,14 +3,16 @@ use core::time::Duration;
 mod net;
 mod rpc;
 
-use rpc::*;
+use rpc::agent::{Agent, RpcAgent};
+use rpc::RpcNetIfcRxTxPayload;
 
 fn main() {
+    let rpc = Agent;
     let client_id = 1;
     let _mem_ptr = unsafe {
         std::env::set_var("MOCK_HOST_SERVER_ADDR", "0.0.0.0");
         std::env::set_var("MOCK_HOST_SERVER_PORT", "9876");
-        c_createBRAM(512, 1024 * 1024)
+        rpc.c_createBRAM(512, 1024 * 1024)
     };
 
     let mut nic_payload = RpcNetIfcRxTxPayload::new();
@@ -25,7 +27,7 @@ fn main() {
     let mut fragment = 0;
     for _ in 0..100 {
         unsafe {
-            c_netIfcGetRxData(nic_ptr, client_id, 0);
+            rpc.c_netIfcGetRxData(nic_ptr, client_id, 0);
             // c_netIfcPutTxData(client_id, nic_ptr);
             // c_getPcieBarReadReq(bar_ptr, client_id);
             // c_getPcieBarWriteReq(bar_ptr, client_id);
