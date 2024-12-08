@@ -42,8 +42,8 @@ impl RpcNetIfcRxTxPayload {
         }
     }
 
-    /// new request, return generated request and remained buffer
-    pub fn request(buf: &[u8]) -> (Self, &[u8]) {
+    /// new request, return generated request and used bytes.
+    pub fn new_request(buf: &[u8]) -> (Self, usize) {
         assert!(!buf.is_empty());
 
         let len = buf.len().min(64);
@@ -69,12 +69,13 @@ impl RpcNetIfcRxTxPayload {
             data,
             byte_en,
             reserved: 0,
+            // Hard code value, not used
             _is_first: 170,
             is_last,
             is_valid: 1,
         };
 
-        (request, remainder)
+        (request, len)
     }
 }
 

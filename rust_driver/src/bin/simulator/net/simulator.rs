@@ -45,6 +45,10 @@ impl<R: RpcAgent> Agent<R> {
         }
     }
 
+    // TODO(fh): return `Vec<RpcNetIfcRxTxPayload>` for more meaningful testing?
+    // So I can convert between `Vec<RpcNetIfcRxTxPayload>` and `payload: Vec<u8>`
+    // Currently I convert between `eth_frame: Vec<u8>` and `payload: Vec<u8>`
+
     /// Receive a single ethernet frame buffer from NIC
     fn receive_ethernet_frame_buffer(&self) -> Vec<u8> {
         let mut request = RpcNetIfcRxTxPayload::new();
@@ -77,12 +81,20 @@ impl<R: RpcAgent> Agent<R> {
     }
 
     /// Transmit a single ethernet frame buffer to NIC
-    fn transmit_ethernet_frame_buffer(&self, buffer: &[u8]) {
+    fn transmit_ethernet_frame_buffer(&self, buffer: &[u8]) -> usize {
         let mut buf = buffer;
+        let mut transmitted_bytes = 0;
         while !buf.is_empty() {
-            let (request, next_buf) = RpcNetIfcRxTxPayload::request(buf);
-            buf = next_buf;
+            let (mut request, len) = RpcNetIfcRxTxPayload::new_request(buf);
+            transmitted_bytes += len;
+
+            unsafe {
+                self.rpc.c_netIfcPutTxData(self.client_id, &raw mut request);
+            }
+            buf = &buf[len..];
         }
+
+        transmitted_bytes
     }
 
     /// Parse frame and extract UDP payload and source ip address
@@ -191,7 +203,11 @@ impl<R: RpcAgent> Agent<R> {
 
 impl<R: RpcAgent> UdpAgent for Agent<R> {
     fn send_to(&self, buf: &[u8], addr: IpAddr) -> Result<usize> {
-        todo!()
+        // TODO(fh): return errors
+
+        let buffer = self.construct_frame(addr, buf).into_inner();
+        let transmitted_bytes = self.transmit_ethernet_frame_buffer(&buffer);
+        Ok(transmitted_bytes)
     }
 
     fn recv_from(&self, buf: &mut [u8]) -> Result<(usize, IpAddr)> {
@@ -322,9 +338,9 @@ mod tests {
                 let json = std::fs::read(filename).unwrap();
                 let expected = serde_json::from_slice(&json).unwrap();
 
-                let (request, next_buf) = RpcNetIfcRxTxPayload::request(buf);
+                let (request, len) = RpcNetIfcRxTxPayload::new_request(buf);
                 assert_eq!(request, expected);
-                buf = next_buf;
+                buf = &buf[len..];
             }
         }
     }
