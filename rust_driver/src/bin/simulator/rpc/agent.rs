@@ -69,7 +69,7 @@ impl RpcNetIfcRxTxPayload {
             data,
             byte_en,
             reserved: 0,
-            _is_first: 0,
+            _is_first: 170,
             is_last,
             is_valid: 1,
         };

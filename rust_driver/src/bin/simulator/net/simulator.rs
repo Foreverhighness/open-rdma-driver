@@ -296,4 +296,36 @@ mod tests {
             cmp_ethernet_frame(&frame, &buffer);
         }
     }
+
+    #[test]
+    fn test_transmit_ethernet_frame_buffer() {
+        let udp_agent = SENDER;
+        let dst_addr = RECEIVER.ip;
+
+        for i in 0..=1 {
+            let filename = &format!("ethernet-frame-{i}.bin");
+            let buffer = std::fs::read(filename).unwrap();
+
+            let (expected_payload, origin) = RECEIVER.parse_frame_and_extract_payload(&buffer).unwrap();
+            assert_eq!(udp_agent.ip, origin);
+
+            let frame = udp_agent.construct_frame(dst_addr, expected_payload);
+            let frame = frame.into_inner();
+
+            cmp_ethernet_frame(&frame, &buffer);
+
+            let mut buf = frame.as_slice();
+            let mut fragment = 0;
+            while !buf.is_empty() {
+                let filename = &format!("fragment-{i}-{fragment}.bin");
+                fragment += 1;
+                let json = std::fs::read(filename).unwrap();
+                let expected = serde_json::from_slice(&json).unwrap();
+
+                let (request, next_buf) = RpcNetIfcRxTxPayload::request(buf);
+                assert_eq!(request, expected);
+                buf = next_buf;
+            }
+        }
+    }
 }
