@@ -1,12 +1,15 @@
 //! Transmit/Receive network packet using simulator's network
 
 use core::mem::transmute;
-use core::net::IpAddr;
+use core::net::{IpAddr, Ipv4Addr};
 
 use eui48::MacAddress;
 use log::trace;
 use smoltcp::phy::ChecksumCapabilities;
-use smoltcp::wire::{EthernetFrame, EthernetProtocol, Ipv4Packet, Ipv6Packet, UdpPacket, UdpRepr};
+use smoltcp::wire::{
+    EthernetAddress, EthernetFrame, EthernetProtocol, EthernetRepr, IpProtocol, IpRepr, Ipv4Packet, Ipv6Packet,
+    UdpPacket, UdpRepr,
+};
 
 use super::{Result, UdpAgent, RDMA_PROT};
 use crate::rpc::agent::RpcAgent;
@@ -19,6 +22,16 @@ pub struct Agent<R: RpcAgent> {
     ip: IpAddr,
 
     rpc: R,
+}
+
+fn ip2mac(ip: IpAddr) -> MacAddress {
+    if ip == IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)) {
+        MacAddress::new([0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xFE])
+    } else if ip == IpAddr::V4(Ipv4Addr::new(192, 168, 0, 3)) {
+        MacAddress::new([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF])
+    } else {
+        unimplemented!()
+    }
 }
 
 impl<R: RpcAgent> Agent<R> {
@@ -106,23 +119,73 @@ impl<R: RpcAgent> Agent<R> {
     }
 
     /// construct ethernet frame from UDP payload
-    fn construct_frame<'p>(&self, dst_addr: IpAddr, payload: &'p [u8]) -> EthernetFrame<&'p [u8]> {
-        let repr = UdpRepr {
+    fn construct_frame<'p>(&self, dst_addr: IpAddr, payload: &[u8]) -> EthernetFrame<Vec<u8>> {
+        const HOP_LIMIT: u8 = 64;
+
+        let udp_repr = UdpRepr {
             src_port: RDMA_PROT,
             dst_port: RDMA_PROT,
         };
-        let mut buffer = vec![0; repr.header_len() + payload.len()];
-        let mut datagram = UdpPacket::new_unchecked(&mut buffer);
-        repr.emit(
+
+        let ip_repr = IpRepr::new(
+            self.ip.into(),
+            dst_addr.into(),
+            IpProtocol::Udp,
+            udp_repr.header_len() + payload.len(),
+            HOP_LIMIT,
+        );
+
+        let ethertype = match ip_repr {
+            IpRepr::Ipv4(_) => EthernetProtocol::Ipv4,
+            IpRepr::Ipv6(_) => EthernetProtocol::Ipv6,
+        };
+        let ethernet_repr = EthernetRepr {
+            src_addr: EthernetAddress::from_bytes(self.mac.as_bytes()),
+            dst_addr: EthernetAddress::from_bytes(ip2mac(dst_addr).as_bytes()),
+            ethertype,
+        };
+
+        let mut frame = EthernetFrame::new_checked(vec![0; ethernet_repr.buffer_len() + ip_repr.buffer_len()]).unwrap();
+        ethernet_repr.emit(&mut frame);
+        let buffer = frame.payload_mut();
+        assert_eq!(buffer.len(), ip_repr.buffer_len());
+
+        let buffer = match ip_repr {
+            IpRepr::Ipv4(repr) => {
+                let mut packet = Ipv4Packet::new_checked(buffer).unwrap();
+                repr.emit(&mut packet, &ChecksumCapabilities::default());
+                packet.set_ident(1);
+                packet.clear_flags();
+                packet.fill_checksum();
+
+                let range = packet.header_len() as usize..packet.total_len() as usize;
+                let buffer = packet.into_inner();
+                &mut buffer[range]
+            }
+            IpRepr::Ipv6(repr) => {
+                let mut packet = Ipv6Packet::new_checked(buffer).unwrap();
+                repr.emit(&mut packet);
+
+                let range = packet.header_len() as usize..packet.total_len() as usize;
+                let buffer = packet.into_inner();
+                &mut buffer[range]
+            }
+        };
+
+        ip_repr.emit(buffer, &ChecksumCapabilities::default());
+        let buffer = &mut frame.payload_mut()[ip_repr.header_len()..ip_repr.buffer_len()];
+
+        let mut datagram = UdpPacket::new_unchecked(buffer);
+        udp_repr.emit(
             &mut datagram,
             &self.ip.into(),
             &dst_addr.into(),
             payload.len(),
             |p| p.copy_from_slice(&payload),
-            &ChecksumCapabilities::default(),
+            &ChecksumCapabilities::ignored(),
         );
 
-        todo!()
+        frame
     }
 }
 
