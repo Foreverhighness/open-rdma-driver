@@ -11,7 +11,7 @@ pub struct MockAgent {
 }
 
 impl MockAgent {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             frame: RefCell::new(0),
             fragment: RefCell::new(0),

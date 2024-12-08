@@ -204,3 +204,96 @@ impl<R: RpcAgent> UdpAgent for Agent<R> {
         Ok((len, origin))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use core::net::Ipv4Addr;
+
+    use smoltcp::wire::Ipv4Repr;
+
+    use super::*;
+    use crate::rpc::mock_agent::MockAgent;
+
+    const SENDER: Agent<MockAgent> = Agent::new(
+        0,
+        MacAddress::new([0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xFE]),
+        IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)),
+        MockAgent::new(),
+    );
+
+    const RECEIVER: Agent<MockAgent> = Agent::new(
+        0,
+        MacAddress::new([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]),
+        IpAddr::V4(Ipv4Addr::new(192, 168, 0, 3)),
+        MockAgent::new(),
+    );
+
+    fn cmp_ethernet_frame(lhs: &[u8], rhs: &[u8]) {
+        let lhs = EthernetFrame::new_checked(lhs).unwrap();
+        let rhs = EthernetFrame::new_checked(rhs).unwrap();
+
+        assert_eq!(EthernetRepr::parse(&lhs).unwrap(), EthernetRepr::parse(&rhs).unwrap());
+
+        let lhs = Ipv4Packet::new_checked(lhs.payload()).unwrap();
+        let rhs = Ipv4Packet::new_checked(rhs.payload()).unwrap();
+        let checksum_caps = &ChecksumCapabilities::default();
+
+        assert_eq!(
+            Ipv4Repr::parse(&lhs, checksum_caps).unwrap(),
+            Ipv4Repr::parse(&rhs, checksum_caps).unwrap(),
+        );
+        assert_eq!(lhs.checksum(), rhs.checksum());
+        assert_eq!(lhs.payload(), rhs.payload());
+
+        let ip_repr = Ipv4Repr::parse(&lhs, checksum_caps).unwrap();
+        let src_addr = &ip_repr.src_addr.into_address();
+        let dst_addr = &ip_repr.dst_addr.into_address();
+
+        let lhs = UdpPacket::new_checked(lhs.payload()).unwrap();
+        let rhs = UdpPacket::new_checked(rhs.payload()).unwrap();
+
+        assert_eq!(
+            UdpRepr::parse(&lhs, src_addr, dst_addr, checksum_caps),
+            UdpRepr::parse(&rhs, src_addr, dst_addr, checksum_caps)
+        );
+        assert_eq!(lhs.checksum(), rhs.checksum());
+        assert_eq!(lhs.payload(), rhs.payload());
+    }
+
+    #[test]
+    fn test_recv_from() {
+        let udp_agent = RECEIVER;
+        let mut buf = vec![0; 8192];
+
+        for frame in 0..=1 {
+            let filename = &format!("ethernet-frame-{frame}.bin");
+            let frame = std::fs::read(filename).unwrap();
+            let (expected_payload, expected_origin) = udp_agent.parse_frame_and_extract_payload(&frame).unwrap();
+
+            let (len, origin) = udp_agent.recv_from(&mut buf).unwrap();
+
+            assert_eq!(origin, expected_origin);
+            assert_eq!(len, expected_payload.len());
+            assert_eq!(&buf[..len], expected_payload);
+        }
+    }
+
+    #[test]
+    fn test_construct_frame() {
+        let udp_agent = SENDER;
+        let dst_addr = RECEIVER.ip;
+
+        for frame in 0..=1 {
+            let filename = &format!("ethernet-frame-{frame}.bin");
+            let buffer = std::fs::read(filename).unwrap();
+
+            let (expected_payload, origin) = RECEIVER.parse_frame_and_extract_payload(&buffer).unwrap();
+            assert_eq!(udp_agent.ip, origin);
+
+            let frame = udp_agent.construct_frame(dst_addr, expected_payload);
+            let frame = frame.into_inner();
+
+            cmp_ethernet_frame(&frame, &buffer);
+        }
+    }
+}
