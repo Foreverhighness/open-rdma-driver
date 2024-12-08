@@ -1,3 +1,5 @@
+#![expect(unreachable_pub, reason = "work in progress")]
+
 use std::error::Error;
 use std::net::Ipv4Addr;
 use std::sync::atomic::AtomicBool;
@@ -23,6 +25,8 @@ pub(crate) mod tests;
 mod types;
 
 pub(crate) use logic::BlueRDMALogic;
+
+pub mod emulator;
 
 /// An software device implementation of the device.
 #[allow(dead_code)]
