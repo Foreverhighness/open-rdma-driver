@@ -5,6 +5,7 @@ use core::cell::RefCell;
 use super::agent::RpcAgent;
 use super::{BarIoInfo, RpcNetIfcRxTxPayload};
 
+#[derive(Debug)]
 pub struct MockAgent {
     frame: RefCell<u32>,
     fragment: RefCell<u32>,

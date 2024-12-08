@@ -189,7 +189,7 @@ mod checker;
 /// ctrl poll thread: polling the ctrl descriptor
 mod ctrl_poller;
 /// adaptor device: hardware, software, emulated
-mod device;
+pub mod device;
 /// model for rdma
 mod model;
 /// basic nic functions

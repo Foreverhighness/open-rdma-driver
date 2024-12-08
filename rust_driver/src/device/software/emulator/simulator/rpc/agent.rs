@@ -32,6 +32,7 @@ pub struct RpcNetIfcRxTxPayload {
     pub is_valid: u8,
 }
 
+#[expect(missing_copy_implementations, reason = "This type should not be clone or copy")]
 #[repr(C)]
 #[derive(Debug, Eq, PartialEq)]
 pub struct Payload(pub [u8; 64]);
@@ -127,6 +128,7 @@ impl RpcNetIfcRxTxPayload {
     }
 }
 
+#[expect(missing_copy_implementations, reason = "This type should not be clone or copy")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct BarIoInfo {
@@ -161,6 +163,8 @@ extern "C" {
     pub fn c_writeBRAM(client_id: u64, csr_addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32);
 }
 
+#[expect(missing_copy_implementations, reason = "This type should not be clone or copy")]
+#[derive(Debug)]
 pub struct Agent;
 
 impl RpcAgent for Agent {

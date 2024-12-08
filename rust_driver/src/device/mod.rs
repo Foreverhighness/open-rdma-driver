@@ -1,3 +1,4 @@
+#![expect(missing_docs, reason = "wip hack")]
 use std::fmt::Debug;
 use std::sync::Arc;
 
@@ -8,7 +9,7 @@ mod emulated;
 mod hardware;
 pub(crate) mod layout;
 mod ringbuf;
-mod software;
+pub mod software;
 mod types;
 
 pub(crate) mod scheduler;

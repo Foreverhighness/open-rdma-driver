@@ -1,10 +1,7 @@
 use core::time::Duration;
 
-mod net;
-mod rpc;
-
-use rpc::agent::{Agent, RpcAgent};
-use rpc::RpcNetIfcRxTxPayload;
+use open_rdma_driver::device::software::emulator::simulator::rpc::agent::Agent;
+use open_rdma_driver::device::software::emulator::simulator::rpc::{RpcAgent, RpcNetIfcRxTxPayload};
 
 fn main() {
     let rpc = Agent;
@@ -43,8 +40,8 @@ fn main() {
 
         generate_frame_fragment_file(&nic_payload, frame, fragment);
 
-        let payload = unsafe { core::mem::transmute::<_, [u8; 64]>(nic_payload.data) };
-        buffer.extend_from_slice(&payload);
+        let payload = &nic_payload.data.0;
+        buffer.extend_from_slice(payload);
 
         if nic_payload.is_last == 1 {
             generate_frame_file(&buffer, frame, fragment);

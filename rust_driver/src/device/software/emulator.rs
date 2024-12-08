@@ -5,4 +5,4 @@ pub mod device;
 mod csr;
 mod dma;
 mod net;
-mod simulator;
+pub mod simulator;

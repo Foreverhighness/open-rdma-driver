@@ -2,5 +2,5 @@
 
 mod csr_agent;
 mod dma_agent;
-mod rpc;
+pub mod rpc;
 mod udp_agent;
