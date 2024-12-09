@@ -172,6 +172,24 @@ impl BarIoInfo {
             pci_tag: 0,
         }
     }
+
+    pub const fn new_read_response(pci_tag: u64, value: u64) -> Self {
+        Self {
+            value,
+            addr: 0,
+            valid: 1,
+            pci_tag,
+        }
+    }
+
+    pub const fn new_write_response(pci_tag: u64, valid: bool) -> Self {
+        Self {
+            value: 0,
+            addr: 0,
+            valid: if valid { 1 } else { 0 },
+            pci_tag,
+        }
+    }
 }
 
 // gcc -O3 -D_FILE_OFFSET_BITS=64 -fPIC -shared -o /usr/lib/libMockHost.so /blue-rdma/src/third_party/MockHost.c
@@ -184,8 +202,8 @@ extern "C" {
     pub fn c_getPcieBarWriteReq(result: *mut BarIoInfo, client_id: u64);
     pub fn c_putPcieBarReadResp(client_id: u64, result: *mut BarIoInfo);
     pub fn c_putPcieBarWriteResp(client_id: u64, result: *mut BarIoInfo);
-    pub fn c_readBRAM(result: *mut u32, client_id: u64, csr_addr: u64, word_width: u32);
-    pub fn c_writeBRAM(client_id: u64, csr_addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32);
+    pub fn c_readBRAM(result: *mut u32, client_id: u64, addr: u64, word_width: u32);
+    pub fn c_writeBRAM(client_id: u64, addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32);
 }
 
 #[expect(missing_copy_implementations, reason = "This type should not be clone or copy")]
