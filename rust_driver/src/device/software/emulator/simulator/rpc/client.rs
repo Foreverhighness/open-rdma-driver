@@ -34,12 +34,12 @@ pub trait Client {
         unsafe { c_putPcieBarWriteResp(client_id, result) }
     }
 
-    unsafe fn c_readBRAM(&self, result: *mut u32, client_id: u64, csr_addr: u64, word_width: u32) {
-        unsafe { c_readBRAM(result, client_id, csr_addr, word_width) }
+    unsafe fn c_readBRAM(&self, result: *mut u32, client_id: u64, addr: u64, word_width: u32) {
+        unsafe { c_readBRAM(result, client_id, addr, word_width) }
     }
 
-    unsafe fn c_writeBRAM(&self, client_id: u64, csr_addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32) {
-        unsafe { c_writeBRAM(client_id, csr_addr, data, byte_en, word_width) }
+    unsafe fn c_writeBRAM(&self, client_id: u64, addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32) {
+        unsafe { c_writeBRAM(client_id, addr, data, byte_en, word_width) }
     }
 }
 
