@@ -1,5 +1,6 @@
 //! Modules for communicate within simulator network.
 
+pub mod device;
 pub mod rpc;
 
 mod config;

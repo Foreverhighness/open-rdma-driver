@@ -33,6 +33,7 @@ pub struct BlueRdmaMetaReportRegisters {
 const _: () = assert!(size_of::<BlueRdmaMetaReportRegisters>() == 4096);
 
 /// Struct that holds registers related to one command request queue.
+#[derive(Debug, Default)]
 #[repr(C)]
 pub struct RegistersCommandRequest {
     pub ring_buffer_base_address_low: u32,  // 0x8000
@@ -42,6 +43,7 @@ pub struct RegistersCommandRequest {
 }
 
 /// Struct that holds registers related to one command response queue.
+#[derive(Debug, Default)]
 #[repr(C)]
 pub struct RegistersCommandResponse {
     pub ring_buffer_base_address_low: u32,  // 0x0000
@@ -51,6 +53,7 @@ pub struct RegistersCommandResponse {
 }
 
 /// Struct that holds registers related to one send queue.
+#[derive(Debug, Default)]
 #[repr(C)]
 pub struct RegistersSend {
     pub ring_buffer_base_address_low: u32,  // 0x9000
@@ -60,6 +63,7 @@ pub struct RegistersSend {
 }
 
 /// Struct that holds registers related to one meta report queue.
+#[derive(Debug, Default)]
 #[repr(C)]
 pub struct RegistersMetaReport {
     pub ring_buffer_base_address_low: u32,  // 0x1000

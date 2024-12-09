@@ -10,7 +10,7 @@
     macro_use_extern_crate,
     meta_variable_misuse,
     missing_abi,
-    missing_copy_implementations,
+    // missing_copy_implementations,
     missing_debug_implementations,
     // must_not_suspend, unstable
     missing_docs,
