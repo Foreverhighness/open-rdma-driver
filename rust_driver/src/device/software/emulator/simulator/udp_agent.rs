@@ -10,11 +10,11 @@ use smoltcp::wire::{
     UdpPacket, UdpRepr,
 };
 
-use super::super::net::{Result, UdpAgent, RDMA_PROT};
-use super::rpc::{RpcAgent, RpcNetIfcRxTxPayload};
+use super::super::net::{Agent, Result, RDMA_PROT};
+use super::rpc::{Client, RpcNetIfcRxTxPayload};
 
 /// UdpAgent by using RPC call to communicate with peers
-pub struct Agent<R: RpcAgent> {
+pub struct UdpAgent<R: Client> {
     client_id: u64,
     mac: MacAddress,
     ip: IpAddr,
@@ -32,7 +32,7 @@ fn ip2mac(ip: IpAddr) -> MacAddress {
     }
 }
 
-impl<R: RpcAgent> Agent<R> {
+impl<R: Client> UdpAgent<R> {
     /// Create a UDP agent
     pub const fn new(client_id: u64, mac: MacAddress, ip: IpAddr, rpc: R) -> Self {
         Self {
@@ -199,7 +199,7 @@ impl<R: RpcAgent> Agent<R> {
     }
 }
 
-impl<R: RpcAgent> UdpAgent for Agent<R> {
+impl<R: Client> Agent for UdpAgent<R> {
     fn send_to(&self, buf: &[u8], addr: IpAddr) -> Result<usize> {
         // TODO(fh): return errors
 
@@ -225,21 +225,21 @@ mod tests {
 
     use smoltcp::wire::Ipv4Repr;
 
-    use super::super::rpc::mock_agent::MockAgent;
+    use super::super::rpc::mock_client::MockRpcClient;
     use super::*;
 
-    const SENDER: Agent<MockAgent> = Agent::new(
+    const SENDER: UdpAgent<MockRpcClient> = UdpAgent::new(
         0,
         MacAddress::new([0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xFE]),
         IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)),
-        MockAgent::new(),
+        MockRpcClient::new(),
     );
 
-    const RECEIVER: Agent<MockAgent> = Agent::new(
+    const RECEIVER: UdpAgent<MockRpcClient> = UdpAgent::new(
         0,
         MacAddress::new([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]),
         IpAddr::V4(Ipv4Addr::new(192, 168, 0, 3)),
-        MockAgent::new(),
+        MockRpcClient::new(),
     );
 
     fn cmp_ethernet_frame(lhs: &[u8], rhs: &[u8]) {

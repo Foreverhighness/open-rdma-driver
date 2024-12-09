@@ -9,7 +9,7 @@ pub const RDMA_PROT: u16 = 4791;
 const MTU: usize = 4128;
 
 /// refer to [std::net::UdpSocket]
-pub trait UdpAgent {
+pub trait Agent {
     /// Sends data to the given address. On success, returns the number of bytes written.
     ///
     /// # Errors

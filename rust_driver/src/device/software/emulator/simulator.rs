@@ -1,6 +1,6 @@
-//! Agents for communicate in simulator network;
+//! Modules for communicate within simulator network.
 
-mod csr_agent;
-mod dma_agent;
+mod csr_proxy;
+mod dma_client;
 pub mod rpc;
 mod udp_agent;

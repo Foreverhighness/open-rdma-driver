@@ -1,26 +1,51 @@
-//! Python Server RPC call agent
+//! Python Server RPC call Client
 
 use serde::de::SeqAccess;
 use serde::ser::SerializeTuple;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[expect(non_snake_case, reason = "C library interface")]
-pub trait RpcAgent {
-    unsafe fn c_createBRAM(&self, word_width: u32, memory_size: u64) -> u64;
-    unsafe fn c_netIfcGetRxData(&self, result: *mut RpcNetIfcRxTxPayload, client_id: u64, is_read: u8);
-    unsafe fn c_netIfcPutTxData(&self, client_id: u64, data_stream: *mut RpcNetIfcRxTxPayload);
-    unsafe fn c_getPcieBarReadReq(&self, result: *mut BarIoInfo, client_id: u64);
-    unsafe fn c_getPcieBarWriteReq(&self, result: *mut BarIoInfo, client_id: u64);
-    unsafe fn c_putPcieBarReadResp(&self, client_id: u64, result: *mut BarIoInfo);
-    unsafe fn c_putPcieBarWriteResp(&self, client_id: u64, result: *mut BarIoInfo);
-    unsafe fn c_readBRAM(&self, result: *mut u32, client_id: u64, csr_addr: u64, word_width: u32);
-    unsafe fn c_writeBRAM(&self, client_id: u64, csr_addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32);
+pub trait Client {
+    unsafe fn c_createBRAM(&self, word_width: u32, memory_size: u64) -> u64 {
+        unsafe { c_createBRAM(word_width, memory_size) }
+    }
+
+    unsafe fn c_netIfcGetRxData(&self, result: *mut RpcNetIfcRxTxPayload, client_id: u64, is_read: u8) {
+        unsafe { c_netIfcGetRxData(result, client_id, is_read) }
+    }
+
+    unsafe fn c_netIfcPutTxData(&self, client_id: u64, data_stream: *mut RpcNetIfcRxTxPayload) {
+        unsafe { c_netIfcPutTxData(client_id, data_stream) }
+    }
+
+    unsafe fn c_getPcieBarReadReq(&self, result: *mut BarIoInfo, client_id: u64) {
+        unsafe { c_getPcieBarReadReq(result, client_id) }
+    }
+
+    unsafe fn c_getPcieBarWriteReq(&self, result: *mut BarIoInfo, client_id: u64) {
+        unsafe { c_getPcieBarWriteReq(result, client_id) }
+    }
+
+    unsafe fn c_putPcieBarReadResp(&self, client_id: u64, result: *mut BarIoInfo) {
+        unsafe { c_putPcieBarReadResp(client_id, result) }
+    }
+
+    unsafe fn c_putPcieBarWriteResp(&self, client_id: u64, result: *mut BarIoInfo) {
+        unsafe { c_putPcieBarWriteResp(client_id, result) }
+    }
+
+    unsafe fn c_readBRAM(&self, result: *mut u32, client_id: u64, csr_addr: u64, word_width: u32) {
+        unsafe { c_readBRAM(result, client_id, csr_addr, word_width) }
+    }
+
+    unsafe fn c_writeBRAM(&self, client_id: u64, csr_addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32) {
+        unsafe { c_writeBRAM(client_id, csr_addr, data, byte_en, word_width) }
+    }
 }
 
 #[repr(C)]
 #[derive(Debug, serde::Serialize, serde::Deserialize, Eq, PartialEq)]
 pub struct RpcNetIfcRxTxPayload {
-    // change type u8 -> u32, so it can be serialize and remain 32 bit align
     pub data: Payload,
     pub byte_en: [u8; 8],
 
@@ -165,42 +190,6 @@ extern "C" {
 
 #[expect(missing_copy_implementations, reason = "This type should not be clone or copy")]
 #[derive(Debug)]
-pub struct Agent;
+pub struct RpcClient;
 
-impl RpcAgent for Agent {
-    unsafe fn c_createBRAM(&self, word_width: u32, memory_size: u64) -> u64 {
-        unsafe { c_createBRAM(word_width, memory_size) }
-    }
-
-    unsafe fn c_netIfcGetRxData(&self, result: *mut RpcNetIfcRxTxPayload, client_id: u64, is_read: u8) {
-        unsafe { c_netIfcGetRxData(result, client_id, is_read) }
-    }
-
-    unsafe fn c_netIfcPutTxData(&self, client_id: u64, data_stream: *mut RpcNetIfcRxTxPayload) {
-        unsafe { c_netIfcPutTxData(client_id, data_stream) }
-    }
-
-    unsafe fn c_getPcieBarReadReq(&self, result: *mut BarIoInfo, client_id: u64) {
-        unsafe { c_getPcieBarReadReq(result, client_id) }
-    }
-
-    unsafe fn c_getPcieBarWriteReq(&self, result: *mut BarIoInfo, client_id: u64) {
-        unsafe { c_getPcieBarWriteReq(result, client_id) }
-    }
-
-    unsafe fn c_putPcieBarReadResp(&self, client_id: u64, result: *mut BarIoInfo) {
-        unsafe { c_putPcieBarReadResp(client_id, result) }
-    }
-
-    unsafe fn c_putPcieBarWriteResp(&self, client_id: u64, result: *mut BarIoInfo) {
-        unsafe { c_putPcieBarWriteResp(client_id, result) }
-    }
-
-    unsafe fn c_readBRAM(&self, result: *mut u32, client_id: u64, csr_addr: u64, word_width: u32) {
-        unsafe { c_readBRAM(result, client_id, csr_addr, word_width) }
-    }
-
-    unsafe fn c_writeBRAM(&self, client_id: u64, csr_addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32) {
-        unsafe { c_writeBRAM(client_id, csr_addr, data, byte_en, word_width) }
-    }
-}
+impl Client for RpcClient {}

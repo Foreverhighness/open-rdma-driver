@@ -1,10 +1,9 @@
 use core::time::Duration;
 
-use open_rdma_driver::device::software::emulator::simulator::rpc::agent::Agent;
-use open_rdma_driver::device::software::emulator::simulator::rpc::{RpcAgent, RpcNetIfcRxTxPayload};
+use open_rdma_driver::device::software::emulator::simulator::rpc::{Client, RpcClient, RpcNetIfcRxTxPayload};
 
 fn main() {
-    let rpc = Agent;
+    let rpc = RpcClient;
     let client_id = 1;
     let _mem_ptr = unsafe {
         std::env::set_var("MOCK_HOST_SERVER_ADDR", "0.0.0.0");

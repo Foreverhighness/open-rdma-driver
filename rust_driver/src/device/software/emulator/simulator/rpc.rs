@@ -1,6 +1,6 @@
 //! `Python Server` RPC call wrapper
 
-pub mod agent;
-pub mod mock_agent;
+mod client;
+pub(crate) mod mock_client;
 
-pub use agent::{BarIoInfo, RpcAgent, RpcNetIfcRxTxPayload};
+pub use client::{BarIoInfo, Client, RpcClient, RpcNetIfcRxTxPayload};
