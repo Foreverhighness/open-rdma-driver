@@ -28,13 +28,6 @@ macro_rules! declare_and_impl_basic_register {
             }
             use $crate::device::software::emulator::device_api::csr::[<RegisterQueue $part>];
             impl<UA: Agent> [<RegisterQueue $part>] for [<$prefix $csr_type $part Handler>]<'_, UA> {}
-
-            impl<UA: Agent> RegisterOperation for [<$prefix $csr_type $part Handler>]<'_, UA> {
-                type Output = u32;
-
-                fn read(&self) -> u32 { self.reg.read() }
-                fn write(&self, val: u32) { self.reg.write(val) }
-            }
         }
     };
 }
@@ -156,21 +149,22 @@ macro_rules! declare_and_impl_queue {
 }
 
 macro_rules! register_queue_csr {
-    ($base_addr:literal, $prefix:ident, $csr_type:ident, $lower:ident) => {
-        use $crate::device::software::emulator::device_api::csr::RegisterOperation;
+    ($base_addr:literal, $prefix:ident, $csr_type:ident, $csr_type_upper:ident) => {
         use $crate::device::software::emulator::net::Agent;
         use $crate::device::software::emulator::Emulator;
 
-        paste::paste! { pub const [<$lower:upper _BASE_ADDR>]: u64 = $base_addr; }
-        const _: () = assert!($base_addr % 4096 == 0); // Base address should align to 4K
+        paste::paste! {
+            pub const [<REGISTERS_ $csr_type_upper _BASE_ADDR>]: u64 = $base_addr;
+            const _: () = assert!($base_addr % 4096 == 0); // Base address should align to 4K
 
-        declare_and_impl_basic_register!($prefix, $csr_type, AddressHigh);
-        declare_and_impl_basic_register!($prefix, $csr_type, AddressLow);
-        declare_and_impl_basic_register!($prefix, $csr_type, Head);
-        declare_and_impl_basic_register!($prefix, $csr_type, Tail);
+            declare_and_impl_basic_register!($prefix, [<Registers $csr_type>], AddressHigh);
+            declare_and_impl_basic_register!($prefix, [<Registers $csr_type>], AddressLow);
+            declare_and_impl_basic_register!($prefix, [<Registers $csr_type>], Head);
+            declare_and_impl_basic_register!($prefix, [<Registers $csr_type>], Tail);
 
-        declare_and_impl_address!($prefix, $csr_type);
+            declare_and_impl_address!($prefix, [<Registers $csr_type>]);
 
-        declare_and_impl_queue!($prefix, $csr_type);
+            declare_and_impl_queue!($prefix, [<Registers $csr_type>]);
+        }
     };
 }
