@@ -1,6 +1,6 @@
 //! Emulator for blue rdma device
 
-pub mod device;
+pub mod device_api;
 mod impls;
 pub use impls::*;
 
