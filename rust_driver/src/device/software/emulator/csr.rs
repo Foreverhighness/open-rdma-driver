@@ -24,7 +24,7 @@ impl RegisterOperation for AtomicU32 {
 }
 
 #[derive(Debug, Default)]
-pub(super) struct EmulatorCsrs {
+pub struct EmulatorCsrs {
     cmd_request: EmulatorRegistersCommandRequest,
     cmd_response: EmulatorRegistersCommandResponse,
     meta_report: EmulatorRegistersMetaReport,
