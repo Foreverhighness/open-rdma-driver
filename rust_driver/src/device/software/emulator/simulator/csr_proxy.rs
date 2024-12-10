@@ -18,25 +18,33 @@ pub struct Proxy<R: rpc::Client, Dev: device_api::RawDevice> {
 
     rpc: R,
     dev: Arc<Dev>,
+
+    stop: Arc<AtomicBool>,
 }
 
 impl<R: rpc::Client, Dev: device_api::RawDevice> Proxy<R, Dev> {
     pub fn new(client_id: u64, rpc: R, dev: Arc<Dev>) -> Self {
-        Self { client_id, rpc, dev }
+        Self {
+            client_id,
+            rpc,
+            dev,
+            stop: Arc::default(),
+        }
     }
 
-    fn recv_read_request(&self) -> BarIoInfo {
+    fn recv_read_request(&self) -> Option<BarIoInfo> {
         let mut request = BarIoInfo::new();
-        loop {
+        while !self.stop.load(core::sync::atomic::Ordering::Relaxed) {
             unsafe {
                 self.rpc.c_getPcieBarReadReq(&raw mut request, self.client_id);
             }
             if request.valid == 1 {
                 debug!("recv csr read request {request:?}");
-                return request;
+                return Some(request);
             }
             std::thread::sleep(Duration::from_millis(10));
         }
+        None
     }
 
     fn handle_read_request(&self, req: &BarIoInfo) {
@@ -48,18 +56,19 @@ impl<R: rpc::Client, Dev: device_api::RawDevice> Proxy<R, Dev> {
         }
     }
 
-    fn recv_write_request(&self) -> BarIoInfo {
+    fn recv_write_request(&self) -> Option<BarIoInfo> {
         let mut request = BarIoInfo::new();
-        loop {
+        while !self.stop.load(core::sync::atomic::Ordering::Relaxed) {
             unsafe {
                 self.rpc.c_getPcieBarWriteReq(&raw mut request, self.client_id);
             }
             if request.valid == 1 {
                 debug!("recv csr write request {request:?}");
-                return request;
+                return Some(request);
             }
             std::thread::sleep(Duration::from_millis(10));
         }
+        None
     }
 
     fn handle_write_request(&self, req: &BarIoInfo) {
@@ -80,21 +89,17 @@ where
     Dev: device_api::RawDevice + Send + Sync + 'static,
 {
     pub fn run(self) -> (JoinHandle<()>, JoinHandle<()>, Arc<AtomicBool>) {
-        let stop = Arc::new(AtomicBool::new(false));
-        let stop_read = Arc::clone(&stop);
-        let stop_write = Arc::clone(&stop);
+        let stop = Arc::clone(&self.stop);
         let proxy_read = Arc::new(self);
         let proxy_write = Arc::clone(&proxy_read);
 
         let handle_read = std::thread::spawn(move || {
-            while !stop_read.load(core::sync::atomic::Ordering::Relaxed) {
-                let req = proxy_read.recv_read_request();
+            while let Some(req) = proxy_read.recv_read_request() {
                 proxy_read.handle_read_request(&req);
             }
         });
         let handle_write = std::thread::spawn(move || {
-            while !stop_write.load(core::sync::atomic::Ordering::Relaxed) {
-                let req = proxy_write.recv_write_request();
+            while let Some(req) = proxy_write.recv_write_request() {
                 proxy_write.handle_write_request(&req);
             }
         });
