@@ -151,27 +151,27 @@ impl RegistersQueue for EmulatorRegistersSend {
 }
 
 #[derive(Debug, Default)]
-pub struct EmulatorQueueAddressLow<const BaseAddr: u64>(AtomicU32);
+pub struct EmulatorQueueAddressLow<const BASE_ADDR: u64>(AtomicU32);
 #[derive(Debug, Default)]
-pub struct EmulatorQueueAddressHigh<const BaseAddr: u64>(AtomicU32);
+pub struct EmulatorQueueAddressHigh<const BASE_ADDR: u64>(AtomicU32);
 #[derive(Debug, Default)]
-pub struct EmulatorQueueHead<const BaseAddr: u64>(AtomicU32);
+pub struct EmulatorQueueHead<const BASE_ADDR: u64>(AtomicU32);
 #[derive(Debug, Default)]
-pub struct EmulatorQueueTail<const BaseAddr: u64>(AtomicU32);
+pub struct EmulatorQueueTail<const BASE_ADDR: u64>(AtomicU32);
 #[derive(Debug, Default)]
-pub struct EmulatorQueueAddress<const BaseAddr: u64>(
-    EmulatorQueueAddressHigh<BaseAddr>,
-    EmulatorQueueAddressLow<BaseAddr>,
+pub struct EmulatorQueueAddress<const BASE_ADDR: u64>(
+    EmulatorQueueAddressHigh<BASE_ADDR>,
+    EmulatorQueueAddressLow<BASE_ADDR>,
 );
 #[derive(Debug, Default)]
-pub struct EmulatorRegistersQueue<const BaseAddr: u64> {
-    addr: EmulatorQueueAddress<BaseAddr>,
-    head: EmulatorQueueHead<BaseAddr>,
-    tail: EmulatorQueueTail<BaseAddr>,
+pub struct EmulatorRegistersQueue<const BASE_ADDR: u64> {
+    addr: EmulatorQueueAddress<BASE_ADDR>,
+    head: EmulatorQueueHead<BASE_ADDR>,
+    tail: EmulatorQueueTail<BASE_ADDR>,
 }
 
-impl<const BaseAddr: u64> RegisterQueueAddressLow for EmulatorQueueAddressLow<BaseAddr> {}
-impl<const BaseAddr: u64> RegisterOperation for EmulatorQueueAddressLow<BaseAddr> {
+impl<const BASE_ADDR: u64> RegisterQueueAddressLow for EmulatorQueueAddressLow<BASE_ADDR> {}
+impl<const BASE_ADDR: u64> RegisterOperation for EmulatorQueueAddressLow<BASE_ADDR> {
     type Output = u32;
 
     fn read(&self) -> Self::Output {
@@ -182,8 +182,8 @@ impl<const BaseAddr: u64> RegisterOperation for EmulatorQueueAddressLow<BaseAddr
         self.0.write(val)
     }
 }
-impl<const BaseAddr: u64> RegisterQueueAddressHigh for EmulatorQueueAddressHigh<BaseAddr> {}
-impl<const BaseAddr: u64> RegisterOperation for EmulatorQueueAddressHigh<BaseAddr> {
+impl<const BASE_ADDR: u64> RegisterQueueAddressHigh for EmulatorQueueAddressHigh<BASE_ADDR> {}
+impl<const BASE_ADDR: u64> RegisterOperation for EmulatorQueueAddressHigh<BASE_ADDR> {
     type Output = u32;
 
     fn read(&self) -> Self::Output {
@@ -194,8 +194,8 @@ impl<const BaseAddr: u64> RegisterOperation for EmulatorQueueAddressHigh<BaseAdd
         self.0.write(val)
     }
 }
-impl<const BaseAddr: u64> RegisterQueueHead for EmulatorQueueHead<BaseAddr> {}
-impl<const BaseAddr: u64> RegisterOperation for EmulatorQueueHead<BaseAddr> {
+impl<const BASE_ADDR: u64> RegisterQueueHead for EmulatorQueueHead<BASE_ADDR> {}
+impl<const BASE_ADDR: u64> RegisterOperation for EmulatorQueueHead<BASE_ADDR> {
     type Output = u32;
 
     fn read(&self) -> Self::Output {
@@ -206,8 +206,8 @@ impl<const BaseAddr: u64> RegisterOperation for EmulatorQueueHead<BaseAddr> {
         self.0.write(val)
     }
 }
-impl<const BaseAddr: u64> RegisterQueueTail for EmulatorQueueTail<BaseAddr> {}
-impl<const BaseAddr: u64> RegisterOperation for EmulatorQueueTail<BaseAddr> {
+impl<const BASE_ADDR: u64> RegisterQueueTail for EmulatorQueueTail<BASE_ADDR> {}
+impl<const BASE_ADDR: u64> RegisterOperation for EmulatorQueueTail<BASE_ADDR> {
     type Output = u32;
 
     fn read(&self) -> Self::Output {
@@ -218,9 +218,9 @@ impl<const BaseAddr: u64> RegisterOperation for EmulatorQueueTail<BaseAddr> {
         self.0.write(val)
     }
 }
-impl<const BaseAddr: u64> RegistersQueueAddress for EmulatorQueueAddress<BaseAddr> {
-    type High = EmulatorQueueAddressHigh<BaseAddr>;
-    type Low = EmulatorQueueAddressLow<BaseAddr>;
+impl<const BASE_ADDR: u64> RegistersQueueAddress for EmulatorQueueAddress<BASE_ADDR> {
+    type High = EmulatorQueueAddressHigh<BASE_ADDR>;
+    type Low = EmulatorQueueAddressLow<BASE_ADDR>;
 
     fn low(&self) -> &Self::Low {
         &self.1
@@ -230,10 +230,10 @@ impl<const BaseAddr: u64> RegistersQueueAddress for EmulatorQueueAddress<BaseAdd
         &self.0
     }
 }
-impl<const BaseAddr: u64> RegistersQueue for EmulatorRegistersQueue<BaseAddr> {
-    type Address = EmulatorQueueAddress<BaseAddr>;
-    type Head = EmulatorQueueHead<BaseAddr>;
-    type Tail = EmulatorQueueTail<BaseAddr>;
+impl<const BASE_ADDR: u64> RegistersQueue for EmulatorRegistersQueue<BASE_ADDR> {
+    type Address = EmulatorQueueAddress<BASE_ADDR>;
+    type Head = EmulatorQueueHead<BASE_ADDR>;
+    type Tail = EmulatorQueueTail<BASE_ADDR>;
 
     fn addr(&self) -> &Self::Address {
         &self.addr
