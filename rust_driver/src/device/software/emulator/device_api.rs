@@ -3,19 +3,29 @@
 pub mod csr;
 
 pub trait ControlStatusRegisters {
-    type CmdRequest: csr::RegistersCommandRequest;
-    type CmdResponse: csr::RegistersCommandResponse;
-    type MetaReport: csr::RegistersMetaReport;
-    type Send: csr::RegistersSend;
+    type CmdRequest<'a>: csr::RegistersCommandRequest
+    where
+        Self: 'a;
+    type CmdResponse<'a>: csr::RegistersCommandResponse
+    where
+        Self: 'a;
+    type MetaReport<'a>: csr::RegistersMetaReport
+    where
+        Self: 'a;
+    type Send<'a>: csr::RegistersSend
+    where
+        Self: 'a;
 
-    fn cmd_request(&self) -> &Self::CmdRequest;
-    fn cmd_response(&self) -> &Self::CmdResponse;
-    fn meta_report(&self) -> &Self::MetaReport;
-    fn send(&self) -> &Self::Send;
+    fn cmd_request(&self) -> Self::CmdRequest<'_>;
+    fn cmd_response(&self) -> Self::CmdResponse<'_>;
+    fn meta_report(&self) -> Self::MetaReport<'_>;
+    fn send(&self) -> Self::Send<'_>;
 }
 
 pub trait RawDevice {
-    type Csrs: ControlStatusRegisters;
+    type Csrs<'c>: ControlStatusRegisters
+    where
+        Self: 'c;
 
-    fn csrs(&self) -> &Self::Csrs;
+    fn csrs(&self) -> Self::Csrs<'_>;
 }

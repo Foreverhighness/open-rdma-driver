@@ -115,10 +115,10 @@ trait ControlStatusRegistersExt: ControlStatusRegisters {
 }
 
 mod csr {
-    use super::super::super::csr::{
-        REGISTERS_COMMAND_REQUEST_BASE_ADDR, REGISTERS_COMMAND_RESPONSE_BASE_ADDR, REGISTERS_META_REPORT_BASE_ADDR,
-        REGISTERS_SEND_BASE_ADDR,
-    };
+    use super::super::super::csr::command_request::REGISTERS_COMMAND_REQUEST_BASE_ADDR;
+    use super::super::super::csr::command_response::REGISTERS_COMMAND_RESPONSE_BASE_ADDR;
+    use super::super::super::csr::meta_report::REGISTERS_META_REPORT_BASE_ADDR;
+    use super::super::super::csr::send::REGISTERS_SEND_BASE_ADDR;
     use super::device_api::csr::{RegisterOperation, RegistersQueue, RegistersQueueAddress};
     use super::device_api::ControlStatusRegisters;
     use super::ControlStatusRegistersExt;
