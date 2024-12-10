@@ -54,7 +54,8 @@ impl ControlStatusRegisters for EmulatorCsrs {
     }
 }
 
-const REGISTERS_COMMAND_REQUEST_BASE_ADDR: u64 = 0x8000;
+// TODO(fh): Remove pub?
+pub(super) const REGISTERS_COMMAND_REQUEST_BASE_ADDR: u64 = 0x8000;
 /// Struct that holds registers related to one command request queue.
 #[derive(Debug, Default)]
 pub struct EmulatorRegistersCommandRequest(EmulatorRegistersQueue<REGISTERS_COMMAND_REQUEST_BASE_ADDR>);
@@ -77,7 +78,8 @@ impl RegistersQueue for EmulatorRegistersCommandRequest {
     }
 }
 
-const REGISTERS_COMMAND_RESPONSE_BASE_ADDR: u64 = 0x0000;
+// TODO(fh): Remove pub?
+pub(super) const REGISTERS_COMMAND_RESPONSE_BASE_ADDR: u64 = 0x0000;
 /// Struct that holds registers related to one command response queue.
 #[derive(Debug, Default)]
 pub struct EmulatorRegistersCommandResponse(EmulatorRegistersQueue<REGISTERS_COMMAND_RESPONSE_BASE_ADDR>);
@@ -100,7 +102,8 @@ impl RegistersQueue for EmulatorRegistersCommandResponse {
     }
 }
 
-const REGISTERS_META_REPORT_BASE_ADDR: u64 = 0x1000;
+// TODO(fh): Remove pub?
+pub(super) const REGISTERS_META_REPORT_BASE_ADDR: u64 = 0x1000;
 /// Struct that holds registers related to one meta report queue.
 #[derive(Debug, Default)]
 pub struct EmulatorRegistersMetaReport(EmulatorRegistersQueue<REGISTERS_META_REPORT_BASE_ADDR>);
@@ -123,7 +126,8 @@ impl RegistersQueue for EmulatorRegistersMetaReport {
     }
 }
 
-const REGISTERS_SEND_BASE_ADDR: u64 = 0x9000;
+// TODO(fh): Remove pub?
+pub(super) const REGISTERS_SEND_BASE_ADDR: u64 = 0x9000;
 /// Struct that holds registers related to one send queue.
 #[derive(Debug, Default)]
 pub struct EmulatorRegistersSend(EmulatorRegistersQueue<REGISTERS_SEND_BASE_ADDR>);
