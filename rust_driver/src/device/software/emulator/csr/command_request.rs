@@ -61,7 +61,9 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandRequestHeadHandler
     }
 
     fn write(&self, val: Self::Output) {
-        todo!()
+        self.reg.write(val);
+
+        self.dev.doorbell(val);
     }
 }
 

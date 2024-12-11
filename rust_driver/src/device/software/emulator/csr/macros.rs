@@ -2,13 +2,22 @@ macro_rules! declare_and_impl_basic_register {
     ($prefix:ident, $csr_type:ident, $part:ident) => {
         paste::paste! {
             #[derive(Debug, Default)]
-            pub(super) struct [<$prefix $csr_type $part>](core::sync::atomic::AtomicU32);
+            pub(super) struct [<$prefix $csr_type $part>] {
+                val: core::sync::atomic::AtomicU32,
+
+                read_cnt: core::sync::atomic::AtomicU32,
+                write_cnt: core::sync::atomic::AtomicU32,
+                driver_read_cnt: core::sync::atomic::AtomicU32,
+                driver_write_cnt: core::sync::atomic::AtomicU32,
+            }
             impl [<$prefix $csr_type $part>] {
                 fn read(&self) -> u32 {
-                    self.0.load(core::sync::atomic::Ordering::Relaxed)
+                    let _ = self.read_cnt.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+                    self.val.load(core::sync::atomic::Ordering::Relaxed)
                 }
                 fn write(&self, val: u32) {
-                    self.0.store(val, core::sync::atomic::Ordering::Relaxed)
+                    let _ = self.write_cnt.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+                    self.val.store(val, core::sync::atomic::Ordering::Relaxed)
                 }
             }
 
