@@ -48,6 +48,8 @@ impl<R: rpc::Client> DmaClient<R> {
 
         buf[start..start + len].copy_from_slice(&data[..len]);
 
+        println!("ready write @ {} {buf:?}", addr & (!63));
+
         let byte_en = if len == 64 {
             [u8::MAX; 8]
         } else {
@@ -107,6 +109,7 @@ impl<R: rpc::Client> DmaClient<R> {
         let mut address = addr;
         let mut data = slice;
         while !data.is_empty() {
+            println!("want write @ {address} {data:?}");
             let n_written = self.write_at_most_64(address, data);
 
             data = &data[n_written..];
@@ -234,9 +237,9 @@ mod tests {
             let data = unsafe { core::slice::from_raw_parts(data.cast::<u8>().cast_const().add(start), len) };
             println!("really write at {addr} {len} bytes: {data:?}");
 
-            println!("old: {:?}", &memory[..96]);
-            memory[addr..addr + len].copy_from_slice(data);
-            println!("new: {:?}", &memory[..96]);
+            println!("old: {:?}", &memory[32..64]);
+            memory[addr + start..addr + end].copy_from_slice(data);
+            println!("new: {:?}", &memory[32..64]);
         }
     }
 
@@ -258,7 +261,7 @@ mod tests {
 
         case!(client, 0, [1u8, 2, 3, 4], [u8; 4]);
         case!(client, 0, core::array::from_fn::<u8, 66, _>(|_| rng.gen()), [u8; 66]);
-        // case!(client, 20, core::array::from_fn::<u8, 20, _>(|_| rng.gen()), [u8; 20]);
+        case!(client, 20, core::array::from_fn::<u8, 20, _>(|_| rng.gen()), [u8; 20]);
         case!(
             client,
             0,
@@ -277,5 +280,16 @@ mod tests {
             core::array::from_fn::<u8, 96, _>(|i| i.try_into().unwrap()),
             [u8; 96]
         );
+        let values = unsafe { client.read::<[u8; 64 + 96 - 1]>(1) };
+
+        for (expect, &val) in (1..32).zip(&values[0..31]) {
+            assert_eq!(expect, val);
+        }
+        for (expect, &val) in (0..32).zip(&values[31..63]) {
+            assert_eq!(expect, val);
+        }
+        for (expect, &val) in (0..96).zip(&values[63..63 + 96]) {
+            assert_eq!(expect, val);
+        }
     }
 }
