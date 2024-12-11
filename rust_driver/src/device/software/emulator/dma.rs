@@ -30,6 +30,17 @@ pub trait PointerMut: Clone + Copy {
     unsafe fn write(self, val: Self::Output);
 }
 
+// For zero copy, may not use
+pub trait PointerMutExt: PointerMut {
+    unsafe fn with<F, T>(self, f: F) -> T
+    where
+        F: FnOnce(&Self::Output) -> T;
+
+    unsafe fn with_mut<F, T>(self, f: F) -> T
+    where
+        F: FnOnce(&mut Self::Output) -> T;
+}
+
 // May not use
 mod physical {
     use derive_more::From;
