@@ -5,8 +5,9 @@ use std::sync::Arc;
 
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::RawDevice;
-use super::net;
+use super::simulator::dma_client::DmaClient;
 use super::simulator::udp_agent::UdpAgent;
+use super::{dma, net};
 
 #[derive(Debug)]
 pub enum State {
@@ -14,19 +15,28 @@ pub enum State {
 }
 
 #[derive(Debug)]
-pub struct Emulator<UA: net::Agent = UdpAgent> {
+pub struct Emulator<UA: net::Agent = UdpAgent, DC: dma::Client = DmaClient> {
+    /// Control and Status Registers
     csrs: EmulatorCsrs,
 
-    state: State,
-
+    /// Udp agent
     udp_agent: UA,
+
+    /// DMA Client
+    pub(crate) dma_client: DC,
+
+    /// Thread Stop signal, may move out of this structure if I change this structure into `EmulatorInner`
     stop: AtomicBool,
+
+    /// Emulator State
+    state: State,
 }
 
-impl<UA: net::Agent> Emulator<UA> {
-    pub fn new(udp_agent: UA) -> Self {
+impl<UA: net::Agent, DC: dma::Client> Emulator<UA, DC> {
+    pub fn new(udp_agent: UA, dma_client: DC) -> Self {
         Self {
             udp_agent,
+            dma_client,
             csrs: EmulatorCsrs::default(),
             state: State::NotReady,
             stop: AtomicBool::default(),
@@ -36,6 +46,7 @@ impl<UA: net::Agent> Emulator<UA> {
     pub(super) fn start_net(self: &Arc<Self>)
     where
         UA: Send + Sync + 'static,
+        DC: Send + Sync + 'static,
     {
         let dev = Arc::clone(self);
 
@@ -50,7 +61,7 @@ impl<UA: net::Agent> Emulator<UA> {
     }
 }
 
-impl<UA: net::Agent> Drop for Emulator<UA> {
+impl<UA: net::Agent, DC: dma::Client> Drop for Emulator<UA, DC> {
     fn drop(&mut self) {
         self.stop.store(true, core::sync::atomic::Ordering::Relaxed);
     }

@@ -7,6 +7,8 @@ use open_rdma_driver::device::software::emulator::simulator::rpc::{Client, RpcCl
 use open_rdma_driver::device::software::emulator::Emulator;
 
 fn main() {
+    env_logger::init();
+
     let rpc = RpcClient;
     let client_id = unsafe {
         std::env::set_var("MOCK_HOST_SERVER_ADDR", "0.0.0.0");
@@ -18,7 +20,7 @@ fn main() {
     let (read_thread, write_thread, stop) = csr_proxy.run();
 
     println!("running simulator");
-    std::thread::sleep(Duration::from_secs(5));
+    std::thread::sleep(Duration::from_secs(30));
     println!("exit simulator");
 
     stop.store(true, core::sync::atomic::Ordering::Relaxed);
