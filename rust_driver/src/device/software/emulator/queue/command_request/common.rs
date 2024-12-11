@@ -2,7 +2,7 @@ use core::fmt;
 
 use super::opcode::Opcode;
 use crate::device::layout::CmdQueueDescCommonHead;
-use crate::device::software::emulator::errors::Error;
+use crate::device::software::emulator::queue::errors::ParseDescriptorError;
 use crate::device::software::emulator::Result;
 
 pub(super) const DESCRIPTOR_SIZE: usize = 32; // 256 bits
@@ -17,8 +17,12 @@ impl CommonHeader {
     }
 
     pub fn opcode(&self) -> Result<Opcode> {
-        let opcode: u8 = self.0.get_op_code().try_into().map_err(|_| Error::DescriptorParse())?;
-        opcode.try_into().map_err(|_| Error::DescriptorParse())
+        let opcode: u8 = self.0.get_op_code().try_into().unwrap();
+        let opcode = opcode
+            .try_into()
+            .map_err(|_| ParseDescriptorError::CommandRequestUnknownOpcode(opcode))?;
+
+        Ok(opcode)
     }
 }
 

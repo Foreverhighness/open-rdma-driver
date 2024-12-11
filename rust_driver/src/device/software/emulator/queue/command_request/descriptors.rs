@@ -30,7 +30,7 @@ pub enum DescriptorRef<'d> {
 }
 
 impl<'d> DescriptorRef<'d> {
-    fn parse<'r>(raw: &'r Unknown) -> Result<DescriptorRef<'d>>
+    pub(crate) fn parse<'r>(raw: &'r Unknown) -> Result<DescriptorRef<'d>>
     where
         'r: 'd,
     {

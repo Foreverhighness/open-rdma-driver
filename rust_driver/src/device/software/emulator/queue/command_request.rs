@@ -1,9 +1,10 @@
 pub mod descriptors;
 
-mod common;
+pub(super) mod common;
 mod opcode;
 
 use common::Unknown;
+use descriptors::DescriptorRef;
 
 use crate::device::software::emulator::device_api::csr::{RegistersQueue, RegistersQueueAddress};
 use crate::device::software::emulator::device_api::{ControlStatusRegisters, RawDevice};
@@ -26,5 +27,7 @@ impl<UA: Agent> CommandRequestQueueAbility for Emulator<UA> {
         let raw = unsafe { ptr.read() };
 
         log::trace!("raw descriptor: {raw:02X?}");
+
+        dbg!(DescriptorRef::parse(&raw).unwrap());
     }
 }
