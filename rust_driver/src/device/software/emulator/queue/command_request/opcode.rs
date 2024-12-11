@@ -1,1 +1,1 @@
-pub(crate) use crate::device::types::CtrlRbDescOpcode as Opcode;
+pub(super) type Opcode = crate::device::types::CtrlRbDescOpcode;

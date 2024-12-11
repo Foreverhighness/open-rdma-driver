@@ -3,7 +3,7 @@ pub mod descriptors;
 mod common;
 mod opcode;
 
-use common::DESCRIPTOR_SIZE;
+use common::Unknown;
 
 use crate::device::software::emulator::device_api::csr::{RegistersQueue, RegistersQueueAddress};
 use crate::device::software::emulator::device_api::{ControlStatusRegisters, RawDevice};
@@ -22,7 +22,7 @@ impl<UA: Agent> CommandRequestQueueAbility for Emulator<UA> {
 
         let addr = base_addr.into();
 
-        let ptr = self.dma_client.new_ptr_mut::<[u8; DESCRIPTOR_SIZE]>(addr);
+        let ptr = self.dma_client.new_ptr_mut::<Unknown>(addr);
         let raw = unsafe { ptr.read() };
 
         log::trace!("raw descriptor: {raw:02X?}");
