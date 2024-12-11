@@ -6,6 +6,7 @@ use std::sync::Arc;
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::RawDevice;
 use super::net;
+use super::simulator::udp_agent::UdpAgent;
 
 #[derive(Debug)]
 pub enum State {
@@ -13,7 +14,7 @@ pub enum State {
 }
 
 #[derive(Debug)]
-pub struct Emulator<UA: net::Agent> {
+pub struct Emulator<UA: net::Agent = UdpAgent> {
     csrs: EmulatorCsrs,
 
     state: State,

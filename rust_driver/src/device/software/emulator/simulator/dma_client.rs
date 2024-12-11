@@ -4,7 +4,7 @@ use super::config::WORD_WIDTH;
 use super::rpc;
 
 #[derive(Debug)]
-pub struct DmaClient<R: rpc::Client> {
+pub struct DmaClient<R: rpc::Client = rpc::RpcClient> {
     client_id: u64,
 
     rpc: R,

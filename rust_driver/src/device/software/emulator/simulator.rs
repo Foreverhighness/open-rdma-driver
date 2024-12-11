@@ -6,4 +6,4 @@ pub mod rpc;
 
 mod config;
 mod dma_client;
-mod udp_agent;
+pub(crate) mod udp_agent;

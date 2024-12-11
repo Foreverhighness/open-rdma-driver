@@ -11,11 +11,11 @@ use smoltcp::wire::{
 };
 
 use super::super::net::{Agent, Result, RDMA_PROT};
-use super::rpc::{Client, RpcNetIfcRxTxPayload};
+use super::rpc::{Client, RpcClient, RpcNetIfcRxTxPayload};
 
 #[derive(Debug)]
 /// UdpAgent by using RPC call to communicate with peers
-pub struct UdpAgent<R: Client> {
+pub struct UdpAgent<R: Client = RpcClient> {
     client_id: u64,
     mac: MacAddress,
     ip: IpAddr,
