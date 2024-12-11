@@ -34,8 +34,16 @@ impl<R: rpc::Client> DmaClient<R> {
                 WORD_WIDTH,
             );
         }
-        println!("read over @{addr} start@{start} {buf:?}");
-        &buf[start..]
+
+        let data = &buf[start..];
+
+        log::trace!(
+            "read  at {addr:#018X}, start at {start:02}, buf: {buf:02X?}, data: {data:02X?}",
+            addr = addr & !(u64::from(BYTES_PER_WORD) - 1),
+            data = data
+        );
+
+        data
     }
 
     fn write_at_most_64(&self, addr: u64, data: &[u8]) -> usize {
@@ -48,7 +56,11 @@ impl<R: rpc::Client> DmaClient<R> {
 
         buf[start..start + len].copy_from_slice(&data[..len]);
 
-        println!("ready write @ {} {buf:?}", addr & (!63));
+        log::trace!(
+            "write at {addr:#018X}, start at {start:02}, buf: {buf:02X?}, data: {data:02X?}",
+            addr = addr & !(u64::from(BYTES_PER_WORD) - 1),
+            data = &data[..len]
+        );
 
         let byte_en = if len == 64 {
             [u8::MAX; 8]
@@ -94,9 +106,11 @@ impl<R: rpc::Client> DmaClient<R> {
             }
         }
 
-        log::debug!("DMA: read  {size} bytes: {slice:?}");
+        log::debug!("DMA: read  {size:02} bytes: {slice:?}");
 
         debug_assert_eq!(n_read, size);
+
+        // Safety: Each byte has been written.
         unsafe { ret.assume_init() }
     }
 
@@ -109,19 +123,19 @@ impl<R: rpc::Client> DmaClient<R> {
         let mut address = addr;
         let mut data = slice;
         while !data.is_empty() {
-            println!("want write @ {address} {data:?}");
             let n_written = self.write_at_most_64(address, data);
 
             data = &data[n_written..];
             address = address.checked_add(u64::try_from(n_written).unwrap()).unwrap();
         }
 
-        log::debug!("DMA: write {size} bytes: {slice:?}");
-        // Assert read back same
+        log::debug!("DMA: write {size:02} bytes: {slice:?}");
+
+        // Assert read back same, for debugging purpose
         {
             let read_back = unsafe { self.read::<T>(addr) };
             let read_back_slice = unsafe { core::slice::from_raw_parts::<u8>((&raw const read_back).cast(), size) };
-            // debug_assert_eq!(read_back_slice, slice);
+            debug_assert_eq!(read_back_slice, slice);
         }
     }
 }
