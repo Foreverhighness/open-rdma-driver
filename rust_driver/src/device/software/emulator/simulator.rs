@@ -5,5 +5,8 @@ pub mod device;
 pub mod rpc;
 
 mod config;
-pub(crate) mod dma_client;
-pub(crate) mod udp_agent;
+mod dma_client;
+mod udp_agent;
+
+pub(crate) use dma_client::DmaClient;
+pub(crate) use udp_agent::UdpAgent;

@@ -10,6 +10,7 @@ use crate::device::software::emulator::device_api::csr::{RegistersQueue, Registe
 use crate::device::software::emulator::device_api::{ControlStatusRegisters, RawDevice};
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
+use crate::device::software::emulator::queue::descriptor::HandleDescriptor;
 use crate::device::software::emulator::Emulator;
 
 pub trait CommandRequestQueueAbility: RawDevice {
@@ -26,8 +27,17 @@ impl<UA: Agent> CommandRequestQueueAbility for Emulator<UA> {
         let ptr = self.dma_client.new_ptr_mut::<Unknown>(addr);
         let raw = unsafe { ptr.read() };
 
-        log::trace!("raw descriptor: {raw:02X?}");
+        log::trace!("raw descriptor @ {addr:?}[{head}]: {raw:02X?}");
 
-        dbg!(DescriptorRef::parse(&raw).unwrap());
+        let descriptor_ref = dbg!(DescriptorRef::parse(&raw).unwrap());
+
+        match descriptor_ref {
+            DescriptorRef::UpdateMemoryRegionTable(_) => todo!(),
+            DescriptorRef::UpdatePageTable(descriptor) => self.handle(descriptor).unwrap(),
+            DescriptorRef::QueuePairManagement(_) => todo!(),
+            DescriptorRef::SetNetworkParameter(_) => todo!(),
+            DescriptorRef::SetRawPacketReceiveMeta(_) => todo!(),
+            DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(_) => todo!(),
+        }
     }
 }

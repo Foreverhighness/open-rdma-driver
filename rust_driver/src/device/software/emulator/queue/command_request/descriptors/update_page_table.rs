@@ -1,23 +1,25 @@
 use core::fmt;
 
 use crate::device::layout::CmdQueueReqDescUpdatePGT;
-use crate::device::software::emulator::device_api::RawDevice;
+use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queue::command_request::common::{
     Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
-use crate::device::software::emulator::queue::request::Request;
-use crate::device::software::emulator::Result;
+use crate::device::software::emulator::queue::descriptor::HandleDescriptor;
+use crate::device::software::emulator::{Emulator, Result};
 
 #[repr(C, align(32))]
 pub struct UpdatePageTable(CmdQueueReqDescUpdatePGT<[u8; DESCRIPTOR_SIZE]>);
 const _: () = assert!(size_of::<UpdatePageTable>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<UpdatePageTable>() == DESCRIPTOR_ALIGN);
 
-impl Request for UpdatePageTable {
-    type Response = ();
+impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
+    type Output = ();
 
-    fn handle<Dev: RawDevice>(&self, dev: &Dev) -> Result<Self::Response> {
-        todo!()
+    fn handle(&self, descriptor: &UpdatePageTable) -> Result<Self::Output> {
+        log::trace!("handle {descriptor:?}");
+
+        Ok(())
     }
 }
 

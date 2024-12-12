@@ -42,7 +42,7 @@ impl<R: rpc::Client, Dev: device_api::RawDevice> Proxy<R, Dev> {
                 debug!("recv csr read request {request:?}");
                 return Some(request);
             }
-            std::thread::sleep(Duration::from_millis(10));
+            core::hint::spin_loop();
         }
         None
     }
@@ -66,7 +66,7 @@ impl<R: rpc::Client, Dev: device_api::RawDevice> Proxy<R, Dev> {
                 debug!("recv csr write request {request:?}");
                 return Some(request);
             }
-            std::thread::sleep(Duration::from_millis(10));
+            core::hint::spin_loop();
         }
         None
     }

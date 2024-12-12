@@ -16,6 +16,14 @@ impl CommonHeader {
         self.0.get_valid() as _
     }
 
+    pub fn is_success(&self) -> bool {
+        self.0.get_is_success_or_need_signal_cplt() as _
+    }
+
+    pub fn need_signal_cplt(&self) -> bool {
+        self.0.get_is_success_or_need_signal_cplt() as _
+    }
+
     pub fn opcode(&self) -> Result<Opcode> {
         let opcode: u8 = self.0.get_op_code().try_into().unwrap();
         let opcode = opcode
@@ -30,10 +38,7 @@ impl fmt::Debug for CommonHeader {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("CommandRequestCommonHeader")
             .field("valid", &self.valid())
-            .field(
-                "is_success_or_need_signal_cplt",
-                &(self.0.get_is_success_or_need_signal_cplt() as bool),
-            )
+            .field("is_success_or_need_signal_cplt", &self.is_success())
             .field("opcode", &self.opcode().map_err(|_| fmt::Error)?)
             .field("extra_segment_cnt", &self.0.get_extra_segment_cnt())
             .field("user_data", &self.0.get_user_data())

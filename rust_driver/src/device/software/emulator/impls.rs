@@ -5,9 +5,7 @@ use std::sync::Arc;
 
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::RawDevice;
-use super::simulator::dma_client::DmaClient;
-use super::simulator::udp_agent::UdpAgent;
-use super::{dma, net};
+use super::{dma, net, simulator};
 
 #[derive(Debug)]
 pub enum State {
@@ -15,7 +13,7 @@ pub enum State {
 }
 
 #[derive(Debug)]
-pub struct Emulator<UA: net::Agent = UdpAgent, DC: dma::Client = DmaClient> {
+pub struct Emulator<UA: net::Agent = simulator::UdpAgent, DC: dma::Client = simulator::DmaClient> {
     /// Control and Status Registers
     csrs: EmulatorCsrs,
 
