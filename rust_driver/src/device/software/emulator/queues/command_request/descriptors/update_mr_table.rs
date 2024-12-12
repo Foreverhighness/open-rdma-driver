@@ -14,7 +14,9 @@ pub struct UpdateMemoryRegionTable(CmdQueueReqDescUpdateMrTable<[u8; DESCRIPTOR_
 const _: () = assert!(size_of::<UpdateMemoryRegionTable>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<UpdateMemoryRegionTable>() == DESCRIPTOR_ALIGN);
 
-const OPCODE: Opcode = Opcode::UpdateMrTable;
+impl UpdateMemoryRegionTable {
+    const OPCODE: Opcode = Opcode::UpdateMrTable;
+}
 
 impl<UA: Agent> HandleDescriptor<UpdateMemoryRegionTable> for Emulator<UA> {
     type Output = ();
@@ -23,6 +25,9 @@ impl<UA: Agent> HandleDescriptor<UpdateMemoryRegionTable> for Emulator<UA> {
         todo!()
     }
 }
+
+type MemoryAccessFlag = crate::types::MemAccessTypeFlag;
+type Key = crate::types::Key;
 
 impl UpdateMemoryRegionTable {
     pub fn mr_base_va(&self) -> u64 {
@@ -33,16 +38,16 @@ impl UpdateMemoryRegionTable {
         self.0.get_mr_length().try_into().unwrap()
     }
 
-    pub fn mr_key(&self) -> u32 {
-        self.0.get_mr_key().try_into().unwrap()
+    pub fn mr_key(&self) -> Key {
+        Key::new(self.0.get_mr_key().try_into().unwrap())
     }
 
     pub fn pd_handler(&self) -> u32 {
         self.0.get_pd_handler().try_into().unwrap()
     }
 
-    pub fn access_flag(&self) -> u8 {
-        self.0.get_acc_flags().try_into().unwrap()
+    pub fn access_flag(&self) -> MemoryAccessFlag {
+        MemoryAccessFlag::from_bits(self.0.get_acc_flags().try_into().unwrap()).unwrap()
     }
 
     pub fn page_table_offset(&self) -> u32 {
@@ -55,10 +60,10 @@ impl fmt::Debug for UpdateMemoryRegionTable {
         f.debug_struct("CommandRequestUpdateMemoryRegionTable")
             .field("header", self.header())
             .field("mr_base_va", &format_args!("{:#018X}", self.mr_base_va()))
-            .field("mr_len", &self.mr_len())
+            .field("mr_len", &format_args!("{:#08X}", self.mr_len()))
             .field("mr_key", &self.mr_key())
             .field("pd_handler", &self.pd_handler())
-            .field("access_flag", &format_args!("{:#010b}", self.access_flag()))
+            .field("access_flag", &self.access_flag())
             .field("page_table_offset", &self.page_table_offset())
             .finish()
     }

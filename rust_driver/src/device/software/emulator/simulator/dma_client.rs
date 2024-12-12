@@ -122,7 +122,7 @@ impl<R: rpc::Client> DmaClient<R> {
             }
         }
 
-        log::debug!("DMA: read @ {src:#018X} {size:02} bytes: {:#02X?}", unsafe {
+        log::debug!("DMA: read @ {src:#018X} {size:02} bytes: {:02X?}", unsafe {
             core::mem::transmute::<_, &mut [u8]>(slice)
         });
 

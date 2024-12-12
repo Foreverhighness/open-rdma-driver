@@ -17,7 +17,9 @@ pub struct UpdatePageTable(CmdQueueReqDescUpdatePGT<[u8; DESCRIPTOR_SIZE]>);
 const _: () = assert!(size_of::<UpdatePageTable>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<UpdatePageTable>() == DESCRIPTOR_ALIGN);
 
-const OPCODE: Opcode = Opcode::UpdatePageTable;
+impl UpdatePageTable {
+    const OPCODE: Opcode = Opcode::UpdatePageTable;
+}
 
 impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
     type Output = ();
@@ -25,7 +27,7 @@ impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
     fn handle(&self, request: &UpdatePageTable) -> Result<Self::Output> {
         log::trace!("handle {request:?}");
 
-        let response = CommonHeader::new(OPCODE, true);
+        let response = CommonHeader::new(UpdatePageTable::OPCODE, true);
 
         let csrs = self.csrs();
         let cmd_response_csrs = csrs.cmd_response();

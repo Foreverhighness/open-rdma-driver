@@ -51,7 +51,7 @@ impl fmt::Debug for CommonHeader {
             .field("opcode", &self.opcode().map_err(|_| fmt::Error)?)
             .field("extra_segment_cnt", &self.0.get_extra_segment_cnt())
             .field("user_data", &self.0.get_user_data())
-            .finish_non_exhaustive()
+            .finish()
     }
 }
 
