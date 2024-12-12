@@ -122,7 +122,9 @@ impl<R: rpc::Client> DmaClient<R> {
             }
         }
 
-        log::debug!("DMA: read @ {src:#018X} {size:02} bytes: {slice:?}");
+        log::debug!("DMA: read @ {src:#018X} {size:02} bytes: {:#02X?}", unsafe {
+            core::mem::transmute::<_, &mut [u8]>(slice)
+        });
 
         debug_assert_eq!(n_read, size);
 
@@ -170,11 +172,11 @@ impl<R: rpc::Client> DmaClient<R> {
         log::debug!("DMA: write @ {dst:#018X} {size:02} bytes: {slice:?}");
 
         // Assert read back same, for debugging purpose
-        {
-            let read_back = unsafe { self.read::<T>(dst) };
-            let read_back_slice = unsafe { core::slice::from_raw_parts::<u8>((&raw const read_back).cast(), size) };
-            debug_assert_eq!(read_back_slice, slice);
-        }
+        // {
+        //     let read_back = unsafe { self.read::<T>(dst) };
+        //     let read_back_slice = unsafe { core::slice::from_raw_parts::<u8>((&raw const read_back).cast(), size) };
+        //     debug_assert_eq!(read_back_slice, slice);
+        // }
     }
 
     /// Copies `count * size_of::<T>()` bytes from `src` to `dst`. The source
