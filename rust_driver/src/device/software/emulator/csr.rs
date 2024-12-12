@@ -21,11 +21,11 @@ use super::net::Agent;
 use super::Emulator;
 
 #[derive(Debug, Default)]
-pub(super) struct EmulatorCsrs {
-    cmd_request: EmulatorRegistersCommandRequest,
-    cmd_response: EmulatorRegistersCommandResponse,
-    meta_report: EmulatorRegistersMetaReport,
-    send: EmulatorRegistersSend,
+pub struct EmulatorCsrs {
+    pub(crate) cmd_request: EmulatorRegistersCommandRequest,
+    pub(crate) cmd_response: EmulatorRegistersCommandResponse,
+    pub(crate) meta_report: EmulatorRegistersMetaReport,
+    pub(crate) send: EmulatorRegistersSend,
 }
 
 #[derive(Debug)]

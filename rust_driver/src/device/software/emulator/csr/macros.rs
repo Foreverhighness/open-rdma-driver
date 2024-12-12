@@ -2,7 +2,7 @@ macro_rules! declare_and_impl_basic_register {
     ($prefix:ident, $csr_type:ident, $part:ident) => {
         paste::paste! {
             #[derive(Debug, Default)]
-            pub(super) struct [<$prefix $csr_type $part>] {
+            pub(crate) struct [<$prefix $csr_type $part>] {
                 val: core::sync::atomic::AtomicU32,
 
                 read_cnt: core::sync::atomic::AtomicU32,
@@ -11,11 +11,11 @@ macro_rules! declare_and_impl_basic_register {
                 driver_write_cnt: core::sync::atomic::AtomicU32,
             }
             impl [<$prefix $csr_type $part>] {
-                fn read(&self) -> u32 {
+                pub fn read(&self) -> u32 {
                     let _ = self.read_cnt.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
                     self.val.load(core::sync::atomic::Ordering::Relaxed)
                 }
-                fn write(&self, val: u32) {
+                pub fn write(&self, val: u32) {
                     let _ = self.write_cnt.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
                     self.val.store(val, core::sync::atomic::Ordering::Relaxed)
                 }
@@ -27,7 +27,7 @@ macro_rules! declare_and_impl_basic_register {
                 dev: &'h Emulator<UA>,
             }
             impl<'h, UA: Agent> [<$prefix $csr_type $part Handler>]<'h, UA> {
-                pub(super) fn new<'r, 'd>(reg: &'r [<$prefix $csr_type $part>], dev: &'d Emulator<UA>) -> Self
+                pub(crate) fn new<'r, 'd>(reg: &'r [<$prefix $csr_type $part>], dev: &'d Emulator<UA>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -45,12 +45,12 @@ macro_rules! declare_and_impl_address {
     ($prefix:ident, $csr_type:ident) => {
         paste::paste! {
             #[derive(Debug, Default)]
-            pub(super) struct [<$prefix $csr_type Address>] {
-                low: [<$prefix $csr_type AddressLow>],
-                high: [<$prefix $csr_type AddressHigh>]
+            pub(crate) struct [<$prefix $csr_type Address>] {
+                pub(crate) low: [<$prefix $csr_type AddressLow>],
+                pub(crate) high: [<$prefix $csr_type AddressHigh>]
             }
             impl [<$prefix $csr_type Address>] {
-                fn read(&self) -> u64 {
+                pub(crate) fn read(&self) -> u64 {
                     let low: u64 = self.low.read().into();
                     let high: u64 = self.high.read().into();
 
@@ -70,7 +70,7 @@ macro_rules! declare_and_impl_address {
                 dev: &'h Emulator<UA>,
             }
             impl<'h, UA: Agent> [<$prefix $csr_type AddressHandler>]<'h, UA> {
-                pub(super) fn new<'r, 'd>(addr: &'r [<$prefix $csr_type Address>], dev: &'d Emulator<UA>) -> Self
+                pub(crate) fn new<'r, 'd>(addr: &'r [<$prefix $csr_type Address>], dev: &'d Emulator<UA>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -104,10 +104,10 @@ macro_rules! declare_and_impl_queue {
     ($prefix:ident, $csr_type:ident) => {
         paste::paste! {
             #[derive(Debug, Default)]
-            pub(super) struct [<$prefix $csr_type>] {
-                addr: [<$prefix $csr_type Address>],
-                head: [<$prefix $csr_type Head>],
-                tail: [<$prefix $csr_type Tail>],
+            pub(crate) struct [<$prefix $csr_type>] {
+                pub(crate) addr: [<$prefix $csr_type Address>],
+                pub(crate) head: [<$prefix $csr_type Head>],
+                pub(crate) tail: [<$prefix $csr_type Tail>],
             }
 
             #[derive(Debug)]
@@ -116,7 +116,7 @@ macro_rules! declare_and_impl_queue {
                 dev: &'h Emulator<UA>,
             }
             impl<'h, UA: Agent> [<$prefix $csr_type Handler>]<'h, UA> {
-                pub(super) fn new<'r, 'd>(regs: &'r [<$prefix $csr_type>], dev: &'d Emulator<UA>) -> Self
+                pub(crate) fn new<'r, 'd>(regs: &'r [<$prefix $csr_type>], dev: &'d Emulator<UA>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,

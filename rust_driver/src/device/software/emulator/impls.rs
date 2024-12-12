@@ -15,7 +15,7 @@ pub enum State {
 #[derive(Debug)]
 pub struct Emulator<UA: net::Agent = simulator::UdpAgent, DC: dma::Client = simulator::DmaClient> {
     /// Control and Status Registers
-    csrs: EmulatorCsrs,
+    pub(crate) csrs: EmulatorCsrs,
 
     /// Udp agent
     udp_agent: UA,
