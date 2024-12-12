@@ -2,7 +2,7 @@ use core::fmt;
 
 use super::opcode::Opcode;
 use crate::device::layout::CmdQueueDescCommonHead;
-use crate::device::software::emulator::queue::errors::ParseDescriptorError;
+use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::Result;
 
 pub(super) const DESCRIPTOR_SIZE: usize = 32; // 256 bits

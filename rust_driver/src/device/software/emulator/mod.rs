@@ -8,7 +8,7 @@ mod dma;
 mod errors;
 mod impls;
 mod net;
-mod queue;
+mod queues;
 
 pub use impls::*;
 

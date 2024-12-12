@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::device::layout::CmdQueueReqDescSetRawPacketReceiveMeta;
-use crate::device::software::emulator::queue::command_request::common::{Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
+use crate::device::software::emulator::queues::command_request::common::{Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[repr(C, align(32))]
 pub struct SetRawPacketReceiveMeta(CmdQueueReqDescSetRawPacketReceiveMeta<[u8; DESCRIPTOR_SIZE]>);

@@ -6,10 +6,10 @@ use crate::device::software::emulator::device_api::csr::{RegisterOperation, Regi
 use crate::device::software::emulator::device_api::{ControlStatusRegisters, RawDevice};
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
-use crate::device::software::emulator::queue::command_request::common::{
+use crate::device::software::emulator::queues::command_request::common::{
     CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
-use crate::device::software::emulator::queue::descriptor::HandleDescriptor;
+use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::{Emulator, Result};
 
 #[repr(C, align(32))]

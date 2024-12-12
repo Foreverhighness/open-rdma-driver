@@ -14,7 +14,7 @@ pub use update_page_table::UpdatePageTable;
 
 use super::common::Unknown;
 use super::opcode::Opcode;
-use crate::device::software::emulator::queue::command_request::common::Header;
+use crate::device::software::emulator::queues::command_request::common::Header;
 use crate::device::software::emulator::Result;
 
 #[non_exhaustive]

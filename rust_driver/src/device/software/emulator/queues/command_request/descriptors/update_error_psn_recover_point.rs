@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::device::layout::CmdQueueReqDescUpdateErrRecoverPoint;
-use crate::device::software::emulator::queue::command_request::common::{Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
+use crate::device::software::emulator::queues::command_request::common::{Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[repr(C, align(32))]
 pub struct UpdateErrorPacketSequenceNumberRecoverPoint(CmdQueueReqDescUpdateErrRecoverPoint<[u8; DESCRIPTOR_SIZE]>);

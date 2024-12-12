@@ -1,4 +1,4 @@
-use super::queue::errors::ParseDescriptorError;
+use super::queues::errors::ParseDescriptorError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

@@ -1,7 +1,7 @@
 use log::trace;
 
 use crate::device::software::emulator::device_api::csr::RegisterOperation;
-use crate::device::software::emulator::queue::command_request::CommandRequestQueueAbility;
+use crate::device::software::emulator::queues::command_request::CommandRequestQueueAbility;
 
 // Register common part
 register_queue_csr!(0x8000, Emulator, CommandRequest, COMMAND_REQUEST);
