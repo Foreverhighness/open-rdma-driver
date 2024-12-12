@@ -14,7 +14,7 @@ pub(crate) struct CommandRequestQueue<'q, UA: Agent> {
 }
 
 impl<'q, UA: Agent> CommandRequestQueue<'q, UA> {
-    pub(crate) unsafe fn new(dev: &'q Emulator<UA>) -> Self {
+    pub(crate) fn new(dev: &'q Emulator<UA>) -> Self {
         Self { dev }
     }
 }
@@ -25,7 +25,7 @@ impl<'q, UA: Agent> CommandRequestQueue<'q, UA> {
 
 impl<UA: Agent> CommandRequestQueue<'_, UA> {
     // argument `head` is for debugging purpose
-    pub(crate) unsafe fn pop(&mut self, head: u32) -> Option<Unknown> {
+    pub(crate) unsafe fn pop(&self, head: u32) -> Option<Unknown> {
         let addr = self.dev.csrs.cmd_request.addr.read();
         let read_head = self.dev.csrs.cmd_request.head.read();
         let tail = self.dev.csrs.cmd_request.tail.read();
@@ -54,6 +54,6 @@ impl<UA: Agent> CommandRequestQueue<'_, UA> {
 
 impl<UA: Agent> Emulator<UA> {
     pub(crate) fn command_request_queue(&self) -> CommandRequestQueue<'_, UA> {
-        unsafe { CommandRequestQueue::new(self) }
+        CommandRequestQueue::new(self)
     }
 }

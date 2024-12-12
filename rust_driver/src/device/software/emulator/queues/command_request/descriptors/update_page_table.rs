@@ -29,23 +29,9 @@ impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
 
         let response = CommonHeader::new(UpdatePageTable::OPCODE, true);
 
-        let csrs = self.csrs();
-        let cmd_response_csrs = csrs.cmd_response();
-        let base_addr = cmd_response_csrs.addr().read();
-        let head_reg = cmd_response_csrs.head();
-        let head = head_reg.read();
-
-        let addr = base_addr
-            .checked_add(u64::from(head) * u64::try_from(DESCRIPTOR_SIZE).unwrap())
-            .unwrap()
-            .into();
-        let ptr = self.dma_client.new_ptr_mut::<CommonHeader>(addr);
-        // Safety: src and dst is valid
         unsafe {
-            ptr.write(response);
+            self.command_response_queue().push(response);
         }
-
-        head_reg.write(head + 1);
 
         Ok(())
     }
