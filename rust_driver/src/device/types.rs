@@ -357,7 +357,7 @@ pub(crate) enum ToHostWorkRbDescError {
     DeviceError(DeviceError),
 }
 
-#[derive(Debug, TryFromPrimitive, IntoPrimitive)]
+#[derive(Debug, TryFromPrimitive, IntoPrimitive, PartialEq)]
 #[repr(u8)]
 pub(crate) enum CtrlRbDescOpcode {
     UpdateMrTable = 0x00,

@@ -599,8 +599,8 @@ impl ToCardWriteDescriptor {
 
     pub(crate) fn write_last_opcode_with_imm(&self) -> (ToHostWorkRbDescOpcode, Option<u32>) {
         match (self.is_last, self.is_resp(), self.has_imm()) {
-            (true, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseLast, None), /* ignore read response last
-                                                                                       * with imm */
+            // ignore read response last with imm
+            (true, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseLast, None),
             (true, false, true) => (ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate, self.imm),
             (true, false, false) => (ToHostWorkRbDescOpcode::RdmaWriteLast, None),
             (false, true, _) => (ToHostWorkRbDescOpcode::RdmaReadResponseMiddle, None),

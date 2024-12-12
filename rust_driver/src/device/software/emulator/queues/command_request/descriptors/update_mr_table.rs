@@ -77,6 +77,7 @@ impl AsRef<Unknown> for UpdateMemoryRegionTable {
 
 impl AsRef<UpdateMemoryRegionTable> for Unknown {
     fn as_ref(&self) -> &UpdateMemoryRegionTable {
+        assert_eq!(self.header().opcode().unwrap(), UpdateMemoryRegionTable::OPCODE);
         unsafe { core::mem::transmute(self) }
     }
 }

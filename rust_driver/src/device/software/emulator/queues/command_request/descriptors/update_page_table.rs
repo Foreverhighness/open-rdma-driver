@@ -2,9 +2,6 @@ use core::fmt;
 
 use super::Opcode;
 use crate::device::layout::CmdQueueReqDescUpdatePGT;
-use crate::device::software::emulator::device_api::csr::{RegisterOperation, RegistersQueue, RegistersQueueAddress};
-use crate::device::software::emulator::device_api::{ControlStatusRegisters, RawDevice};
-use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::{
     CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
@@ -70,6 +67,7 @@ impl AsRef<Unknown> for UpdatePageTable {
 
 impl AsRef<UpdatePageTable> for Unknown {
     fn as_ref(&self) -> &UpdatePageTable {
+        assert_eq!(self.header().opcode().unwrap(), UpdatePageTable::OPCODE);
         unsafe { core::mem::transmute(self) }
     }
 }

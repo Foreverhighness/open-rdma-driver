@@ -1,16 +1,50 @@
 use core::fmt;
 
+use super::Opcode;
 use crate::device::layout::CmdQueueReqDescSetRawPacketReceiveMeta;
-use crate::device::software::emulator::queues::command_request::common::{Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
+use crate::device::software::emulator::net::Agent;
+use crate::device::software::emulator::queues::command_request::common::{
+    Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
+};
+use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
+use crate::device::software::emulator::{Emulator, Result};
 
 #[repr(C, align(32))]
 pub struct SetRawPacketReceiveMeta(CmdQueueReqDescSetRawPacketReceiveMeta<[u8; DESCRIPTOR_SIZE]>);
 const _: () = assert!(size_of::<SetRawPacketReceiveMeta>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<SetRawPacketReceiveMeta>() == DESCRIPTOR_ALIGN);
 
+impl SetRawPacketReceiveMeta {
+    const OPCODE: Opcode = Opcode::SetRawPacketReceiveMeta;
+}
+
+impl<UA: Agent> HandleDescriptor<SetRawPacketReceiveMeta> for Emulator<UA> {
+    type Output = ();
+
+    fn handle(&self, request: &SetRawPacketReceiveMeta) -> Result<Self::Output> {
+        todo!()
+    }
+}
+
+type Key = crate::types::Key;
+
+impl SetRawPacketReceiveMeta {
+    pub fn write_base_addr(&self) -> u64 {
+        self.0.get_write_base_addr()
+    }
+
+    pub fn write_mr_key(&self) -> Key {
+        Key::new(self.0.get_write_mr_key().try_into().unwrap())
+    }
+}
+
 impl fmt::Debug for SetRawPacketReceiveMeta {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+        f.debug_struct("CommandRequestSetRawPacketReceiveMeta")
+            .field("header", self.header())
+            .field("write_base_addr", &format_args!("{:#018X}", self.write_base_addr()))
+            .field("write_mr_key", &self.write_mr_key())
+            .finish()
     }
 }
 
@@ -22,6 +56,7 @@ impl AsRef<Unknown> for SetRawPacketReceiveMeta {
 
 impl AsRef<SetRawPacketReceiveMeta> for Unknown {
     fn as_ref(&self) -> &SetRawPacketReceiveMeta {
+        assert_eq!(self.header().opcode().unwrap(), SetRawPacketReceiveMeta::OPCODE);
         unsafe { core::mem::transmute(self) }
     }
 }

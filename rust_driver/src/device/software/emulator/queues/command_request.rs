@@ -22,12 +22,12 @@ impl<UA: Agent> CommandRequestQueueAbility for Emulator<UA> {
         let descriptor_ref = dbg!(DescriptorRef::parse(&raw).unwrap());
 
         match descriptor_ref {
-            DescriptorRef::UpdateMemoryRegionTable(_) => todo!(),
-            DescriptorRef::UpdatePageTable(descriptor) => self.handle(descriptor).unwrap(),
-            DescriptorRef::QueuePairManagement(_) => todo!(),
-            DescriptorRef::SetNetworkParameter(_) => todo!(),
-            DescriptorRef::SetRawPacketReceiveMeta(_) => todo!(),
-            DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(_) => todo!(),
+            DescriptorRef::UpdateMemoryRegionTable(req) => self.handle(req).unwrap(),
+            DescriptorRef::UpdatePageTable(req) => self.handle(req).unwrap(),
+            DescriptorRef::QueuePairManagement(req) => self.handle(req).unwrap(),
+            DescriptorRef::SetNetworkParameter(req) => self.handle(req).unwrap(),
+            DescriptorRef::SetRawPacketReceiveMeta(req) => self.handle(req).unwrap(),
+            DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(req) => self.handle(req).unwrap(),
         }
     }
 }

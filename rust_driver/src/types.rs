@@ -301,7 +301,8 @@ pub enum QpType {
 
 /// Packet MTU
 #[non_exhaustive]
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, TryFromPrimitive)]
+#[repr(u8)]
 pub enum Pmtu {
     /// 256 bytes
     #[default]
