@@ -83,7 +83,23 @@ impl<R: rpc::Client> DmaClient<R> {
         len
     }
 
-    unsafe fn read<T>(&self, addr: u64) -> T {
+    /// Reads the value from `src` without moving it. This leaves the
+    /// memory in `src` unchanged.
+    ///
+    /// # Safety
+    ///
+    /// Behavior is undefined if any of the following conditions are violated:
+    ///
+    /// * `src` must be [valid] for reads.
+    ///
+    /// * `src` must be properly aligned. Use [`read_unaligned`] if this is not the case.
+    ///
+    /// * `src` must point to a properly initialized value of type `T`.
+    ///
+    /// Note that even if `T` has size `0`, the pointer must be properly aligned.
+    unsafe fn read<T>(&self, src: u64) -> T {
+        assert_eq!(src % u64::try_from(align_of::<T>()).unwrap(), 0);
+
         let mut ret = MaybeUninit::uninit();
         let size = size_of::<T>();
 
@@ -94,7 +110,7 @@ impl<R: rpc::Client> DmaClient<R> {
 
         let mut buf = [0u8; 64];
         while n_read < size {
-            let result = self.read_at_64(addr.checked_add(u64::try_from(n_read).unwrap()).unwrap(), &mut buf);
+            let result = self.read_at_64(src.checked_add(u64::try_from(n_read).unwrap()).unwrap(), &mut buf);
             let len = result.len().min(size - n_read);
 
             // #![feature(maybe_uninit_write_slice)] <https://github.com/rust-lang/rust/issues/79995>
@@ -106,7 +122,7 @@ impl<R: rpc::Client> DmaClient<R> {
             }
         }
 
-        log::debug!("DMA: read  {size:02} bytes: {slice:?}");
+        log::debug!("DMA: read @ {src:#018X} {size:02} bytes: {slice:?}");
 
         debug_assert_eq!(n_read, size);
 
@@ -114,28 +130,105 @@ impl<R: rpc::Client> DmaClient<R> {
         unsafe { ret.assume_init() }
     }
 
-    unsafe fn write<T>(&self, addr: u64, val: T) {
+    /// Overwrites a memory location with the given value without reading or
+    /// dropping the old value.
+    ///
+    /// `write` does not drop the contents of `dst`. This is safe, but it could leak
+    /// allocations or resources, so care should be taken not to overwrite an object
+    /// that should be dropped.
+    ///
+    /// Additionally, it does not drop `src`. Semantically, `src` is moved into the
+    /// location pointed to by `dst`.
+    ///
+    /// This is appropriate for initializing uninitialized memory, or overwriting
+    /// memory that has previously been [`read`] from.
+    ///
+    /// # Safety
+    ///
+    /// Behavior is undefined if any of the following conditions are violated:
+    ///
+    /// * `dst` must be [valid] for writes.
+    ///
+    /// * `dst` must be properly aligned. Use [`write_unaligned`] if this is not the case.
+    ///
+    /// Note that even if `T` has size `0`, the pointer must be properly aligned.
+    unsafe fn write<T>(&self, dst: u64, src: T) {
         let size = size_of::<T>();
+        let mut addr = dst;
 
         // Safety: Byte slice
-        let slice = unsafe { core::slice::from_raw_parts::<u8>((&raw const val).cast(), size) };
-
-        let mut address = addr;
+        let slice = unsafe { core::slice::from_raw_parts::<u8>((&raw const src).cast(), size) };
         let mut data = slice;
+
         while !data.is_empty() {
-            let n_written = self.write_at_most_64(address, data);
+            let n_written = self.write_at_most_64(addr, data);
 
             data = &data[n_written..];
-            address = address.checked_add(u64::try_from(n_written).unwrap()).unwrap();
+            addr = addr.checked_add(u64::try_from(n_written).unwrap()).unwrap();
         }
 
-        log::debug!("DMA: write {size:02} bytes: {slice:?}");
+        log::debug!("DMA: write @ {dst:#018X} {size:02} bytes: {slice:?}");
 
         // Assert read back same, for debugging purpose
         {
-            let read_back = unsafe { self.read::<T>(addr) };
+            let read_back = unsafe { self.read::<T>(dst) };
             let read_back_slice = unsafe { core::slice::from_raw_parts::<u8>((&raw const read_back).cast(), size) };
             debug_assert_eq!(read_back_slice, slice);
+        }
+    }
+
+    /// Copies `count * size_of::<T>()` bytes from `src` to `dst`. The source
+    /// and destination must *not* overlap.
+    ///
+    /// For regions of memory which might overlap, use [`core::ptr::copy`] instead.
+    ///
+    /// `copy_nonoverlapping` is semantically equivalent to C's [`memcpy`], but
+    /// with the argument order swapped.
+    ///
+    /// The copy is "untyped" in the sense that data may be uninitialized or otherwise violate the
+    /// requirements of `T`. The initialization state is preserved exactly.
+    ///
+    /// [`memcpy`]: https://en.cppreference.com/w/c/string/byte/memcpy
+    ///
+    /// # Safety
+    ///
+    /// Behavior is undefined if any of the following conditions are violated:
+    ///
+    /// * `src` must be [valid] for reads of `count * size_of::<T>()` bytes.
+    ///
+    /// * `dst` must be [valid] for writes of `count * size_of::<T>()` bytes.
+    ///
+    /// * Both `src` and `dst` must be properly aligned.
+    ///
+    /// * The region of memory beginning at `src` with a size of `count * size_of::<T>()` bytes must *not* overlap with
+    ///   the region of memory beginning at `dst` with the same size.
+    ///
+    /// Like [`read`], `copy_nonoverlapping` creates a bitwise copy of `T`, regardless of
+    /// whether `T` is [`Copy`]. If `T` is not [`Copy`], using *both* the values
+    /// in the region beginning at `*src` and the region beginning at `*dst` can
+    /// [violate memory safety][read-ownership].
+    ///
+    /// Note that even if the effectively copied size (`count * size_of::<T>()`) is
+    /// `0`, the pointers must be properly aligned.
+    ///
+    /// [`read`]: core::ptr::read
+    /// [read-ownership]: core::ptr::read#ownership-of-the-returned-value
+    /// [valid]: core::ptr#safety
+    unsafe fn copy_nonoverlapping<T>(&self, mut src: *const T, dst: u64, count: usize) {
+        let size = size_of::<T>();
+        let mut addr = dst;
+
+        for _ in 0..count {
+            // Safety: Byte slice
+            let mut data = unsafe { core::slice::from_raw_parts(src.cast(), size) };
+            src = unsafe { src.add(1) };
+
+            while !data.is_empty() {
+                let n_written = self.write_at_most_64(addr, data);
+
+                data = &data[n_written..];
+                addr = addr.checked_add(n_written.try_into().unwrap()).unwrap();
+            }
         }
     }
 }
@@ -177,6 +270,10 @@ impl<T, R: rpc::Client> PointerMut for Ptr<'_, T, R> {
 
     unsafe fn write(self, val: T) {
         unsafe { self.client.write(self.addr.into(), val) }
+    }
+
+    unsafe fn copy_nonoverlapping(self, src: *const T, count: usize) {
+        unsafe { self.client.copy_nonoverlapping(src, self.addr.into(), count) }
     }
 }
 
@@ -261,6 +358,8 @@ mod tests {
         ($cli:ident, $addr:literal, $val:expr, $typ:ty) => {
             let val: $typ = $val;
             unsafe { $cli.write::<$typ>($addr, val) };
+            assert_eq!(unsafe { $cli.read::<$typ>($addr) }, val);
+            unsafe { $cli.copy_nonoverlapping(&raw const val, $addr, 1) };
             assert_eq!(unsafe { $cli.read::<$typ>($addr) }, val);
         };
     }
