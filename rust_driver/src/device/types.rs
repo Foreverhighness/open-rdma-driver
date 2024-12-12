@@ -3,7 +3,7 @@ use std::net::Ipv4Addr;
 use std::time::Instant;
 
 use eui48::MacAddress;
-use num_enum::TryFromPrimitive;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use super::layout::{
     CmdQueueDescCommonHead, MetaReportQueueDescBthReth, MetaReportQueueDescFragAETH, MetaReportQueueDescFragBTH,
@@ -357,7 +357,7 @@ pub(crate) enum ToHostWorkRbDescError {
     DeviceError(DeviceError),
 }
 
-#[derive(Debug, TryFromPrimitive)]
+#[derive(Debug, TryFromPrimitive, IntoPrimitive)]
 #[repr(u8)]
 pub(crate) enum CtrlRbDescOpcode {
     UpdateMrTable = 0x00,

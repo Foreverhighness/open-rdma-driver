@@ -8,5 +8,5 @@ pub(super) trait Descriptor {}
 pub(super) trait HandleDescriptor<Desc>: RawDevice {
     type Output;
 
-    fn handle(&self, descriptor: &Desc) -> Result<Self::Output>;
+    fn handle(&self, request: &Desc) -> Result<Self::Output>;
 }

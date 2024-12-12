@@ -1,9 +1,13 @@
 use core::fmt;
 
+use super::Opcode;
 use crate::device::layout::CmdQueueReqDescUpdatePGT;
+use crate::device::software::emulator::device_api::csr::{RegisterOperation, RegistersQueue, RegistersQueueAddress};
+use crate::device::software::emulator::device_api::{ControlStatusRegisters, RawDevice};
+use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queue::command_request::common::{
-    Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
+    CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queue::descriptor::HandleDescriptor;
 use crate::device::software::emulator::{Emulator, Result};
@@ -13,11 +17,33 @@ pub struct UpdatePageTable(CmdQueueReqDescUpdatePGT<[u8; DESCRIPTOR_SIZE]>);
 const _: () = assert!(size_of::<UpdatePageTable>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<UpdatePageTable>() == DESCRIPTOR_ALIGN);
 
+const OPCODE: Opcode = Opcode::UpdatePageTable;
+
 impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
     type Output = ();
 
-    fn handle(&self, descriptor: &UpdatePageTable) -> Result<Self::Output> {
-        log::trace!("handle {descriptor:?}");
+    fn handle(&self, request: &UpdatePageTable) -> Result<Self::Output> {
+        log::trace!("handle {request:?}");
+
+        let response = CommonHeader::new(OPCODE, true);
+
+        let csrs = self.csrs();
+        let cmd_response_csrs = csrs.cmd_response();
+        let base_addr = cmd_response_csrs.addr().read();
+        let head_reg = cmd_response_csrs.head();
+        let head = head_reg.read();
+
+        let addr = base_addr
+            .checked_add(u64::from(head) * u64::try_from(DESCRIPTOR_SIZE).unwrap())
+            .unwrap()
+            .into();
+        let ptr = self.dma_client.new_ptr_mut::<CommonHeader>(addr);
+        // Safety: src and dst is valid
+        unsafe {
+            ptr.write(response);
+        }
+
+        head_reg.write(head + 1);
 
         Ok(())
     }

@@ -12,6 +12,15 @@ pub(super) const DESCRIPTOR_ALIGN: usize = 32; // 256 bits
 pub struct CommonHeader(CmdQueueDescCommonHead<[u8; 8]>);
 
 impl CommonHeader {
+    pub fn new(opcode: Opcode, success: bool) -> Self {
+        let mut header = CmdQueueDescCommonHead([0; 8]);
+        header.set_valid(true);
+        header.set_is_success_or_need_signal_cplt(success);
+        header.set_op_code(u8::from(opcode).into());
+
+        Self(header)
+    }
+
     pub fn valid(&self) -> bool {
         self.0.get_valid() as _
     }

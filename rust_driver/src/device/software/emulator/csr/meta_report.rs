@@ -59,7 +59,15 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportHeadHandler<'_,
     }
 
     fn write(&self, val: Self::Output) {
-        todo!()
+        let old = self.reg.read();
+        self.reg.write(val);
+
+        let _ = self.reg.write_cnt.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+
+        trace!(
+            "Write {} tail {old:010X} -> {val:010X}",
+            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
+        );
     }
 }
 
@@ -76,6 +84,14 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportTailHandler<'_,
     }
 
     fn write(&self, val: Self::Output) {
-        todo!()
+        let old = self.reg.read();
+        self.reg.write(val);
+
+        let _ = self.reg.write_cnt.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+
+        trace!(
+            "Write {} tail {old:010X} -> {val:010X}",
+            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
+        );
     }
 }
