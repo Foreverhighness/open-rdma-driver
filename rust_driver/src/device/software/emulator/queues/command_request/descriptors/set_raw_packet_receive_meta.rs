@@ -4,7 +4,7 @@ use super::Opcode;
 use crate::device::layout::CmdQueueReqDescSetRawPacketReceiveMeta;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::{
-    Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
+    CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::types::MemoryRegionKey;
@@ -23,7 +23,12 @@ impl<UA: Agent> HandleDescriptor<SetRawPacketReceiveMeta> for Emulator<UA> {
     type Output = ();
 
     fn handle(&self, request: &SetRawPacketReceiveMeta) -> Result<Self::Output> {
-        todo!()
+        log::debug!("handle {request:?}");
+
+        let response = CommonHeader::new(SetRawPacketReceiveMeta::OPCODE, true, request.header().user_data());
+        unsafe { self.command_response_queue().push(response) };
+
+        Ok(())
     }
 }
 

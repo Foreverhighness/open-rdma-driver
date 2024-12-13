@@ -32,9 +32,7 @@ impl<UA: Agent> HandleDescriptor<UpdateMemoryRegionTable> for Emulator<UA> {
         self.memory_region_table().update(mr_context)?;
 
         let response = CommonHeader::new(UpdateMemoryRegionTable::OPCODE, true, request.header().user_data());
-        unsafe {
-            self.command_response_queue().push(response);
-        }
+        unsafe { self.command_response_queue().push(response) };
 
         Ok(())
     }

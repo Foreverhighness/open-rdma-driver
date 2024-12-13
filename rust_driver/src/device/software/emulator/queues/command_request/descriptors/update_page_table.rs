@@ -22,12 +22,10 @@ impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
     type Output = ();
 
     fn handle(&self, request: &UpdatePageTable) -> Result<Self::Output> {
-        log::trace!("handle {request:?}");
+        log::debug!("handle {request:?}");
 
         let response = CommonHeader::new(UpdatePageTable::OPCODE, true, request.header().user_data());
-        unsafe {
-            self.command_response_queue().push(response);
-        }
+        unsafe { self.command_response_queue().push(response) };
 
         Ok(())
     }

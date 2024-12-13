@@ -3,8 +3,9 @@ use core::fmt;
 use super::Opcode;
 use crate::device::layout::CmdQueueReqDescQpManagementSeg0;
 use crate::device::software::emulator::net::Agent;
+use crate::device::software::emulator::queue_pair::Context;
 use crate::device::software::emulator::queues::command_request::common::{
-    Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
+    CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::types::{
@@ -25,7 +26,36 @@ impl<UA: Agent> HandleDescriptor<QueuePairManagement> for Emulator<UA> {
     type Output = ();
 
     fn handle(&self, request: &QueuePairManagement) -> Result<Self::Output> {
-        todo!()
+        log::debug!("handle {request:?}");
+
+        let qpn = request.queue_pair_number();
+        let qp_context = Context::from_req(request);
+
+        let success = if request.valid() {
+            // create
+            let _ = self.queue_pair_table().insert(qp_context);
+            true
+        } else {
+            // delete
+            self.queue_pair_table().remove(qpn)
+        };
+
+        let response = CommonHeader::new(QueuePairManagement::OPCODE, success, request.header().user_data());
+        unsafe { self.command_response_queue().push(response) };
+
+        Ok(())
+    }
+}
+
+impl Context {
+    fn from_req(req: &QueuePairManagement) -> Self {
+        Self::new(
+            req.queue_pair_number(),
+            req.protect_domain_handler(),
+            req.queue_pair_type(),
+            req.remote_queue_access_flag(),
+            req.packet_mtu_kind(),
+        )
     }
 }
 

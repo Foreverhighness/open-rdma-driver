@@ -7,7 +7,7 @@ use super::Opcode;
 use crate::device::layout::CmdQueueReqDescSetNetworkParam;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::{
-    Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
+    CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::{Emulator, Result};
@@ -25,7 +25,12 @@ impl<UA: Agent> HandleDescriptor<SetNetworkParameter> for Emulator<UA> {
     type Output = ();
 
     fn handle(&self, request: &SetNetworkParameter) -> Result<Self::Output> {
-        todo!()
+        log::debug!("handle {request:?}");
+
+        let response = CommonHeader::new(SetNetworkParameter::OPCODE, true, request.header().user_data());
+        unsafe { self.command_response_queue().push(response) };
+
+        Ok(())
     }
 }
 
