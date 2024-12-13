@@ -7,6 +7,7 @@ use crate::device::software::emulator::queues::command_request::common::{
     CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
+use crate::device::software::emulator::types::{PacketSequenceNumber, QueuePairNumber};
 use crate::device::software::emulator::{Emulator, Result};
 
 #[repr(C, align(32))]
@@ -36,11 +37,11 @@ impl<UA: Agent> HandleDescriptor<UpdateErrorPacketSequenceNumberRecoverPoint> fo
 }
 
 impl UpdateErrorPacketSequenceNumberRecoverPoint {
-    pub fn packet_sequence_number(&self) -> u32 {
+    pub fn packet_sequence_number(&self) -> PacketSequenceNumber {
         self.0.get_psn().try_into().unwrap()
     }
 
-    pub fn queue_pair_number(&self) -> u32 {
+    pub fn queue_pair_number(&self) -> QueuePairNumber {
         self.0.get_qpn().try_into().unwrap()
     }
 }

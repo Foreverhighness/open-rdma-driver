@@ -2,6 +2,7 @@ use core::fmt;
 
 use super::Opcode;
 use crate::device::layout::CmdQueueReqDescSetRawPacketReceiveMeta;
+use crate::device::software::emulator::address::DmaAddress;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::{
     CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
@@ -33,8 +34,8 @@ impl<UA: Agent> HandleDescriptor<SetRawPacketReceiveMeta> for Emulator<UA> {
 }
 
 impl SetRawPacketReceiveMeta {
-    pub fn write_base_addr(&self) -> u64 {
-        self.0.get_write_base_addr()
+    pub fn write_base_addr(&self) -> DmaAddress {
+        self.0.get_write_base_addr().into()
     }
 
     pub fn write_mr_key(&self) -> MemoryRegionKey {
@@ -46,7 +47,7 @@ impl fmt::Debug for SetRawPacketReceiveMeta {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("CommandRequestSetRawPacketReceiveMeta")
             .field("header", self.header())
-            .field("write_base_addr", &format_args!("{:#018X}", self.write_base_addr()))
+            .field("write_base_addr", &self.write_base_addr())
             .field("write_mr_key", &self.write_mr_key())
             .finish()
     }
