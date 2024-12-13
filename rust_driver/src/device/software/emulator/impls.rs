@@ -4,7 +4,7 @@ use core::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
-use super::device_api::RawDevice;
+use super::device_api::{ControlStatusRegisters, RawDevice};
 use super::{dma, net, simulator};
 
 #[derive(Debug)]
@@ -66,12 +66,7 @@ impl<UA: net::Agent, DC: dma::Client> Drop for Emulator<UA, DC> {
 }
 
 impl<UA: net::Agent> RawDevice for Emulator<UA> {
-    type Csrs<'a>
-        = EmulatorCsrsHandler<'a, UA>
-    where
-        Self: 'a;
-
-    fn csrs(&self) -> Self::Csrs<'_> {
-        Self::Csrs::new(&self.csrs, self)
+    fn csrs(&self) -> impl ControlStatusRegisters {
+        EmulatorCsrsHandler::new(&self.csrs, self)
     }
 }

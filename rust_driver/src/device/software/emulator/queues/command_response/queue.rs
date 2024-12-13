@@ -27,7 +27,7 @@ impl<UA: Agent> CommandResponseQueue<'_, UA> {
             .checked_add(u64::from(head) * u64::try_from(DESCRIPTOR_SIZE).unwrap())
             .unwrap()
             .into();
-        let ptr = self.dev.dma_client.new_ptr_mut::<T>(addr);
+        let ptr = self.dev.dma_client.with_addr::<T>(addr);
         // Safety: src and dst is valid
         unsafe {
             ptr.write(response);

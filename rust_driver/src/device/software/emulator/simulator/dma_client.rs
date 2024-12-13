@@ -2,6 +2,7 @@
 
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
+use std::process::Output;
 
 use super::config::WORD_WIDTH;
 use super::rpc;
@@ -274,18 +275,16 @@ impl<T, R: rpc::Client> PointerMut for Ptr<'_, T, R> {
         unsafe { self.client.write(self.addr.into(), val) }
     }
 
+    // Turn into more generic version? but it is hard to implement
+    // unsafe fn copy_nonoverlapping(self, src: impl PointerConst<Output = T>, count: usize) {}
+
     unsafe fn copy_nonoverlapping(self, src: *const T, count: usize) {
         unsafe { self.client.copy_nonoverlapping(src, self.addr.into(), count) }
     }
 }
 
 impl<R: rpc::Client> dma::Client for DmaClient<R> {
-    type PtrMut<'a, T>
-        = Ptr<'a, T, R>
-    where
-        Self: 'a;
-
-    fn new_ptr_mut<T>(&self, addr: DmaAddress) -> Self::PtrMut<'_, T> {
+    fn with_addr<T>(&self, addr: DmaAddress) -> impl PointerMut<Output = T> {
         Ptr::new(addr, self)
     }
 }

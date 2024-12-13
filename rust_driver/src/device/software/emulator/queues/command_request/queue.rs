@@ -40,7 +40,7 @@ impl<UA: Agent> CommandRequestQueue<'_, UA> {
             .unwrap()
             .into();
 
-        let ptr = self.dev.dma_client.new_ptr_mut::<Unknown>(addr);
+        let ptr = self.dev.dma_client.with_addr::<Unknown>(addr);
         let raw = unsafe { ptr.read() };
 
         // pop item

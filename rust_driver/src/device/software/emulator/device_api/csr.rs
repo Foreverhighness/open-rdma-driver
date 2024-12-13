@@ -8,15 +8,8 @@ pub trait RegisterQueueAddressHigh: RegisterOperation<Output = u32> {}
 pub trait RegisterQueueHead: RegisterOperation<Output = u32> {}
 pub trait RegisterQueueTail: RegisterOperation<Output = u32> {}
 pub trait RegistersQueueAddress {
-    type High<'a>: RegisterQueueAddressHigh
-    where
-        Self: 'a;
-    type Low<'a>: RegisterQueueAddressLow
-    where
-        Self: 'a;
-
-    fn high(&self) -> Self::High<'_>;
-    fn low(&self) -> Self::Low<'_>;
+    fn high(&self) -> impl RegisterQueueAddressHigh;
+    fn low(&self) -> impl RegisterQueueAddressLow;
 
     fn read(&self) -> u64 {
         let low: u64 = self.low().read().into();
@@ -32,22 +25,12 @@ pub trait RegistersQueueAddress {
     }
 }
 pub trait RegistersQueue {
-    type Address<'a>: RegistersQueueAddress
-    where
-        Self: 'a;
-    type Head<'a>: RegisterQueueHead
-    where
-        Self: 'a;
-    type Tail<'a>: RegisterQueueTail
-    where
-        Self: 'a;
-
     // Do I need expose base address to the driver?
     // const BASE_ADDR: u64;
 
-    fn addr(&self) -> Self::Address<'_>;
-    fn head(&self) -> Self::Head<'_>;
-    fn tail(&self) -> Self::Tail<'_>;
+    fn addr(&self) -> impl RegistersQueueAddress;
+    fn head(&self) -> impl RegisterQueueHead;
+    fn tail(&self) -> impl RegisterQueueTail;
 }
 
 pub trait RegistersCommandRequest: RegistersQueue {}

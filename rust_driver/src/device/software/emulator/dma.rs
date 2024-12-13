@@ -17,11 +17,8 @@ pub trait Client {
     // type RefMut
     // type Ptr;
     // Currently use only one ptr type for simplicity
-    type PtrMut<'a, T>: PointerMut<Output = T>
-    where
-        Self: 'a;
 
-    fn new_ptr_mut<T>(&self, addr: DmaAddress) -> Self::PtrMut<'_, T>;
+    fn with_addr<T>(&self, addr: DmaAddress) -> impl PointerMut<Output = T>;
 }
 
 pub trait PointerMut: Clone + Copy {

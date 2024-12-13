@@ -35,8 +35,7 @@ macro_rules! declare_and_impl_basic_register {
                     Self { reg, dev }
                 }
             }
-            use $crate::device::software::emulator::device_api::csr::[<RegisterQueue $part>];
-            impl<UA: Agent> [<RegisterQueue $part>] for [<$prefix $csr_type $part Handler>]<'_, UA> {}
+            impl<UA: Agent> csr::[<RegisterQueue $part>] for [<$prefix $csr_type $part Handler>]<'_, UA> {}
         }
     };
 }
@@ -78,21 +77,11 @@ macro_rules! declare_and_impl_address {
                     Self { addr, dev }
                 }
             }
-            use $crate::device::software::emulator::device_api::csr::RegistersQueueAddress;
-            impl<UA: Agent> RegistersQueueAddress for [<$prefix $csr_type AddressHandler>]<'_, UA> {
-                type High<'a>
-                    = [<$prefix $csr_type AddressHighHandler>]<'a, UA>
-                where
-                    Self: 'a;
-                type Low<'a>
-                    = [<$prefix $csr_type AddressLowHandler>]<'a, UA>
-                where
-                    Self: 'a;
-
-                fn high(&self) -> Self::High<'_> {
+            impl<UA: Agent> csr::RegistersQueueAddress for [<$prefix $csr_type AddressHandler>]<'_, UA> {
+                fn high(&self) -> impl csr::RegisterQueueAddressHigh {
                     [<$prefix $csr_type AddressHighHandler>]::new(&self.addr.high, self.dev)
                 }
-                fn low(&self) -> Self::Low<'_> {
+                fn low(&self) -> impl csr::RegisterQueueAddressLow {
                     [<$prefix $csr_type AddressLowHandler>]::new(&self.addr.low, self.dev)
                 }
             }
@@ -124,32 +113,17 @@ macro_rules! declare_and_impl_queue {
                     Self { regs, dev }
                 }
             }
-            use $crate::device::software::emulator::device_api::csr::$csr_type;
-            use $crate::device::software::emulator::device_api::csr::RegistersQueue;
-            impl<UA: Agent> $csr_type for [<$prefix $csr_type Handler>]<'_, UA> {}
-            impl<UA: Agent> RegistersQueue for [<$prefix $csr_type Handler>]<'_, UA> {
-                type Address<'a>
-                    = [<$prefix $csr_type AddressHandler>]<'a, UA>
-                where
-                    Self: 'a;
-                type Head<'a>
-                    = [<$prefix $csr_type HeadHandler>]<'a, UA>
-                where
-                    Self: 'a;
-                type Tail<'a>
-                    = [<$prefix $csr_type TailHandler>]<'a, UA>
-                where
-                    Self: 'a;
-
-                fn addr(&self) -> Self::Address<'_> {
+            impl<UA: Agent> csr::$csr_type for [<$prefix $csr_type Handler>]<'_, UA> {}
+            impl<UA: Agent> csr::RegistersQueue for [<$prefix $csr_type Handler>]<'_, UA> {
+                fn addr(&self) -> impl csr::RegistersQueueAddress {
                     [<$prefix $csr_type AddressHandler>]::new(&self.regs.addr, self.dev)
                 }
 
-                fn head(&self) -> Self::Head<'_> {
+                fn head(&self) -> impl csr::RegisterQueueHead {
                     [<$prefix $csr_type HeadHandler>]::new(&self.regs.head, self.dev)
                 }
 
-                fn tail(&self) -> Self::Tail<'_> {
+                fn tail(&self) -> impl csr::RegisterQueueTail {
                     [<$prefix $csr_type TailHandler>]::new(&self.regs.tail, self.dev)
                 }
             }
@@ -159,6 +133,7 @@ macro_rules! declare_and_impl_queue {
 
 macro_rules! register_queue_csr {
     ($base_addr:literal, $prefix:ident, $csr_type:ident, $csr_type_upper:ident) => {
+        use $crate::device::software::emulator::device_api::csr;
         use $crate::device::software::emulator::net::Agent;
         use $crate::device::software::emulator::Emulator;
 
