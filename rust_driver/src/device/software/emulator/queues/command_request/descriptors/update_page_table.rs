@@ -58,6 +58,7 @@ impl fmt::Debug for UpdatePageTable {
 
 impl AsRef<Unknown> for UpdatePageTable {
     fn as_ref(&self) -> &Unknown {
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }
@@ -65,6 +66,8 @@ impl AsRef<Unknown> for UpdatePageTable {
 impl AsRef<UpdatePageTable> for Unknown {
     fn as_ref(&self) -> &UpdatePageTable {
         assert_eq!(self.header().opcode().unwrap(), UpdatePageTable::OPCODE);
+
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }

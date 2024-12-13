@@ -27,6 +27,8 @@ impl<UA: Agent> HandleDescriptor<SetNetworkParameter> for Emulator<UA> {
     fn handle(&self, request: &SetNetworkParameter) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
+        // TODO(fh): start net agent here.
+
         let response = CommonHeader::new(SetNetworkParameter::OPCODE, true, request.header().user_data());
         unsafe { self.command_response_queue().push(response) };
 
@@ -66,6 +68,7 @@ impl fmt::Debug for SetNetworkParameter {
 
 impl AsRef<Unknown> for SetNetworkParameter {
     fn as_ref(&self) -> &Unknown {
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }
@@ -73,6 +76,8 @@ impl AsRef<Unknown> for SetNetworkParameter {
 impl AsRef<SetNetworkParameter> for Unknown {
     fn as_ref(&self) -> &SetNetworkParameter {
         assert_eq!(self.header().opcode().unwrap(), SetNetworkParameter::OPCODE);
+
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }

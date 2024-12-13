@@ -22,9 +22,11 @@ impl UpdateErrorPacketSequenceNumberRecoverPoint {
 impl<UA: Agent> HandleDescriptor<UpdateErrorPacketSequenceNumberRecoverPoint> for Emulator<UA> {
     type Output = ();
 
+    #[expect(unreachable_code, reason = "testing")]
     fn handle(&self, request: &UpdateErrorPacketSequenceNumberRecoverPoint) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
+        todo!();
         let response = CommonHeader::new(
             UpdateErrorPacketSequenceNumberRecoverPoint::OPCODE,
             true,
@@ -58,6 +60,7 @@ impl fmt::Debug for UpdateErrorPacketSequenceNumberRecoverPoint {
 
 impl AsRef<Unknown> for UpdateErrorPacketSequenceNumberRecoverPoint {
     fn as_ref(&self) -> &Unknown {
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }
@@ -68,6 +71,8 @@ impl AsRef<UpdateErrorPacketSequenceNumberRecoverPoint> for Unknown {
             self.header().opcode().unwrap(),
             UpdateErrorPacketSequenceNumberRecoverPoint::OPCODE
         );
+
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }

@@ -93,6 +93,7 @@ impl fmt::Debug for UpdateMemoryRegionTable {
 
 impl AsRef<Unknown> for UpdateMemoryRegionTable {
     fn as_ref(&self) -> &Unknown {
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }
@@ -100,6 +101,8 @@ impl AsRef<Unknown> for UpdateMemoryRegionTable {
 impl AsRef<UpdateMemoryRegionTable> for Unknown {
     fn as_ref(&self) -> &UpdateMemoryRegionTable {
         assert_eq!(self.header().opcode().unwrap(), UpdateMemoryRegionTable::OPCODE);
+
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }

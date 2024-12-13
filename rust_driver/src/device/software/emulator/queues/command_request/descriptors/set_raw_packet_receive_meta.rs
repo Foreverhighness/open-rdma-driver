@@ -23,9 +23,11 @@ impl SetRawPacketReceiveMeta {
 impl<UA: Agent> HandleDescriptor<SetRawPacketReceiveMeta> for Emulator<UA> {
     type Output = ();
 
+    #[expect(unreachable_code, reason = "testing")]
     fn handle(&self, request: &SetRawPacketReceiveMeta) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
+        todo!();
         let response = CommonHeader::new(SetRawPacketReceiveMeta::OPCODE, true, request.header().user_data());
         unsafe { self.command_response_queue().push(response) };
 
@@ -55,6 +57,7 @@ impl fmt::Debug for SetRawPacketReceiveMeta {
 
 impl AsRef<Unknown> for SetRawPacketReceiveMeta {
     fn as_ref(&self) -> &Unknown {
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }
@@ -62,6 +65,8 @@ impl AsRef<Unknown> for SetRawPacketReceiveMeta {
 impl AsRef<SetRawPacketReceiveMeta> for Unknown {
     fn as_ref(&self) -> &SetRawPacketReceiveMeta {
         assert_eq!(self.header().opcode().unwrap(), SetRawPacketReceiveMeta::OPCODE);
+
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }

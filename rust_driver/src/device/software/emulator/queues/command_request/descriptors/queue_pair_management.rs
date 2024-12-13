@@ -111,6 +111,7 @@ impl fmt::Debug for QueuePairManagement {
 
 impl AsRef<Unknown> for QueuePairManagement {
     fn as_ref(&self) -> &Unknown {
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }
@@ -118,6 +119,8 @@ impl AsRef<Unknown> for QueuePairManagement {
 impl AsRef<QueuePairManagement> for Unknown {
     fn as_ref(&self) -> &QueuePairManagement {
         assert_eq!(self.header().opcode().unwrap(), QueuePairManagement::OPCODE);
+
+        // SAFETY: const sound because we transmute two types with the same layout
         unsafe { core::mem::transmute(self) }
     }
 }
