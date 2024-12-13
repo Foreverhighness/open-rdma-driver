@@ -34,14 +34,24 @@ pub struct Table(HashMap<QueuePairNumber, Context>);
 
 impl Table {
     pub fn insert(&self, qp_context: Context) -> bool {
-        let qp_table = self.0.pin();
+        log::debug!("insert qp_table with {qp_context:?}");
 
-        qp_table.insert(qp_context.queue_pair_number, qp_context).is_some()
+        let qp_table = self.0.pin();
+        let exist = qp_table.insert(qp_context.queue_pair_number, qp_context).is_some();
+
+        log::trace!("after insertion qp_table: {self:#?}");
+
+        exist
     }
 
     pub fn remove(&self, qpn: QueuePairNumber) -> bool {
-        let qp_table = self.0.pin();
+        log::debug!("remove qp_table with {qpn:?}");
 
-        qp_table.remove(&qpn).is_some()
+        let qp_table = self.0.pin();
+        let exist = qp_table.remove(&qpn).is_some();
+
+        log::trace!("after removal qp_table: {self:#?}");
+
+        exist
     }
 }

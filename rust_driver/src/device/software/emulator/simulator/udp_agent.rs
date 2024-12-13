@@ -1,9 +1,9 @@
 //! Transmit/Receive network packet using simulator's network
 
 use core::net::{IpAddr, Ipv4Addr};
+use core::sync::atomic::AtomicU32;
 
 use eui48::MacAddress;
-use log::trace;
 use smoltcp::phy::ChecksumCapabilities;
 use smoltcp::wire::{
     EthernetAddress, EthernetFrame, EthernetProtocol, EthernetRepr, IpProtocol, IpRepr, Ipv4Packet, Ipv6Packet,
@@ -50,6 +50,9 @@ impl<R: Client> UdpAgent<R> {
 
     /// Receive a single ethernet frame buffer from NIC
     fn receive_ethernet_frame_buffer(&self) -> Vec<u8> {
+        static FRAGMENT: AtomicU32 = AtomicU32::new(0);
+        static FRAME: AtomicU32 = AtomicU32::new(0);
+
         let mut request = RpcNetIfcRxTxPayload::new();
         let mut buffer = Vec::new();
 
@@ -61,7 +64,8 @@ impl<R: Client> UdpAgent<R> {
             if invalid_fragment {
                 continue;
             }
-            trace!("Get NIC fragment: {request:?}");
+            generate_frame_fragment_file(&request, &FRAME, &FRAGMENT);
+
             let payload = &request.data.0;
 
             if request.byte_en == [u8::MAX; 8] {
@@ -74,6 +78,7 @@ impl<R: Client> UdpAgent<R> {
 
             let last_fragment = request.is_last == 1;
             if last_fragment {
+                generate_frame_file(&buffer, &FRAME, &FRAGMENT);
                 return buffer;
             }
         }
@@ -198,6 +203,32 @@ impl<R: Client> UdpAgent<R> {
 
         frame
     }
+}
+
+fn generate_frame_fragment_file(req: &RpcNetIfcRxTxPayload, frame: &AtomicU32, fragment: &AtomicU32) {
+    use core::sync::atomic::Ordering::Relaxed;
+    let (frame, fragment) = (frame.load(Relaxed), fragment.fetch_add(1, Relaxed));
+
+    let filename = &format!(".cache/captures/fragment-{frame}-{fragment}.bin");
+
+    let json = serde_json::to_vec(req).unwrap();
+
+    std::fs::write(filename, &json).unwrap();
+
+    let read_back = std::fs::read(filename).unwrap();
+    let value: RpcNetIfcRxTxPayload = serde_json::from_slice(&read_back).unwrap();
+    assert_eq!(&value, req);
+}
+
+fn generate_frame_file(buffer: &[u8], frame: &AtomicU32, fragment: &AtomicU32) {
+    use core::sync::atomic::Ordering::Relaxed;
+    let (frame, fragment) = (frame.fetch_add(1, Relaxed), fragment.swap(0, Relaxed));
+
+    let filename = &format!(".cache/captures/ethernet-frame-{frame}.bin");
+
+    std::fs::write(filename, &buffer).unwrap();
+
+    assert_eq!(std::fs::read(filename).unwrap(), buffer);
 }
 
 impl<R: Client> Agent for UdpAgent<R> {
