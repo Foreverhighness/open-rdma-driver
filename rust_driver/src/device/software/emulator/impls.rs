@@ -6,7 +6,7 @@ use std::sync::Arc;
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::{ControlStatusRegisters, RawDevice};
 use super::mr_table::MemoryRegionTable;
-use super::{dma, memory_region, net, simulator};
+use super::{dma, memory_region, net, queue_pair, simulator};
 
 #[derive(Debug)]
 pub enum State {
@@ -37,6 +37,9 @@ where
 
     /// Memory Region Table (Key -> Context)
     mr_table: MRT,
+
+    /// Queue Pair Table (QPN -> Context)
+    qp_table: queue_pair::Table,
 }
 
 impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, MRT> {
@@ -48,6 +51,7 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, M
             csrs: EmulatorCsrs::default(),
             state: State::NotReady,
             stop: AtomicBool::default(),
+            qp_table: Default::default(),
         }
     }
 
@@ -71,6 +75,10 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, M
 
     pub(crate) fn memory_region_table(&self) -> &MRT {
         &self.mr_table
+    }
+
+    pub(crate) fn queue_pair_table(&self) -> &queue_pair::Table {
+        &self.qp_table
     }
 }
 
