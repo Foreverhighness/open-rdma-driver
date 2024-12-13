@@ -1,7 +1,9 @@
 use super::common::Unknown;
+use super::descriptors::DescriptorRef;
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::DESCRIPTOR_SIZE;
+use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::Emulator;
 
 #[derive(Debug)]
@@ -49,6 +51,21 @@ impl<UA: Agent> CommandRequestQueue<'_, UA> {
         log::trace!("raw descriptor @ {addr:?}[{head}]: {raw:02X?}");
 
         Some(raw)
+    }
+
+    pub(crate) fn doorbell(&self, head: u32) {
+        let raw = unsafe { self.pop(head).unwrap() };
+
+        let descriptor_ref = dbg!(DescriptorRef::parse(&raw).unwrap());
+
+        match descriptor_ref {
+            DescriptorRef::UpdateMemoryRegionTable(req) => self.dev.handle(req).unwrap(),
+            DescriptorRef::UpdatePageTable(req) => self.dev.handle(req).unwrap(),
+            DescriptorRef::QueuePairManagement(req) => self.dev.handle(req).unwrap(),
+            DescriptorRef::SetNetworkParameter(req) => self.dev.handle(req).unwrap(),
+            DescriptorRef::SetRawPacketReceiveMeta(req) => self.dev.handle(req).unwrap(),
+            DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(req) => self.dev.handle(req).unwrap(),
+        }
     }
 }
 
