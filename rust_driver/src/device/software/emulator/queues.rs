@@ -1,5 +1,8 @@
-pub mod command_request;
-pub mod command_response;
-pub mod errors;
+pub(crate) mod errors;
 
 mod descriptor;
+
+mod command_request;
+mod command_response;
+mod meta_report;
+mod send;

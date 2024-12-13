@@ -1,12 +1,13 @@
 use core::fmt;
 
-use super::opcode::Opcode;
 use crate::device::layout::CmdQueueDescCommonHead;
 use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::Result;
 
 pub(super) const DESCRIPTOR_SIZE: usize = 32; // 256 bits
 pub(super) const DESCRIPTOR_ALIGN: usize = 32; // 256 bits
+
+pub(super) type Opcode = crate::device::types::CtrlRbDescOpcode;
 
 #[repr(transparent)]
 pub struct CommonHeader(CmdQueueDescCommonHead<[u8; 8]>);
@@ -92,7 +93,7 @@ pub trait Header {
 
 impl<T: AsRef<Unknown>> Header for T {
     fn header(&self) -> &CommonHeader {
-        assert_eq!(size_of_val(self), DESCRIPTOR_SIZE);
+        const { assert!(size_of::<T>() == DESCRIPTOR_SIZE) };
 
         &self.as_ref().header
     }

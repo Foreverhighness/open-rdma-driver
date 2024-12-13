@@ -5,15 +5,14 @@ mod update_error_psn_recover_point;
 mod update_mr_table;
 mod update_page_table;
 
-pub use queue_pair_management::QueuePairManagement;
-pub use set_network_parameter::SetNetworkParameter;
-pub use set_raw_packet_receive_meta::SetRawPacketReceiveMeta;
-pub use update_error_psn_recover_point::UpdateErrorPacketSequenceNumberRecoverPoint;
-pub use update_mr_table::UpdateMemoryRegionTable;
-pub use update_page_table::UpdatePageTable;
+use queue_pair_management::QueuePairManagement;
+use set_network_parameter::SetNetworkParameter;
+use set_raw_packet_receive_meta::SetRawPacketReceiveMeta;
+use update_error_psn_recover_point::UpdateErrorPacketSequenceNumberRecoverPoint;
+use update_mr_table::UpdateMemoryRegionTable;
+use update_page_table::UpdatePageTable;
 
-use super::common::Unknown;
-use super::opcode::Opcode;
+use super::common::{Opcode, Unknown};
 use crate::device::software::emulator::queues::command_request::common::Header;
 use crate::device::software::emulator::Result;
 

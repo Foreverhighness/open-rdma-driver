@@ -16,7 +16,7 @@ impl<'q, UA: Agent> CommandResponseQueue<'q, UA> {
 
 impl<UA: Agent> CommandResponseQueue<'_, UA> {
     pub(crate) unsafe fn push<T>(&self, response: T) {
-        assert!(size_of::<T>() <= DESCRIPTOR_SIZE);
+        const { assert!(size_of::<T>() <= DESCRIPTOR_SIZE) };
 
         let addr = self.dev.csrs.cmd_response.addr.read();
         let head = self.dev.csrs.cmd_response.head.read();
