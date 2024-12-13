@@ -7,6 +7,9 @@ use crate::device::software::emulator::queues::command_request::common::{
     Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
+use crate::device::software::emulator::types::{
+    MemoryAccessFlag, PacketMtuKind, ProtectDomainHandler, QueuePairNumber, QueuePairType,
+};
 use crate::device::software::emulator::{Emulator, Result};
 
 #[repr(C, align(32))]
@@ -26,10 +29,6 @@ impl<UA: Agent> HandleDescriptor<QueuePairManagement> for Emulator<UA> {
     }
 }
 
-type QueuePairType = crate::types::QpType;
-type MemoryAccessFlag = crate::types::MemAccessTypeFlag;
-type PacketMtuKind = crate::types::Pmtu;
-
 impl QueuePairManagement {
     pub fn valid(&self) -> bool {
         self.0.get_is_valid().try_into().unwrap()
@@ -39,11 +38,11 @@ impl QueuePairManagement {
         self.0.get_is_error().try_into().unwrap()
     }
 
-    pub fn queue_pair_number(&self) -> u32 {
+    pub fn queue_pair_number(&self) -> QueuePairNumber {
         self.0.get_qpn().try_into().unwrap()
     }
 
-    pub fn protect_domain_handler(&self) -> u32 {
+    pub fn protect_domain_handler(&self) -> ProtectDomainHandler {
         self.0.get_pd_handler().try_into().unwrap()
     }
 
@@ -59,7 +58,7 @@ impl QueuePairManagement {
         u8::try_from(self.0.get_pmtu()).unwrap().try_into().unwrap()
     }
 
-    pub fn peer_queue_pair_number(&self) -> u32 {
+    pub fn peer_queue_pair_number(&self) -> QueuePairNumber {
         self.0.get_peer_qpn().try_into().unwrap()
     }
 }

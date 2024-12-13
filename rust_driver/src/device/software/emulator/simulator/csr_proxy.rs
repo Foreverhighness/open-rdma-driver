@@ -1,11 +1,8 @@
 //! Control Status Register Proxy
 
 use core::sync::atomic::AtomicBool;
-use core::time::Duration;
 use std::sync::Arc;
 use std::thread::JoinHandle;
-
-use log::debug;
 
 use super::super::device_api::{self, ControlStatusRegisters};
 use super::rpc::{self, BarIoInfo};
@@ -39,7 +36,7 @@ impl<R: rpc::Client, Dev: device_api::RawDevice> Proxy<R, Dev> {
                 self.rpc.c_getPcieBarReadReq(&raw mut request, self.client_id);
             }
             if request.valid == 1 {
-                debug!("recv csr read request {request:?}");
+                log::debug!("recv csr read request {request:?}");
                 return Some(request);
             }
             core::hint::spin_loop();
@@ -63,7 +60,7 @@ impl<R: rpc::Client, Dev: device_api::RawDevice> Proxy<R, Dev> {
                 self.rpc.c_getPcieBarWriteReq(&raw mut request, self.client_id);
             }
             if request.valid == 1 {
-                debug!("recv csr write request {request:?}");
+                log::debug!("recv csr write request {request:?}");
                 return Some(request);
             }
             core::hint::spin_loop();

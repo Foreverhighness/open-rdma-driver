@@ -277,7 +277,7 @@ bitflags! {
 
 /// Queue Pair Type for software/hardware
 #[non_exhaustive]
-#[derive(TryFromPrimitive, Debug, Clone, Copy)]
+#[derive(TryFromPrimitive, Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum QpType {
     /// Reliable Connection
@@ -301,7 +301,7 @@ pub enum QpType {
 
 /// Packet MTU
 #[non_exhaustive]
-#[derive(Default, Debug, Clone, Copy, TryFromPrimitive)]
+#[derive(Default, Debug, Clone, Copy, TryFromPrimitive, PartialEq)]
 #[repr(u8)]
 pub enum Pmtu {
     /// 256 bytes

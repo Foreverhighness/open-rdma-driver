@@ -13,6 +13,7 @@ mod mr_table;
 mod net;
 mod queue_pair;
 mod queues;
+mod types;
 
 pub use impls::*;
 

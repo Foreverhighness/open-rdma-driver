@@ -7,6 +7,7 @@ use crate::device::software::emulator::queues::command_request::common::{
     Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
+use crate::device::software::emulator::types::MemoryRegionKey;
 use crate::device::software::emulator::{Emulator, Result};
 
 #[repr(C, align(32))]
@@ -26,15 +27,13 @@ impl<UA: Agent> HandleDescriptor<SetRawPacketReceiveMeta> for Emulator<UA> {
     }
 }
 
-type Key = crate::types::Key;
-
 impl SetRawPacketReceiveMeta {
     pub fn write_base_addr(&self) -> u64 {
         self.0.get_write_base_addr()
     }
 
-    pub fn write_mr_key(&self) -> Key {
-        Key::new(self.0.get_write_mr_key().try_into().unwrap())
+    pub fn write_mr_key(&self) -> MemoryRegionKey {
+        MemoryRegionKey::new(self.0.get_write_mr_key().try_into().unwrap())
     }
 }
 

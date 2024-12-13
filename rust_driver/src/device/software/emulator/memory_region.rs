@@ -2,17 +2,15 @@ use papaya::HashMap;
 
 use super::address::VirtualAddress;
 use super::mr_table::MemoryRegionTable;
-
-pub(crate) type AccessFlag = crate::types::MemAccessTypeFlag;
-pub(crate) type Key = crate::types::Key;
+use super::types::{MemoryAccessFlag, MemoryRegionKey, ProtectDomainHandler};
 
 #[derive(Debug, PartialEq)]
 pub struct Context {
     addr: VirtualAddress,
     len: u32,
-    key: Key,
-    protect_domain_handler: u32,
-    access_flag: AccessFlag,
+    key: MemoryRegionKey,
+    protect_domain_handler: ProtectDomainHandler,
+    access_flag: MemoryAccessFlag,
     page_table_offset: u32,
 }
 
@@ -20,9 +18,9 @@ impl Context {
     pub(crate) fn new(
         addr: VirtualAddress,
         len: u32,
-        key: Key,
+        key: MemoryRegionKey,
         protect_domain_handler: u32,
-        access_flag: AccessFlag,
+        access_flag: MemoryAccessFlag,
         page_table_offset: u32,
     ) -> Self {
         Self {
@@ -37,7 +35,7 @@ impl Context {
 }
 
 #[derive(Debug, Default)]
-pub struct Table(HashMap<Key, Context>);
+pub struct Table(HashMap<MemoryRegionKey, Context>);
 
 impl Table {
     pub(crate) fn new() -> Self {

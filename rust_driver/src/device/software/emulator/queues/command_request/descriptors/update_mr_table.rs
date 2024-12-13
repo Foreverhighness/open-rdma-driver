@@ -10,7 +10,8 @@ use crate::device::software::emulator::queues::command_request::common::{
     CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
-use crate::device::software::emulator::{memory_region, Emulator, Result};
+use crate::device::software::emulator::types::{MemoryAccessFlag, MemoryRegionKey};
+use crate::device::software::emulator::{Emulator, Result};
 
 #[repr(C, align(32))]
 pub struct UpdateMemoryRegionTable(CmdQueueReqDescUpdateMrTable<[u8; DESCRIPTOR_SIZE]>);
@@ -61,16 +62,16 @@ impl UpdateMemoryRegionTable {
         self.0.get_mr_length().try_into().unwrap()
     }
 
-    pub fn mr_key(&self) -> memory_region::Key {
-        memory_region::Key::new(self.0.get_mr_key().try_into().unwrap())
+    pub fn mr_key(&self) -> MemoryRegionKey {
+        MemoryRegionKey::new(self.0.get_mr_key().try_into().unwrap())
     }
 
     pub fn pd_handler(&self) -> u32 {
         self.0.get_pd_handler().try_into().unwrap()
     }
 
-    pub fn access_flag(&self) -> memory_region::AccessFlag {
-        memory_region::AccessFlag::from_bits(self.0.get_acc_flags().try_into().unwrap()).unwrap()
+    pub fn access_flag(&self) -> MemoryAccessFlag {
+        MemoryAccessFlag::from_bits(self.0.get_acc_flags().try_into().unwrap()).unwrap()
     }
 
     pub fn page_table_offset(&self) -> u32 {
