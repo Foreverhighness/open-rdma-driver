@@ -8,6 +8,7 @@ use super::super::Emulator;
 use super::dma_client::DmaClient;
 use super::rpc::RpcClient;
 use super::udp_agent::UdpAgent;
+use crate::device::software::emulator::memory_region::Table;
 
 impl Emulator<UdpAgent<RpcClient>> {
     pub fn new_testing(client_id: u64) -> Arc<Self> {
@@ -17,7 +18,9 @@ impl Emulator<UdpAgent<RpcClient>> {
         let udp_agent = UdpAgent::new(client_id, mac, ip, RpcClient);
         let dma_client = DmaClient::new(client_id, RpcClient);
 
-        let dev = Arc::new(Self::new(udp_agent, dma_client));
+        let mr_table = Table::new();
+
+        let dev = Arc::new(Self::new(udp_agent, dma_client, mr_table));
 
         dev.start_net();
 

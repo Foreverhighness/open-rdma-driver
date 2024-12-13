@@ -223,7 +223,7 @@ impl From<u32> for ThreeBytesStruct {
 
 bitflags! {
     /// Memory access bit flags
-    #[derive(Debug,Clone,Copy)]
+    #[derive(Debug,Clone, Copy, PartialEq)]
     pub struct MemAccessTypeFlag: u8 {
         /// No access flag
         const IbvAccessNoFlags = 0;      // Not defined in rdma-core

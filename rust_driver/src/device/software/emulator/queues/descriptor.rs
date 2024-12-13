@@ -6,6 +6,7 @@ pub(super) trait Descriptor {}
 
 /// Can handle descriptor
 pub(super) trait HandleDescriptor<Desc>: RawDevice {
+    // Seems like Output is always `()`, may remove it in future
     type Output;
 
     fn handle(&self, request: &Desc) -> Result<Self::Output>;

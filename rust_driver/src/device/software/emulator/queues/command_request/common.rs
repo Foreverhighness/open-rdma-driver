@@ -12,11 +12,12 @@ pub(super) const DESCRIPTOR_ALIGN: usize = 32; // 256 bits
 pub struct CommonHeader(CmdQueueDescCommonHead<[u8; 8]>);
 
 impl CommonHeader {
-    pub fn new(opcode: Opcode, success: bool) -> Self {
+    pub fn new(opcode: Opcode, success: bool, user_data: u32) -> Self {
         let mut header = CmdQueueDescCommonHead([0; 8]);
         header.set_valid(true);
         header.set_is_success_or_need_signal_cplt(success);
         header.set_op_code(u8::from(opcode).into());
+        header.set_user_data(user_data);
 
         Self(header)
     }
@@ -40,6 +41,10 @@ impl CommonHeader {
             .map_err(|_| ParseDescriptorError::CommandRequestUnknownOpcode(opcode))?;
 
         Ok(opcode)
+    }
+
+    pub fn user_data(&self) -> u32 {
+        self.0.get_user_data()
     }
 }
 

@@ -2,11 +2,11 @@
 
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
-use std::process::Output;
 
 use super::config::WORD_WIDTH;
 use super::rpc;
-use crate::device::software::emulator::dma::{self, DmaAddress, PointerMut};
+use crate::device::software::emulator::address::DmaAddress;
+use crate::device::software::emulator::dma;
 
 const BYTES_PER_WORD: u32 = WORD_WIDTH / 8;
 
@@ -264,7 +264,7 @@ impl<T, R: rpc::Client> Clone for Ptr<'_, T, R> {
 }
 impl<T, R: rpc::Client> Copy for Ptr<'_, T, R> {}
 
-impl<T, R: rpc::Client> PointerMut for Ptr<'_, T, R> {
+impl<T, R: rpc::Client> dma::PointerMut for Ptr<'_, T, R> {
     type Output = T;
 
     unsafe fn read(self) -> T {
@@ -284,7 +284,7 @@ impl<T, R: rpc::Client> PointerMut for Ptr<'_, T, R> {
 }
 
 impl<R: rpc::Client> dma::Client for DmaClient<R> {
-    fn with_addr<T>(&self, addr: DmaAddress) -> impl PointerMut<Output = T> {
+    fn with_addr<T>(&self, addr: DmaAddress) -> impl dma::PointerMut<Output = T> {
         Ptr::new(addr, self)
     }
 }

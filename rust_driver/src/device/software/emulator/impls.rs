@@ -5,7 +5,8 @@ use std::sync::Arc;
 
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::{ControlStatusRegisters, RawDevice};
-use super::{dma, net, simulator};
+use super::mr_table::MemoryRegionTable;
+use super::{dma, memory_region, net, simulator};
 
 #[derive(Debug)]
 pub enum State {
@@ -13,7 +14,12 @@ pub enum State {
 }
 
 #[derive(Debug)]
-pub struct Emulator<UA: net::Agent = simulator::UdpAgent, DC: dma::Client = simulator::DmaClient> {
+pub struct Emulator<UA = simulator::UdpAgent, DC = simulator::DmaClient, MRT = memory_region::Table>
+where
+    UA: net::Agent,
+    DC: dma::Client,
+    MRT: MemoryRegionTable,
+{
     /// Control and Status Registers
     pub(crate) csrs: EmulatorCsrs,
 
@@ -28,13 +34,17 @@ pub struct Emulator<UA: net::Agent = simulator::UdpAgent, DC: dma::Client = simu
 
     /// Emulator State
     state: State,
+
+    /// Memory Region Table (Key -> Context)
+    mr_table: MRT,
 }
 
-impl<UA: net::Agent, DC: dma::Client> Emulator<UA, DC> {
-    pub fn new(udp_agent: UA, dma_client: DC) -> Self {
+impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, MRT> {
+    pub fn new(udp_agent: UA, dma_client: DC, mr_table: MRT) -> Self {
         Self {
             udp_agent,
             dma_client,
+            mr_table,
             csrs: EmulatorCsrs::default(),
             state: State::NotReady,
             stop: AtomicBool::default(),
@@ -45,6 +55,7 @@ impl<UA: net::Agent, DC: dma::Client> Emulator<UA, DC> {
     where
         UA: Send + Sync + 'static,
         DC: Send + Sync + 'static,
+        MRT: Send + Sync + 'static,
     {
         let dev = Arc::clone(self);
 
@@ -57,9 +68,13 @@ impl<UA: net::Agent, DC: dma::Client> Emulator<UA, DC> {
             }
         });
     }
+
+    pub(crate) fn memory_region_table(&self) -> &MRT {
+        &self.mr_table
+    }
 }
 
-impl<UA: net::Agent, DC: dma::Client> Drop for Emulator<UA, DC> {
+impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Drop for Emulator<UA, DC, MRT> {
     fn drop(&mut self) {
         self.stop.store(true, core::sync::atomic::Ordering::Relaxed);
     }

@@ -2,12 +2,15 @@ use core::fmt;
 
 use super::Opcode;
 use crate::device::layout::CmdQueueReqDescUpdateMrTable;
+use crate::device::software::emulator::address::VirtualAddress;
+use crate::device::software::emulator::memory_region::Context;
+use crate::device::software::emulator::mr_table::MemoryRegionTable;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::{
-    Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
+    CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
-use crate::device::software::emulator::{Emulator, Result};
+use crate::device::software::emulator::{memory_region, Emulator, Result};
 
 #[repr(C, align(32))]
 pub struct UpdateMemoryRegionTable(CmdQueueReqDescUpdateMrTable<[u8; DESCRIPTOR_SIZE]>);
@@ -22,32 +25,52 @@ impl<UA: Agent> HandleDescriptor<UpdateMemoryRegionTable> for Emulator<UA> {
     type Output = ();
 
     fn handle(&self, request: &UpdateMemoryRegionTable) -> Result<Self::Output> {
-        todo!()
+        log::debug!("handle {request:?}");
+
+        let mr_context = Context::from_req(request);
+        self.memory_region_table().update(mr_context)?;
+
+        let response = CommonHeader::new(UpdateMemoryRegionTable::OPCODE, true, request.header().user_data());
+        unsafe {
+            self.command_response_queue().push(response);
+        }
+
+        Ok(())
     }
 }
 
-type MemoryAccessFlag = crate::types::MemAccessTypeFlag;
-type Key = crate::types::Key;
+impl Context {
+    pub(crate) fn from_req(req: &UpdateMemoryRegionTable) -> Self {
+        Self::new(
+            req.mr_base_va(),
+            req.mr_len(),
+            req.mr_key(),
+            req.pd_handler(),
+            req.access_flag(),
+            req.page_table_offset(),
+        )
+    }
+}
 
 impl UpdateMemoryRegionTable {
-    pub fn mr_base_va(&self) -> u64 {
-        self.0.get_mr_base_va()
+    pub fn mr_base_va(&self) -> VirtualAddress {
+        self.0.get_mr_base_va().into()
     }
 
     pub fn mr_len(&self) -> u32 {
         self.0.get_mr_length().try_into().unwrap()
     }
 
-    pub fn mr_key(&self) -> Key {
-        Key::new(self.0.get_mr_key().try_into().unwrap())
+    pub fn mr_key(&self) -> memory_region::Key {
+        memory_region::Key::new(self.0.get_mr_key().try_into().unwrap())
     }
 
     pub fn pd_handler(&self) -> u32 {
         self.0.get_pd_handler().try_into().unwrap()
     }
 
-    pub fn access_flag(&self) -> MemoryAccessFlag {
-        MemoryAccessFlag::from_bits(self.0.get_acc_flags().try_into().unwrap()).unwrap()
+    pub fn access_flag(&self) -> memory_region::AccessFlag {
+        memory_region::AccessFlag::from_bits(self.0.get_acc_flags().try_into().unwrap()).unwrap()
     }
 
     pub fn page_table_offset(&self) -> u32 {
@@ -59,7 +82,7 @@ impl fmt::Debug for UpdateMemoryRegionTable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("CommandRequestUpdateMemoryRegionTable")
             .field("header", self.header())
-            .field("mr_base_va", &format_args!("{:#018X}", self.mr_base_va()))
+            .field("mr_base_va", &self.mr_base_va())
             .field("mr_len", &format_args!("{:#08X}", self.mr_len()))
             .field("mr_key", &self.mr_key())
             .field("pd_handler", &self.pd_handler())
