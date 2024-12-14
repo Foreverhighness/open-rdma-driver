@@ -36,6 +36,7 @@ derive_more = { version = "1.0.0", features = ["from", "into"] }
 paste = "1.0.15"
 env_logger = "0.11.5"
 papaya = "0.1.6"
+bitfield-struct = "0.9.3"
 
 
 [dev-dependencies]

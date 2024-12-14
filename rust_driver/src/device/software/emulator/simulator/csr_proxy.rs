@@ -36,7 +36,7 @@ impl<R: rpc::Client, Dev: device_api::RawDevice> Proxy<R, Dev> {
                 self.rpc.c_getPcieBarReadReq(&raw mut request, self.client_id);
             }
             if request.valid == 1 {
-                log::debug!("recv csr read request {request:?}");
+                // log::debug!("recv csr read request {request:?}");
                 return Some(request);
             }
             core::hint::spin_loop();
@@ -60,7 +60,7 @@ impl<R: rpc::Client, Dev: device_api::RawDevice> Proxy<R, Dev> {
                 self.rpc.c_getPcieBarWriteReq(&raw mut request, self.client_id);
             }
             if request.valid == 1 {
-                log::debug!("recv csr write request {request:?}");
+                // log::debug!("recv csr write request {request:?}");
                 return Some(request);
             }
             core::hint::spin_loop();
