@@ -37,9 +37,8 @@ struct BTHPart1 {
 }
 
 #[repr(C)]
-#[derive(Debug)]
 pub(super) struct RdmaExtendedTransportHeader {
-    addr_inner: [u8; 8],
+    remote_addr_inner: [u8; 8],
     remote_key: MemoryRegionKey,
     len: u32,
 }
@@ -74,10 +73,6 @@ pub(super) struct MessageSequenceNumberAndCanAutoAck {
     message_sequence_number_inner: u32,
     #[bits(7)]
     __: (),
-    can_auto_ack: bool,
-}
 
-#[bitfield_struct::bitfield(u32, repr = u32)]
-struct Test {
-    inner: u32,
+    can_auto_ack: bool,
 }

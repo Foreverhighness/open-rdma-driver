@@ -18,7 +18,7 @@ use crate::device::software::emulator::Result;
 
 #[non_exhaustive]
 #[derive(Debug)]
-pub enum DescriptorRef<'d> {
+pub(super) enum DescriptorRef<'d> {
     UpdateMemoryRegionTable(&'d UpdateMemoryRegionTable),
     UpdatePageTable(&'d UpdatePageTable),
     QueuePairManagement(&'d QueuePairManagement),
@@ -29,7 +29,7 @@ pub enum DescriptorRef<'d> {
 }
 
 impl<'d> DescriptorRef<'d> {
-    pub(crate) fn parse<'r>(raw: &'r Unknown) -> Result<DescriptorRef<'d>>
+    pub(super) fn parse<'r>(raw: &'r Unknown) -> Result<DescriptorRef<'d>>
     where
         'r: 'd,
     {
