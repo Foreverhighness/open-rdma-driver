@@ -7,6 +7,7 @@ use crate::device::software::emulator::queue_pair::Context;
 use crate::device::software::emulator::queues::command_request::common::{
     CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
+use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::types::{
     MemoryAccessFlag, PacketMtuKind, ProtectDomainHandler, QueuePairNumber, QueuePairType,

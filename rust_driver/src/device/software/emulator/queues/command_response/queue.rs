@@ -1,39 +1,52 @@
-use super::DESCRIPTOR_SIZE;
+use core::marker::PhantomData;
+
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
+use crate::device::software::emulator::queues::command_request::common::Unknown;
+use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::Emulator;
 
 #[derive(Debug)]
-pub(crate) struct CommandResponseQueue<'q, UA: Agent> {
+pub(crate) struct CommandResponseQueue<'q, UA: Agent, Desc = Unknown> {
     dev: &'q Emulator<UA>,
+    _descriptors: PhantomData<*mut [Desc]>,
 }
 
 impl<'q, UA: Agent> CommandResponseQueue<'q, UA> {
     pub(crate) fn new(dev: &'q Emulator<UA>) -> Self {
-        Self { dev }
+        Self {
+            dev,
+            _descriptors: PhantomData,
+        }
     }
 }
 
-impl<UA: Agent> CommandResponseQueue<'_, UA> {
-    pub(crate) unsafe fn push<T>(&self, response: T) {
-        const { assert!(size_of::<T>() <= DESCRIPTOR_SIZE) };
+impl<UA: Agent, Desc> CompleteQueue for CommandResponseQueue<'_, UA, Desc> {
+    type Descriptor = Desc;
 
-        let addr = self.dev.csrs.cmd_response.addr.read();
-        let head = self.dev.csrs.cmd_response.head.read();
-        let tail = self.dev.csrs.cmd_response.tail.read();
-        assert!(tail <= head);
+    fn addr(&self) -> u64 {
+        self.dev.csrs.cmd_response.addr.read()
+    }
 
-        let addr = addr
-            .checked_add(u64::from(head) * u64::try_from(DESCRIPTOR_SIZE).unwrap())
+    fn head(&self) -> u32 {
+        self.dev.csrs.cmd_response.head.read()
+    }
+
+    fn tail(&self) -> u32 {
+        self.dev.csrs.cmd_response.tail.read()
+    }
+
+    fn index<T>(&self, index: u32) -> impl PointerMut<Output = T> {
+        let addr = self
+            .addr()
+            .checked_add(u64::from(index) * u64::try_from(size_of::<Self::Descriptor>()).unwrap())
             .unwrap()
             .into();
-        let ptr = self.dev.dma_client.with_addr::<T>(addr);
-        // Safety: src and dst is valid
-        unsafe {
-            ptr.write(response);
-        }
+        self.dev.dma_client.with_addr::<T>(addr)
+    }
 
-        self.dev.csrs.cmd_response.head.write(head + 1);
+    fn advance(&self) {
+        self.dev.csrs.cmd_response.head.write(self.head() + 1);
     }
 }
 
