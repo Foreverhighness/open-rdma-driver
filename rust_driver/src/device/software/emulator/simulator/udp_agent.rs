@@ -222,7 +222,7 @@ fn generate_frame_fragment_file(req: &RpcNetIfcRxTxPayload, frame: &AtomicU32, f
 
 fn generate_frame_file(buffer: &[u8], frame: &AtomicU32, fragment: &AtomicU32) {
     use core::sync::atomic::Ordering::Relaxed;
-    let (frame, fragment) = (frame.fetch_add(1, Relaxed), fragment.swap(0, Relaxed));
+    let (frame, _fragment) = (frame.fetch_add(1, Relaxed), fragment.swap(0, Relaxed));
 
     let filename = &format!(".cache/captures/ethernet-frame-{frame}.bin");
 

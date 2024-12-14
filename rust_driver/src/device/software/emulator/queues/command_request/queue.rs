@@ -1,14 +1,19 @@
+use core::fmt::Debug;
+use core::marker::PhantomData;
+
 use super::common::Unknown;
 use super::descriptors::DescriptorRef;
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
-use crate::device::software::emulator::queues::command_request::common::DESCRIPTOR_SIZE;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
+use crate::device::software::emulator::queues::work_queue::WorkQueue;
 use crate::device::software::emulator::Emulator;
 
+// CommandRequestQueue is same type as RegistersCommandRequestHandle
 #[derive(Debug)]
-pub(crate) struct CommandRequestQueue<'q, UA: Agent> {
+pub(crate) struct CommandRequestQueue<'q, UA: Agent, Desc = Unknown> {
     dev: &'q Emulator<UA>,
+    _descriptors: PhantomData<*mut [Desc]>,
     // addr: u64,
     // head: u32,
     // tail: u32,
@@ -17,46 +22,48 @@ pub(crate) struct CommandRequestQueue<'q, UA: Agent> {
 
 impl<'q, UA: Agent> CommandRequestQueue<'q, UA> {
     pub(crate) fn new(dev: &'q Emulator<UA>) -> Self {
-        Self { dev }
+        Self {
+            dev,
+            _descriptors: PhantomData,
+        }
     }
 }
 
-// pub(crate) trait CommandRequestQueue {
-//     fn pop(&self) -> Result<()>;
-// }
+impl<UA: Agent, Desc> WorkQueue for CommandRequestQueue<'_, UA, Desc> {
+    type Descriptor = Desc;
 
-impl<UA: Agent> CommandRequestQueue<'_, UA> {
-    // argument `head` is for debugging purpose
-    pub(crate) unsafe fn pop(&self, head: u32) -> Option<Unknown> {
-        let addr = self.dev.csrs.cmd_request.addr.read();
-        let read_head = self.dev.csrs.cmd_request.head.read();
-        let tail = self.dev.csrs.cmd_request.tail.read();
-        assert_eq!(read_head, head);
+    fn addr(&self) -> u64 {
+        self.dev.csrs.cmd_request.addr.read()
+    }
 
-        if tail == head {
-            return None;
-        }
+    fn head(&self) -> u32 {
+        self.dev.csrs.cmd_request.head.read()
+    }
 
-        let addr = addr
-            .checked_add(u64::from(tail) * u64::try_from(DESCRIPTOR_SIZE).unwrap())
+    fn tail(&self) -> u32 {
+        self.dev.csrs.cmd_request.tail.read()
+    }
+
+    fn index(&self, index: u32) -> impl PointerMut<Output = Self::Descriptor> {
+        let addr = self
+            .addr()
+            .checked_add(u64::from(index) * u64::try_from(size_of::<Self::Descriptor>()).unwrap())
             .unwrap()
             .into();
 
-        let ptr = self.dev.dma_client.with_addr::<Unknown>(addr);
-        let raw = unsafe { ptr.read() };
-
-        // pop item
-        self.dev.csrs.cmd_request.tail.write(tail + 1);
-
-        log::trace!("raw descriptor @ {addr:?}[{head}]: {raw:02X?}");
-
-        Some(raw)
+        self.dev.dma_client.with_addr::<Self::Descriptor>(addr)
     }
 
-    pub(crate) fn doorbell(&self, head: u32) {
-        let raw = unsafe { self.pop(head).unwrap() };
+    fn advance(&self) {
+        self.dev.csrs.cmd_request.tail.write(self.tail() + 1);
+    }
+}
 
-        let descriptor_ref = dbg!(DescriptorRef::parse(&raw).unwrap());
+impl<UA: Agent> CommandRequestQueue<'_, UA> {
+    pub(crate) fn doorbell(&self, _head: u32) {
+        let raw = unsafe { self.pop() };
+
+        let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
 
         match descriptor_ref {
             DescriptorRef::UpdateMemoryRegionTable(req) => self.dev.handle(req).unwrap(),
