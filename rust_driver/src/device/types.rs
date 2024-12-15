@@ -368,7 +368,8 @@ pub(crate) enum CtrlRbDescOpcode {
     UpdateErrorPsnRecoverPoint = 0x05,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, TryFromPrimitive, IntoPrimitive)]
+#[repr(u8)]
 pub(crate) enum ToCardWorkRbDescOpcode {
     // IBV_WR_RDMA_WRITE           =  0,
     // IBV_WR_RDMA_WRITE_WITH_IMM  =  1,

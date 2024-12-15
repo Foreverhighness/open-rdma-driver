@@ -10,7 +10,7 @@ use super::common::DESCRIPTOR_SIZE;
 use crate::device::software::emulator::Result;
 
 #[non_exhaustive]
-// #[derive(Debug)]
+#[derive(Debug)]
 pub(super) enum DescriptorRef<'d> {
     Seg0(&'d Seg0),
     Seg1(&'d Seg1),

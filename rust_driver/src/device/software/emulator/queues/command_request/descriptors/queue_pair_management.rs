@@ -9,6 +9,7 @@ use crate::device::software::emulator::queues::command_request::common::{
 };
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
+use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::types::{
     MemoryAccessFlag, PacketMtuKind, ProtectDomainHandler, QueuePairNumber, QueuePairType,
 };
@@ -30,7 +31,7 @@ impl<UA: Agent> HandleDescriptor<QueuePairManagement> for Emulator<UA> {
         log::debug!("handle {request:?}");
 
         let qpn = request.queue_pair_number();
-        let qp_context = Context::from_req(request);
+        let qp_context = Context::from_req(request)?;
 
         let success = if request.valid() {
             // create
@@ -49,14 +50,14 @@ impl<UA: Agent> HandleDescriptor<QueuePairManagement> for Emulator<UA> {
 }
 
 impl Context {
-    fn from_req(req: &QueuePairManagement) -> Self {
-        Self::new(
+    fn from_req(req: &QueuePairManagement) -> Result<Self> {
+        Ok(Self::new(
             req.queue_pair_number(),
             req.protect_domain_handler(),
-            req.queue_pair_type(),
+            req.queue_pair_type()?,
             req.remote_queue_access_flag(),
-            req.packet_mtu_kind(),
-        )
+            req.packet_mtu_kind()?,
+        ))
     }
 }
 
@@ -77,16 +78,26 @@ impl QueuePairManagement {
         self.0.get_pd_handler().try_into().unwrap()
     }
 
-    pub fn queue_pair_type(&self) -> QueuePairType {
-        u8::try_from(self.0.get_qp_type()).unwrap().try_into().unwrap()
+    pub fn queue_pair_type(&self) -> Result<QueuePairType> {
+        let queue_pair_type = u8::try_from(self.0.get_qp_type()).unwrap();
+        let queue_pair_type = queue_pair_type
+            .try_into()
+            .map_err(|_| ParseDescriptorError::InvalidQueuePairType(queue_pair_type))?;
+
+        Ok(queue_pair_type)
     }
 
     pub fn remote_queue_access_flag(&self) -> MemoryAccessFlag {
         MemoryAccessFlag::from_bits(self.0.get_rq_access_flags().try_into().unwrap()).unwrap()
     }
 
-    pub fn packet_mtu_kind(&self) -> PacketMtuKind {
-        u8::try_from(self.0.get_pmtu()).unwrap().try_into().unwrap()
+    pub fn packet_mtu_kind(&self) -> Result<PacketMtuKind> {
+        let packet_mtu_kind = u8::try_from(self.0.get_pmtu()).unwrap();
+        let packet_mtu_kind = packet_mtu_kind
+            .try_into()
+            .map_err(|_| ParseDescriptorError::InvalidPacketMTUKind(packet_mtu_kind))?;
+
+        Ok(packet_mtu_kind)
     }
 
     pub fn peer_queue_pair_number(&self) -> QueuePairNumber {
@@ -102,9 +113,9 @@ impl fmt::Debug for QueuePairManagement {
             .field("error", &self.error())
             .field("queue_pair_number", &self.queue_pair_number())
             .field("protect_domain_handler", &self.protect_domain_handler())
-            .field("queue_pair_type", &self.queue_pair_type())
+            .field("queue_pair_type", &self.queue_pair_type().map_err(|_| fmt::Error))
             .field("remote_queue_access_flag", &self.remote_queue_access_flag())
-            .field("packet_mtu_kind", &self.packet_mtu_kind())
+            .field("packet_mtu_kind", &self.packet_mtu_kind().map_err(|_| fmt::Error))
             .field("peer_queue_pair_number", &self.peer_queue_pair_number())
             .finish()
     }

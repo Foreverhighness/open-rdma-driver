@@ -10,3 +10,6 @@ pub(crate) type MemoryRegionKey = crate::types::Key;
 // Memory Region
 pub(crate) type QueuePairType = crate::types::QpType;
 pub(crate) type QueuePairNumber = u32;
+
+// Send
+pub(crate) type SendFlag = crate::types::WorkReqSendFlag;

@@ -1,3 +1,4 @@
+use core::fmt;
 use core::net::Ipv4Addr;
 
 use crate::device::software::emulator::address::DmaAddress;
@@ -16,3 +17,15 @@ pub(crate) struct Seg0 {
 type Descriptor = Seg0;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<Descriptor>() == DESCRIPTOR_ALIGN);
+
+impl fmt::Debug for Descriptor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SendSeg0")
+            .field("header", &self.header)
+            .field("remote_addr", &self.remote_addr)
+            .field("remote_key", &self.remote_key)
+            .field("dest_ip", &self.dest_ip)
+            .field("partition_key", &self.partition_key)
+            .finish()
+    }
+}
