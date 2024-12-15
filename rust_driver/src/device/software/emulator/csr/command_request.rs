@@ -10,18 +10,12 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandRequestAddressHigh
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} address high part {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read command_request address high part {val:010X}",);
         val
     }
 
     fn write(&self, val: Self::Output) {
-        trace!(
-            "Write {} address high part {val:#010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write command_request address high part {val:#010X}",);
         self.reg.write(val);
     }
 }
@@ -31,18 +25,12 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandRequestAddressLowH
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} address low part {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read command_request address low part {val:010X}",);
         val
     }
 
     fn write(&self, val: Self::Output) {
-        trace!(
-            "Write {} address low part {val:#010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write command_request address low part {val:#010X}",);
         self.reg.write(val);
     }
 }
@@ -52,10 +40,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandRequestHeadHandler
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} head {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read command_request head {val:010X}",);
         val
     }
 
@@ -63,10 +48,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandRequestHeadHandler
         let old = self.reg.read();
         self.reg.write(val);
 
-        trace!(
-            "Write {} tail {old:010X} -> {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write command_request tail {old:010X} -> {val:010X}",);
 
         self.dev.command_request_queue().doorbell(val);
     }
@@ -77,10 +59,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandRequestTailHandler
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} tail {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read command_request tail {val:010X}",);
         val
     }
 
@@ -88,9 +67,6 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandRequestTailHandler
         let old = self.reg.read();
         self.reg.write(val);
 
-        trace!(
-            "Write {} tail {old:010X} -> {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write command_request tail {old:010X} -> {val:010X}",);
     }
 }

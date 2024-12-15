@@ -56,16 +56,22 @@ impl<UA: Agent, Desc> WorkQueue for SendQueue<'_, UA, Desc> {
 
 impl<UA: Agent> SendQueue<'_, UA> {
     pub(crate) fn doorbell(&self, _head: u32) {
-        let raw = unsafe { self.pop() };
+        self.dev.tx_send.send(()).unwrap();
+    }
 
-        let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
+    pub(crate) fn run(&self) {
+        while let Ok(_) = self.dev.rx_send.recv() {
+            let raw = unsafe { self.pop() };
 
-        // match descriptor_ref {
-        //     DescriptorRef::Seg0(req) => self.dev.handle(req).unwrap(),
-        //     DescriptorRef::Seg1(req) => self.dev.handle(req).unwrap(),
-        //     DescriptorRef::VariableLengthSGE(req) => self.dev.handle(req).unwrap(),
-        // }
-        todo!()
+            let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
+
+            // match descriptor_ref {
+            //     DescriptorRef::Seg0(req) => self.dev.handle(req).unwrap(),
+            //     DescriptorRef::Seg1(req) => self.dev.handle(req).unwrap(),
+            //     DescriptorRef::VariableLengthSGE(req) => self.dev.handle(req).unwrap(),
+            // }
+            todo!()
+        }
     }
 }
 

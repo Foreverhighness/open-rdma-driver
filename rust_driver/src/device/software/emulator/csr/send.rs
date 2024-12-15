@@ -9,18 +9,12 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersSendAddressHighHandler<'_
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} address high part {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read send address high part {val:010X}",);
         val
     }
 
     fn write(&self, val: Self::Output) {
-        trace!(
-            "Write {} address high part {val:#010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write send address high part {val:#010X}",);
         self.reg.write(val);
     }
 }
@@ -30,18 +24,12 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersSendAddressLowHandler<'_,
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} address low part {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read send address low part {val:010X}",);
         val
     }
 
     fn write(&self, val: Self::Output) {
-        trace!(
-            "Write {} address low part {val:#010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write send address low part {val:#010X}",);
         self.reg.write(val);
     }
 }
@@ -51,15 +39,17 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersSendHeadHandler<'_, UA> {
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} head {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read send head {val:010X}",);
         val
     }
 
     fn write(&self, val: Self::Output) {
-        todo!()
+        let old = self.reg.read();
+        self.reg.write(val);
+
+        trace!("Write send tail {old:010X} -> {val:010X}",);
+
+        self.dev.send_queue().doorbell(val);
     }
 }
 
@@ -68,14 +58,14 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersSendTailHandler<'_, UA> {
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} tail {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read send tail {val:010X}",);
         val
     }
 
     fn write(&self, val: Self::Output) {
-        todo!()
+        let old = self.reg.read();
+        self.reg.write(val);
+
+        trace!("Write send tail {old:010X} -> {val:010X}",);
     }
 }

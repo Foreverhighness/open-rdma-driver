@@ -3,10 +3,13 @@
 use core::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
+use flume::{Receiver, Sender};
+
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::{ControlStatusRegisters, RawDevice};
 use super::mr_table::MemoryRegionTable;
 use super::{dma, memory_region, net, queue_pair, simulator};
+use crate::device::software::packet_processor::PacketProcessor;
 
 #[derive(Debug)]
 pub enum State {
@@ -30,7 +33,7 @@ where
     pub(crate) dma_client: DC,
 
     /// Thread Stop signal, may move out of this structure if I change this structure into `EmulatorInner`
-    stop: AtomicBool,
+    pub(crate) stop: AtomicBool,
 
     /// Emulator State
     state: State,
@@ -40,10 +43,18 @@ where
 
     /// Queue Pair Table (QPN -> Context)
     qp_table: queue_pair::Table,
+
+    pub(crate) tx_command_request: Sender<()>,
+    pub(crate) rx_command_request: Receiver<()>,
+
+    pub(crate) tx_send: Sender<()>,
+    pub(crate) rx_send: Receiver<()>,
 }
 
 impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, MRT> {
     pub fn new(udp_agent: UA, dma_client: DC, mr_table: MRT) -> Self {
+        let (tx_command_request, rx_command_request) = flume::unbounded();
+        let (tx_send, rx_send) = flume::unbounded();
         Self {
             udp_agent,
             dma_client,
@@ -52,25 +63,11 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, M
             state: State::NotReady,
             stop: AtomicBool::default(),
             qp_table: Default::default(),
+            tx_command_request,
+            rx_command_request,
+            tx_send,
+            rx_send,
         }
-    }
-
-    pub(super) fn start_net(self: &Arc<Self>)
-    where
-        UA: Send + Sync + 'static,
-        DC: Send + Sync + 'static,
-        MRT: Send + Sync + 'static,
-    {
-        let dev = Arc::clone(self);
-
-        // TODO(fh): Store this handler properly
-        let _handle = std::thread::spawn(move || {
-            let mut buf = vec![0u8; 8192];
-            while !dev.stop.load(core::sync::atomic::Ordering::Relaxed) {
-                let (len, src) = dev.udp_agent.recv_from(&mut buf).expect("recv error");
-                log::debug!("receive data {:?} from {src:?}", &buf[..len]);
-            }
-        });
     }
 
     pub(crate) fn memory_region_table(&self) -> &MRT {
@@ -79,6 +76,41 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, M
 
     pub(crate) fn queue_pair_table(&self) -> &queue_pair::Table {
         &self.qp_table
+    }
+}
+
+impl<UA> Emulator<UA>
+where
+    UA: net::Agent + Send + Sync + 'static,
+{
+    pub(super) fn start_net(self: &Arc<Self>) {
+        let dev = Arc::clone(self);
+
+        // TODO(fh): Store this handler properly
+        let _handle = std::thread::spawn(move || {
+            // TODO(fh): Alloc buffer from MemoryPool.
+            let mut buf = vec![0u8; 8192];
+            while !dev.stop.load(core::sync::atomic::Ordering::Relaxed) {
+                let (len, src) = dev.udp_agent.recv_from(&mut buf).expect("recv error");
+
+                let msg = PacketProcessor::to_rdma_message(&buf[..len]).unwrap();
+                log::debug!("receive data {msg:#?} from {src:?}");
+            }
+        });
+    }
+
+    pub fn start_work_queue(self: &Arc<Self>) {
+        let dev = Arc::clone(self);
+        // TODO(fh): Store this handler properly
+        let _handler_command_request = std::thread::spawn(move || {
+            // let _ = dev.queues_are_initialized.wait();
+            dev.command_request_queue().run();
+        });
+        let dev = Arc::clone(self);
+        let _handler_send = std::thread::spawn(move || {
+            // let _ = dev.queues_are_initialized.wait();
+            dev.send_queue().run();
+        });
     }
 }
 

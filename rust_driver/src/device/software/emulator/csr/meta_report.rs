@@ -9,18 +9,12 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportAddressHighHand
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} address high part {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read meta_report address high part {val:010X}",);
         val
     }
 
     fn write(&self, val: Self::Output) {
-        trace!(
-            "Write {} address high part {val:#010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write meta_report address high part {val:#010X}",);
         self.reg.write(val);
     }
 }
@@ -30,18 +24,12 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportAddressLowHandl
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} address low part {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read meta_report address low part {val:010X}",);
         val
     }
 
     fn write(&self, val: Self::Output) {
-        trace!(
-            "Write {} address low part {val:#010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write meta_report address low part {val:#010X}",);
         self.reg.write(val);
     }
 }
@@ -51,10 +39,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportHeadHandler<'_,
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} head {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read meta_report head {val:010X}",);
         val
     }
 
@@ -62,10 +47,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportHeadHandler<'_,
         let old = self.reg.read();
         self.reg.write(val);
 
-        trace!(
-            "Write {} tail {old:010X} -> {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write meta_report tail {old:010X} -> {val:010X}",);
     }
 }
 
@@ -74,10 +56,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportTailHandler<'_,
 
     fn read(&self) -> Self::Output {
         let val = self.reg.read();
-        trace!(
-            "Read {} tail {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Read meta_report tail {val:010X}",);
         val
     }
 
@@ -85,9 +64,6 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportTailHandler<'_,
         let old = self.reg.read();
         self.reg.write(val);
 
-        trace!(
-            "Write {} tail {old:010X} -> {val:010X}",
-            std::path::Path::new(file!()).file_stem().unwrap().to_str().unwrap()
-        );
+        trace!("Write meta_report tail {old:010X} -> {val:010X}",);
     }
 }

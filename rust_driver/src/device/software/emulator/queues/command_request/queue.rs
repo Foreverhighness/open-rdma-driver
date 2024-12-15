@@ -60,17 +60,23 @@ impl<UA: Agent, Desc> WorkQueue for CommandRequestQueue<'_, UA, Desc> {
 
 impl<UA: Agent> CommandRequestQueue<'_, UA> {
     pub(crate) fn doorbell(&self, _head: u32) {
-        let raw = unsafe { self.pop() };
+        self.dev.tx_command_request.send(()).unwrap();
+    }
 
-        let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
+    pub(crate) fn run(&self) {
+        while let Ok(_) = self.dev.rx_command_request.recv() {
+            let raw = unsafe { self.pop() };
 
-        match descriptor_ref {
-            DescriptorRef::UpdateMemoryRegionTable(req) => self.dev.handle(req).unwrap(),
-            DescriptorRef::UpdatePageTable(req) => self.dev.handle(req).unwrap(),
-            DescriptorRef::QueuePairManagement(req) => self.dev.handle(req).unwrap(),
-            DescriptorRef::SetNetworkParameter(req) => self.dev.handle(req).unwrap(),
-            DescriptorRef::SetRawPacketReceiveMeta(req) => self.dev.handle(req).unwrap(),
-            DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(req) => self.dev.handle(req).unwrap(),
+            let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
+
+            match descriptor_ref {
+                DescriptorRef::UpdateMemoryRegionTable(req) => self.dev.handle(req).unwrap(),
+                DescriptorRef::UpdatePageTable(req) => self.dev.handle(req).unwrap(),
+                DescriptorRef::QueuePairManagement(req) => self.dev.handle(req).unwrap(),
+                DescriptorRef::SetNetworkParameter(req) => self.dev.handle(req).unwrap(),
+                DescriptorRef::SetRawPacketReceiveMeta(req) => self.dev.handle(req).unwrap(),
+                DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(req) => self.dev.handle(req).unwrap(),
+            }
         }
     }
 }

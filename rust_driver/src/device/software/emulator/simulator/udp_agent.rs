@@ -50,8 +50,8 @@ impl<R: Client> UdpAgent<R> {
 
     /// Receive a single ethernet frame buffer from NIC
     fn receive_ethernet_frame_buffer(&self) -> Vec<u8> {
-        static FRAGMENT: AtomicU32 = AtomicU32::new(0);
-        static FRAME: AtomicU32 = AtomicU32::new(0);
+        // static FRAGMENT: AtomicU32 = AtomicU32::new(0);
+        // static FRAME: AtomicU32 = AtomicU32::new(0);
 
         let mut request = RpcNetIfcRxTxPayload::new();
         let mut buffer = Vec::new();
@@ -64,7 +64,7 @@ impl<R: Client> UdpAgent<R> {
             if invalid_fragment {
                 continue;
             }
-            generate_frame_fragment_file(&request, &FRAME, &FRAGMENT);
+            // generate_frame_fragment_file(&request, &FRAME, &FRAGMENT);
 
             let payload = &request.data.0;
 
@@ -78,7 +78,7 @@ impl<R: Client> UdpAgent<R> {
 
             let last_fragment = request.is_last == 1;
             if last_fragment {
-                generate_frame_file(&buffer, &FRAME, &FRAGMENT);
+                // generate_frame_file(&buffer, &FRAME, &FRAGMENT);
                 return buffer;
             }
         }

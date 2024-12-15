@@ -22,6 +22,7 @@ impl Emulator<UdpAgent<RpcClient>> {
 
         let dev = Arc::new(Self::new(udp_agent, dma_client, mr_table));
 
+        dev.start_work_queue();
         dev.start_net();
 
         dev
