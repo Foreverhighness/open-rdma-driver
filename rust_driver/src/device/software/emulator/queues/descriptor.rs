@@ -7,6 +7,7 @@ pub(super) trait Descriptor {}
 pub(super) trait HandleDescriptor<Desc> {
     // Seems like Output is always `()`, may remove it in future
     type Output;
+    type Context;
 
-    fn handle(&self, request: &Desc) -> Result<Self::Output>;
+    fn handle(&self, request: &Desc, cx: Self::Context) -> Result<Self::Output>;
 }

@@ -24,9 +24,10 @@ impl UpdateMemoryRegionTable {
 }
 
 impl<UA: Agent> HandleDescriptor<UpdateMemoryRegionTable> for Emulator<UA> {
+    type Context = ();
     type Output = ();
 
-    fn handle(&self, request: &UpdateMemoryRegionTable) -> Result<Self::Output> {
+    fn handle(&self, request: &UpdateMemoryRegionTable, _: ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         let mr_context = Context::from_req(request);

@@ -22,10 +22,11 @@ impl SetRawPacketReceiveMeta {
 }
 
 impl<UA: Agent> HandleDescriptor<SetRawPacketReceiveMeta> for Emulator<UA> {
+    type Context = ();
     type Output = ();
 
     #[expect(unreachable_code, reason = "testing")]
-    fn handle(&self, request: &SetRawPacketReceiveMeta) -> Result<Self::Output> {
+    fn handle(&self, request: &SetRawPacketReceiveMeta, _: ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         todo!();

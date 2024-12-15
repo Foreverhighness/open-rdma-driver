@@ -60,17 +60,23 @@ impl<UA: Agent> SendQueue<'_, UA> {
     }
 
     pub(crate) fn run(&self) {
+        let mut state = State::Init;
         while let Ok(_) = self.dev.rx_send.recv() {
             let raw = unsafe { self.pop() };
 
             let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
 
-            // match descriptor_ref {
-            //     DescriptorRef::Seg0(req) => self.dev.handle(req).unwrap(),
-            //     DescriptorRef::Seg1(req) => self.dev.handle(req).unwrap(),
-            //     DescriptorRef::VariableLengthSGE(req) => self.dev.handle(req).unwrap(),
-            // }
-            todo!()
+            state = match descriptor_ref {
+                DescriptorRef::Seg0(req) => self.dev.handle(req, state).unwrap(),
+                DescriptorRef::Seg1(req) => self.dev.handle(req, state).unwrap(),
+                DescriptorRef::VariableLengthSGE(req) => self.dev.handle(req, state).unwrap(),
+            };
+
+            let operation = match state {
+                State::Init => unreachable!(),
+                State::Partial(_) => continue,
+                State::Ready(ref builder) => builder.build(),
+            };
         }
     }
 }
@@ -79,4 +85,21 @@ impl<UA: Agent> Emulator<UA> {
     pub(crate) fn send_queue(&self) -> SendQueue<'_, UA> {
         SendQueue::new(self)
     }
+}
+
+#[derive(Debug)]
+pub(crate) struct Builder {}
+
+impl Builder {
+    fn build(&self) -> i32 {
+        todo!()
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum State {
+    Init,
+    Partial(Builder),
+    Ready(Builder),
+    // Failed,
 }

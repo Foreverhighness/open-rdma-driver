@@ -23,9 +23,10 @@ impl SetNetworkParameter {
 }
 
 impl<UA: Agent> HandleDescriptor<SetNetworkParameter> for Emulator<UA> {
+    type Context = ();
     type Output = ();
 
-    fn handle(&self, request: &SetNetworkParameter) -> Result<Self::Output> {
+    fn handle(&self, request: &SetNetworkParameter, _: ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         // TODO(fh): start net agent here.

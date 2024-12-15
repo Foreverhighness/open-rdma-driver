@@ -21,10 +21,11 @@ impl UpdateErrorPacketSequenceNumberRecoverPoint {
 }
 
 impl<UA: Agent> HandleDescriptor<UpdateErrorPacketSequenceNumberRecoverPoint> for Emulator<UA> {
+    type Context = ();
     type Output = ();
 
     #[expect(unreachable_code, reason = "testing")]
-    fn handle(&self, request: &UpdateErrorPacketSequenceNumberRecoverPoint) -> Result<Self::Output> {
+    fn handle(&self, request: &UpdateErrorPacketSequenceNumberRecoverPoint, _: ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         todo!();
