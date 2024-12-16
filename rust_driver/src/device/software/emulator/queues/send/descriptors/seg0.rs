@@ -2,16 +2,12 @@ use core::fmt;
 use core::net::Ipv4Addr;
 
 use crate::device::software::emulator::address::DmaAddress;
-use crate::device::software::emulator::net::Agent;
-use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::queues::send::common::{Header, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
-use crate::device::software::emulator::queues::send::queue::Builder;
 use crate::device::software::emulator::types::MemoryRegionKey;
-use crate::device::software::emulator::{Emulator, Result};
 
 #[repr(C, align(32))]
 pub(crate) struct Seg0 {
-    header: Header,
+    pub header: Header,
     remote_addr: DmaAddress,
     remote_key: MemoryRegionKey,
     dest_ip: Ipv4Addr,
@@ -21,15 +17,6 @@ pub(crate) struct Seg0 {
 type Descriptor = Seg0;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<Descriptor>() == DESCRIPTOR_ALIGN);
-
-impl<UA: Agent> HandleDescriptor<Descriptor> for Emulator<UA> {
-    type Context = Builder;
-    type Output = ();
-
-    fn handle(&self, request: &Descriptor, builder: &mut Builder) -> Result<Self::Output> {
-        todo!();
-    }
-}
 
 impl fmt::Debug for Seg0 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

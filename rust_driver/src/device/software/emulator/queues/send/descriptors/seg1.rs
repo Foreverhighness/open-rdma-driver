@@ -2,15 +2,12 @@ use core::fmt;
 
 use eui48::MacAddress;
 
-use crate::device::software::emulator::net::Agent;
-use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::queues::send::common::{
     PMtuAndSendFlagAndQpTypeAndSgeCount, PacketSequenceNumber, QueuePairNumber, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
-use crate::device::software::emulator::queues::send::queue::Builder;
 use crate::device::software::emulator::types::{PacketMtuKind, QueuePairType, SendFlag};
-use crate::device::software::emulator::{Emulator, Result};
+use crate::device::software::emulator::Result;
 
 #[repr(C, align(32))]
 pub(crate) struct Seg1 {
@@ -25,15 +22,6 @@ pub(crate) struct Seg1 {
 type Descriptor = Seg1;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<Descriptor>() == DESCRIPTOR_ALIGN);
-
-impl<UA: Agent> HandleDescriptor<Descriptor> for Emulator<UA> {
-    type Context = Builder;
-    type Output = ();
-
-    fn handle(&self, request: &Descriptor, builder: &mut Builder) -> Result<Self::Output> {
-        todo!()
-    }
-}
 
 impl Seg1 {
     fn packet_mtu_kind(&self) -> Result<PacketMtuKind> {

@@ -1,7 +1,8 @@
 use core::marker::PhantomData;
 
-use super::common::DESCRIPTOR_SIZE;
+use super::common::{Opcode, DESCRIPTOR_SIZE};
 use super::descriptors::{Seg0, Seg1, VariableLengthSge};
+use super::operations::WriteBuilder;
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
@@ -60,34 +61,34 @@ impl<UA: Agent> SendQueue<'_, UA> {
     }
 
     pub(crate) fn run(&self) {
-        let mut state = State::ExpectSeg0;
-        let mut builder = Builder::new();
         while let Ok(()) = self.dev.rx_send.recv() {
             let raw = unsafe { self.pop() };
 
-            state = match state {
-                State::ExpectSeg0 => {
-                    let req = Seg0::from_bytes(raw);
-                    self.dev.handle(&req, &mut builder).unwrap();
+            let seg0 = Seg0::from_bytes(raw);
+            let opcode = seg0.header.opcode().expect("send opcode parse failed");
 
-                    State::ExpectSeg1
-                }
-                State::ExpectSeg1 => {
-                    let req = Seg1::from_bytes(raw);
-                    self.dev.handle(&req, &mut builder).unwrap();
+            match opcode {
+                Opcode::Write => {
+                    // write use 3 descriptors
+                    let builder = WriteBuilder::from_seg0(seg0);
 
-                    State::ExpectVariableLenSge
-                }
-                State::ExpectVariableLenSge => {
-                    let req = VariableLengthSge::from_bytes(raw);
-                    self.dev.handle(&req, &mut builder).unwrap();
+                    self.dev.rx_send.recv().expect("send recv failed");
+                    let raw = unsafe { self.pop() };
+                    let seg1 = Seg1::from_bytes(raw);
 
-                    if let Some(op) = builder.try_build() {
-                        State::ExpectSeg0
-                    } else {
-                        State::ExpectVariableLenSge
-                    }
+                    let builder = builder.with_seg1(seg1);
+
+                    self.dev.rx_send.recv().expect("send recv failed");
+                    let raw = unsafe { self.pop() };
+                    let sge = VariableLengthSge::from_bytes(raw);
+
+                    let write_req = builder.with_sge(sge);
+
+                    self.dev.handle(&write_req, &mut ()).unwrap();
                 }
+                Opcode::WriteWithImm => todo!(),
+                Opcode::Read => todo!(),
+                Opcode::ReadResp => todo!(),
             }
         }
     }
@@ -97,25 +98,4 @@ impl<UA: Agent> Emulator<UA> {
     pub(crate) fn send_queue(&self) -> SendQueue<'_, UA> {
         SendQueue::new(self)
     }
-}
-
-#[derive(Debug)]
-pub(crate) struct Builder {}
-
-impl Builder {
-    fn new() -> Self {
-        todo!()
-    }
-
-    fn try_build(&self) -> Option<i32> {
-        todo!()
-    }
-}
-
-#[derive(Debug)]
-pub(crate) enum State {
-    ExpectSeg0,
-    ExpectSeg1,
-    ExpectVariableLenSge,
-    // Failed,
 }
