@@ -1,10 +1,18 @@
+use super::common::Common;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
-use crate::device::software::emulator::queues::send::descriptors::{Seg0, Seg1, VariableLengthSge};
+use crate::device::software::emulator::queues::send::descriptors::{
+    ScatterGatherElement, Seg0, Seg1, VariableLengthSge,
+};
 use crate::device::software::emulator::{Emulator, Result};
 
 #[derive(Debug)]
-pub struct Write {}
+pub struct Write {
+    common: Common,
+    last: bool,
+    first: bool,
+    sge: ScatterGatherElement,
+}
 
 impl<UA: Agent> HandleDescriptor<Write> for Emulator<UA> {
     type Context = ();
@@ -16,18 +24,45 @@ impl<UA: Agent> HandleDescriptor<Write> for Emulator<UA> {
 }
 
 #[derive(Debug)]
-pub struct Builder {}
+/// Write Builder
+// TODO(fh): use strict state machine representation?
+pub struct Builder(Write);
 
 impl Builder {
+    /// Initialize builder from valid seg0
     pub fn from_seg0(seg0: Seg0) -> Self {
-        todo!()
+        let first = seg0.header.first();
+        let last = seg0.header.last();
+        Self(Write {
+            common: Common::from_seg0(&seg0),
+            last,
+            first,
+            sge: ScatterGatherElement {
+                local_key: 0.into(),
+                len: 0,
+                local_addr: 0.into(),
+            },
+        })
     }
 
-    pub fn with_seg1(self, seg1: Seg1) -> Self {
-        todo!()
+    /// Update valid seg1, assuming only seg0 is processed
+    pub fn with_seg1(mut self, seg1: Seg1) -> Self {
+        self.0.common.with_seg1(&seg1);
+
+        self
     }
 
-    pub fn with_sge(self, sge: VariableLengthSge) -> Write {
-        todo!()
+    /// Update sge, assuming seg0 and seg1 are processed
+    pub fn with_sge(mut self, sge: VariableLengthSge) -> Write {
+        let sge0 = sge.sge1;
+        let sge1 = sge.sge2;
+        assert!(
+            sge1.local_addr == 0.into() && sge1.len == 0 && sge1.local_key == 0.into(),
+            "support only one sge for now"
+        );
+
+        self.0.sge = sge0;
+
+        self.0
     }
 }

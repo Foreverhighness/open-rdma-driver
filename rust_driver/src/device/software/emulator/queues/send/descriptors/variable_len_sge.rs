@@ -1,13 +1,12 @@
 use core::fmt;
 
-use crate::device::software::emulator::queues::send::common::{
-    ScatterGatherElement, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
-};
+use super::common::ScatterGatherElement;
+use super::{DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[repr(C, align(32))]
 pub(crate) struct VariableLengthSge {
-    sge2: ScatterGatherElement,
-    sge1: ScatterGatherElement,
+    pub sge2: ScatterGatherElement,
+    pub sge1: ScatterGatherElement,
 }
 type Descriptor = VariableLengthSge;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);

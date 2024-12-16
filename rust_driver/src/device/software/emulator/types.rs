@@ -3,6 +3,7 @@ pub(crate) type PacketMtuKind = crate::types::Pmtu;
 pub(crate) type ProtectDomainHandler = u32;
 pub(crate) type MemoryAccessFlag = crate::types::MemAccessTypeFlag;
 pub(crate) type PacketSequenceNumber = u32;
+pub(crate) type MessageSequenceNumber = u16;
 
 // Queue Pair
 pub(crate) type MemoryRegionKey = crate::types::Key;

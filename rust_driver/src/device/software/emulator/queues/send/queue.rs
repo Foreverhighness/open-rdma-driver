@@ -1,11 +1,11 @@
 use core::marker::PhantomData;
 
-use super::common::{Opcode, DESCRIPTOR_SIZE};
-use super::descriptors::{Seg0, Seg1, VariableLengthSge};
+use super::descriptors::{Seg0, Seg1, VariableLengthSge, DESCRIPTOR_SIZE};
 use super::operations::WriteBuilder;
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
+use crate::device::software::emulator::queues::send::operations::Opcode;
 use crate::device::software::emulator::queues::work_queue::WorkQueue;
 use crate::device::software::emulator::Emulator;
 
@@ -65,6 +65,8 @@ impl<UA: Agent> SendQueue<'_, UA> {
             let raw = unsafe { self.pop() };
 
             let seg0 = Seg0::from_bytes(raw);
+            // TODO(fh): move assertions into from_bytes_checked.
+            assert!(seg0.header.valid());
             let opcode = seg0.header.opcode().expect("send opcode parse failed");
 
             match opcode {

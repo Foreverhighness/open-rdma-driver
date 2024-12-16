@@ -2,16 +2,12 @@ use core::fmt;
 
 use crate::device::software::emulator::address::DmaAddress;
 use crate::device::software::emulator::queues::errors::ParseDescriptorError;
+use crate::device::software::emulator::queues::send::operations::Opcode;
 use crate::device::software::emulator::types::MemoryRegionKey;
 use crate::device::software::emulator::Result;
 
-pub(super) const DESCRIPTOR_SIZE: usize = 32; // 256 bits
-pub(super) const DESCRIPTOR_ALIGN: usize = 32; // 256 bits
-
-pub(super) type Opcode = crate::device::types::ToCardWorkRbDescOpcode;
-
 #[bitfield_struct::bitfield(u64, debug = false)]
-pub(super) struct Header {
+pub(crate) struct Header {
     pub valid: bool,
     is_success_or_need_signal_cplt: bool,
     pub first: bool,
@@ -58,7 +54,7 @@ impl fmt::Debug for Header {
 }
 
 #[bitfield_struct::bitfield(u32)]
-pub(super) struct PMtuAndSendFlagAndQpTypeAndSgeCount {
+pub struct PMtuAndSendFlagAndQpTypeAndSgeCount {
     #[bits(3)]
     pub packet_mtu_kind: u8,
     #[bits(5)]
@@ -78,26 +74,26 @@ pub(super) struct PMtuAndSendFlagAndQpTypeAndSgeCount {
 }
 
 #[bitfield_struct::bitfield(u32)]
-pub(super) struct PacketSequenceNumber {
+pub struct PacketSequenceNumber {
     #[bits(24)]
-    packet_sequence_number: u32,
+    pub packet_sequence_number: u32,
     #[bits(8)]
     __: (),
 }
 
 #[bitfield_struct::bitfield(u32)]
-pub(super) struct QueuePairNumber {
+pub struct QueuePairNumber {
     #[bits(24)]
-    queue_pair_number: u32,
+    pub queue_pair_number: u32,
     #[bits(8)]
     __: (),
 }
 
 #[repr(C)]
-pub(super) struct ScatterGatherElement {
-    local_key: MemoryRegionKey,
-    len: u32,
-    local_addr: DmaAddress,
+pub struct ScatterGatherElement {
+    pub local_key: MemoryRegionKey,
+    pub len: u32,
+    pub local_addr: DmaAddress,
 }
 
 impl fmt::Debug for ScatterGatherElement {
