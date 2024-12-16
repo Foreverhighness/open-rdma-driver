@@ -25,7 +25,7 @@ impl<UA: Agent> HandleDescriptor<UpdateErrorPacketSequenceNumberRecoverPoint> fo
     type Output = ();
 
     #[expect(unreachable_code, reason = "testing")]
-    fn handle(&self, request: &UpdateErrorPacketSequenceNumberRecoverPoint, _: ()) -> Result<Self::Output> {
+    fn handle(&self, request: &UpdateErrorPacketSequenceNumberRecoverPoint, _: &mut ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         todo!();

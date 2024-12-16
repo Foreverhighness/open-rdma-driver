@@ -9,5 +9,5 @@ pub(super) trait HandleDescriptor<Desc> {
     type Output;
     type Context;
 
-    fn handle(&self, request: &Desc, cx: Self::Context) -> Result<Self::Output>;
+    fn handle(&self, request: &Desc, cx: &mut Self::Context) -> Result<Self::Output>;
 }

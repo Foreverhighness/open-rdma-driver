@@ -12,7 +12,7 @@ use super::{dma, memory_region, net, queue_pair, simulator};
 use crate::device::software::packet_processor::PacketProcessor;
 
 #[derive(Debug)]
-pub enum State {
+enum State {
     NotReady,
 }
 

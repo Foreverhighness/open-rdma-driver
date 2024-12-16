@@ -70,12 +70,14 @@ impl<UA: Agent> CommandRequestQueue<'_, UA> {
             let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
 
             match descriptor_ref {
-                DescriptorRef::UpdateMemoryRegionTable(req) => self.dev.handle(req, ()).unwrap(),
-                DescriptorRef::UpdatePageTable(req) => self.dev.handle(req, ()).unwrap(),
-                DescriptorRef::QueuePairManagement(req) => self.dev.handle(req, ()).unwrap(),
-                DescriptorRef::SetNetworkParameter(req) => self.dev.handle(req, ()).unwrap(),
-                DescriptorRef::SetRawPacketReceiveMeta(req) => self.dev.handle(req, ()).unwrap(),
-                DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(req) => self.dev.handle(req, ()).unwrap(),
+                DescriptorRef::UpdateMemoryRegionTable(req) => self.dev.handle(req, &mut ()).unwrap(),
+                DescriptorRef::UpdatePageTable(req) => self.dev.handle(req, &mut ()).unwrap(),
+                DescriptorRef::QueuePairManagement(req) => self.dev.handle(req, &mut ()).unwrap(),
+                DescriptorRef::SetNetworkParameter(req) => self.dev.handle(req, &mut ()).unwrap(),
+                DescriptorRef::SetRawPacketReceiveMeta(req) => self.dev.handle(req, &mut ()).unwrap(),
+                DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(req) => {
+                    self.dev.handle(req, &mut ()).unwrap()
+                }
             }
         }
     }

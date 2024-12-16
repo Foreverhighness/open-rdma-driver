@@ -1,10 +1,10 @@
 use core::marker::PhantomData;
 
 use super::common::DESCRIPTOR_SIZE;
+use super::descriptors::{Seg0, Seg1, VariableLengthSge};
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
-use crate::device::software::emulator::queues::send::descriptors::DescriptorRef;
 use crate::device::software::emulator::queues::work_queue::WorkQueue;
 use crate::device::software::emulator::Emulator;
 
@@ -60,23 +60,35 @@ impl<UA: Agent> SendQueue<'_, UA> {
     }
 
     pub(crate) fn run(&self) {
-        let mut state = State::Init;
-        while let Ok(_) = self.dev.rx_send.recv() {
+        let mut state = State::ExpectSeg0;
+        let mut builder = Builder::new();
+        while let Ok(()) = self.dev.rx_send.recv() {
             let raw = unsafe { self.pop() };
 
-            let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
+            state = match state {
+                State::ExpectSeg0 => {
+                    let req = Seg0::from_bytes(raw);
+                    self.dev.handle(&req, &mut builder).unwrap();
 
-            state = match descriptor_ref {
-                DescriptorRef::Seg0(req) => self.dev.handle(req, state).unwrap(),
-                DescriptorRef::Seg1(req) => self.dev.handle(req, state).unwrap(),
-                DescriptorRef::VariableLengthSGE(req) => self.dev.handle(req, state).unwrap(),
-            };
+                    State::ExpectSeg1
+                }
+                State::ExpectSeg1 => {
+                    let req = Seg1::from_bytes(raw);
+                    self.dev.handle(&req, &mut builder).unwrap();
 
-            let operation = match state {
-                State::Init => unreachable!(),
-                State::Partial(_) => continue,
-                State::Ready(ref builder) => builder.build(),
-            };
+                    State::ExpectVariableLenSge
+                }
+                State::ExpectVariableLenSge => {
+                    let req = VariableLengthSge::from_bytes(raw);
+                    self.dev.handle(&req, &mut builder).unwrap();
+
+                    if let Some(op) = builder.try_build() {
+                        State::ExpectSeg0
+                    } else {
+                        State::ExpectVariableLenSge
+                    }
+                }
+            }
         }
     }
 }
@@ -91,15 +103,19 @@ impl<UA: Agent> Emulator<UA> {
 pub(crate) struct Builder {}
 
 impl Builder {
-    fn build(&self) -> i32 {
+    fn new() -> Self {
+        todo!()
+    }
+
+    fn try_build(&self) -> Option<i32> {
         todo!()
     }
 }
 
 #[derive(Debug)]
 pub(crate) enum State {
-    Init,
-    Partial(Builder),
-    Ready(Builder),
+    ExpectSeg0,
+    ExpectSeg1,
+    ExpectVariableLenSge,
     // Failed,
 }

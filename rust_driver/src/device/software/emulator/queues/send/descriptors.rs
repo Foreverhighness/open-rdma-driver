@@ -2,9 +2,9 @@ mod seg0;
 mod seg1;
 mod variable_len_sge;
 
-use seg0::Seg0;
-use seg1::Seg1;
-use variable_len_sge::VariableLengthSGE;
+pub(super) use seg0::Seg0;
+pub(super) use seg1::Seg1;
+pub(super) use variable_len_sge::VariableLengthSge;
 
 use super::common::DESCRIPTOR_SIZE;
 use crate::device::software::emulator::Result;
@@ -14,7 +14,7 @@ use crate::device::software::emulator::Result;
 pub(super) enum DescriptorRef<'d> {
     Seg0(&'d Seg0),
     Seg1(&'d Seg1),
-    VariableLengthSGE(&'d VariableLengthSGE),
+    VariableLengthSGE(&'d VariableLengthSge),
 }
 
 impl<'d> DescriptorRef<'d> {

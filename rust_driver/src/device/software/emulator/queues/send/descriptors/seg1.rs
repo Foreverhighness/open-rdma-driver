@@ -8,7 +8,7 @@ use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::queues::send::common::{
     PMtuAndSendFlagAndQpTypeAndSgeCount, PacketSequenceNumber, QueuePairNumber, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
 };
-use crate::device::software::emulator::queues::send::queue::State;
+use crate::device::software::emulator::queues::send::queue::Builder;
 use crate::device::software::emulator::types::{PacketMtuKind, QueuePairType, SendFlag};
 use crate::device::software::emulator::{Emulator, Result};
 
@@ -27,10 +27,10 @@ const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<Descriptor>() == DESCRIPTOR_ALIGN);
 
 impl<UA: Agent> HandleDescriptor<Descriptor> for Emulator<UA> {
-    type Context = State;
-    type Output = State;
+    type Context = Builder;
+    type Output = ();
 
-    fn handle(&self, request: &Descriptor, cx: Self::Context) -> Result<Self::Output> {
+    fn handle(&self, request: &Descriptor, builder: &mut Builder) -> Result<Self::Output> {
         todo!()
     }
 }
@@ -75,5 +75,13 @@ impl fmt::Debug for Seg1 {
             .field("queue_pair_number", &self.queue_pair_number)
             .field("immediate", &self.immediate)
             .finish()
+    }
+}
+
+impl Descriptor {
+    pub fn from_bytes(raw: [u8; DESCRIPTOR_SIZE]) -> Self {
+        let descriptor = unsafe { core::mem::transmute::<_, Self>(raw) };
+        assert!((&raw const descriptor).is_aligned());
+        descriptor
     }
 }

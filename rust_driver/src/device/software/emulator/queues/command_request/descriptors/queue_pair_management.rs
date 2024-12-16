@@ -28,7 +28,7 @@ impl<UA: Agent> HandleDescriptor<QueuePairManagement> for Emulator<UA> {
     type Context = ();
     type Output = ();
 
-    fn handle(&self, request: &QueuePairManagement, _: ()) -> Result<Self::Output> {
+    fn handle(&self, request: &QueuePairManagement, _: &mut ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         let qpn = request.queue_pair_number();
