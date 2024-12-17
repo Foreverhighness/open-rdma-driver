@@ -1,5 +1,5 @@
 mod agent;
-mod messages;
+mod message;
 
 pub(super) use agent::Agent;
 
