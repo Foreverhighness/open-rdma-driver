@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::device::layout::MetaReportQueueDescFragAETH;
 use crate::device::software::emulator::address::VirtualAddress;
 use crate::device::software::emulator::types::{MemoryRegionKey, PacketSequenceNumber, QueuePairNumber};
@@ -26,6 +28,15 @@ impl BaseTransportHeader {
                 .with_is_ack_req(is_ack_req)
                 .with_pad_count(pad_cnt),
         )
+    }
+}
+
+impl fmt::Debug for BaseTransportHeader {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("BaseTransportHeader")
+            .field(&self.0)
+            .field(&self.1)
+            .finish()
     }
 }
 
@@ -64,6 +75,16 @@ pub(crate) struct RdmaExtendedTransportHeader {
     len: u32,
 }
 
+impl fmt::Debug for RdmaExtendedTransportHeader {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RdmaExtendedTransportHeader")
+            .field("local_virtual_addr", &self.local_va())
+            .field("local_key", &self.local_key)
+            .field("len", &self.len)
+            .finish()
+    }
+}
+
 impl RdmaExtendedTransportHeader {
     pub const fn new(local_va: VirtualAddress, local_key: MemoryRegionKey, len: u32) -> Self {
         Self {
@@ -71,6 +92,10 @@ impl RdmaExtendedTransportHeader {
             local_key,
             len,
         }
+    }
+
+    pub const fn local_va(&self) -> VirtualAddress {
+        VirtualAddress(u64::from_ne_bytes(self.local_virtual_addr))
     }
 }
 

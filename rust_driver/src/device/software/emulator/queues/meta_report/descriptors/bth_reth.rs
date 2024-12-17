@@ -1,17 +1,20 @@
 //! Base Transport Header and RDMA Extended Transport Header
 
+use core::fmt;
+
 use super::common::{
     BaseTransportHeader, MessageSequenceNumberAndCanAutoAck, PsnAndReqStatus, RdmaExtendedTransportHeader,
 };
 use super::{DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 use crate::device::software::emulator::types::{MessageSequenceNumber, PacketSequenceNumber};
 
+#[derive(Debug)]
 #[repr(C, align(32))]
 pub struct BthReth {
-    pub psn_and_req_status: PsnAndReqStatus,
-    pub bth: BaseTransportHeader,
-    pub reth: RdmaExtendedTransportHeader,
-    pub msn_and_can_auto_ack: MessageSequenceNumberAndCanAutoAck,
+    psn_and_req_status: PsnAndReqStatus,
+    bth: BaseTransportHeader,
+    reth: RdmaExtendedTransportHeader,
+    msn_and_can_auto_ack: MessageSequenceNumberAndCanAutoAck,
 }
 type Descriptor = BthReth;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
@@ -37,4 +40,21 @@ impl BthReth {
                 .with_can_auto_ack(can_auto_ack),
         }
     }
+
+    pub const fn from_ne_bytes(bytes: [u8; DESCRIPTOR_SIZE]) -> Self {
+        unsafe { core::mem::transmute(bytes) }
+    }
 }
+
+// impl fmt::Debug for BthReth {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         f.debug_struct("MetaReportBthReth")
+//             .field("psn", &self.psn_and_req_status)
+//             .field("req_status", &self.psn_and_req_status)
+//             .field("bth", &self.bth)
+//             .field("reth", &self.reth)
+//             .field("msn", &self.msn_and_can_auto_ack)
+//             .field("can_auto_ack", &self.msn_and_can_auto_ack)
+//             .finish()
+//     }
+// }
