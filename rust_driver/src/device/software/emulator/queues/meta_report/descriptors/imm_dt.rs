@@ -1,8 +1,7 @@
 //! Immediate Extended Transport Header
 
-use crate::device::software::emulator::queues::meta_report::common::{
-    ImmediateExtendedTransportHeader, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
-};
+use super::common::ImmediateExtendedTransportHeader;
+use super::{DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[repr(C, align(32))]
 struct ImmDt {

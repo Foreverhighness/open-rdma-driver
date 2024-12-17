@@ -1,6 +1,6 @@
 use crate::device::software::emulator::dma::PointerMut;
 
-pub(super) trait CompleteQueue {
+pub(crate) trait CompleteQueue {
     type Descriptor;
 
     fn addr(&self) -> u64;

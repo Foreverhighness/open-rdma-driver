@@ -1,6 +1,6 @@
 use core::marker::PhantomData;
 
-use super::common::DESCRIPTOR_SIZE;
+use super::descriptors::DESCRIPTOR_SIZE;
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;

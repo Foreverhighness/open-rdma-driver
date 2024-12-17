@@ -86,15 +86,26 @@ where
     pub(super) fn start_net(self: &Arc<Self>) {
         let dev = Arc::clone(self);
 
+        let (tx, rx) = flume::unbounded();
         // TODO(fh): Store this handler properly
-        let _handle = std::thread::spawn(move || {
-            // TODO(fh): Alloc buffer from MemoryPool.
-            let mut buf = vec![0u8; 8192];
+        let _handler_recv = std::thread::spawn(move || {
             while !dev.stop.load(core::sync::atomic::Ordering::Relaxed) {
+                // TODO(fh): Alloc buffer from MemoryPool.
+                let mut buf = vec![0u8; 8192];
                 let (len, src) = dev.udp_agent.recv_from(&mut buf).expect("recv error");
 
+                let ok = tx.send((buf, len, src)).is_ok();
+                assert!(ok);
+            }
+        });
+
+        let dev = Arc::clone(self);
+        let _handler_packet = std::thread::spawn(move || {
+            while let Ok((buf, len, src)) = rx.recv() {
                 let msg = PacketProcessor::to_rdma_message(&buf[..len]).unwrap();
                 log::debug!("receive data {msg:#?} from {src:?}");
+
+                dev.handle_message(&msg);
             }
         });
     }

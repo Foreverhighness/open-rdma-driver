@@ -1,8 +1,7 @@
 //! Base Transport Header and ACK Extended Transport Header
 
-use crate::device::software::emulator::queues::meta_report::common::{
-    AckExtendedTransportHeader, BaseTransportHeader, PsnAndReqStatus, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
-};
+use super::common::{AckExtendedTransportHeader, PsnAndReqStatus};
+use super::{BaseTransportHeader, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[repr(C, align(32))]
 struct BthAeth {

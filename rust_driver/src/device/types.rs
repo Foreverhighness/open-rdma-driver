@@ -297,7 +297,7 @@ impl From<Sge> for DescSge {
     }
 }
 
-#[derive(TryFromPrimitive, Debug, Clone)]
+#[derive(TryFromPrimitive, Debug, Clone, IntoPrimitive)]
 #[repr(u8)]
 pub(crate) enum ToHostWorkRbDescStatus {
     Normal = 1,
@@ -320,7 +320,7 @@ impl ToHostWorkRbDescStatus {
     }
 }
 
-#[derive(TryFromPrimitive, Debug, Clone, Copy)]
+#[derive(TryFromPrimitive, Debug, Clone, Copy, IntoPrimitive)]
 #[repr(u8)]
 pub(crate) enum ToHostWorkRbDescTransType {
     Rc = 0x00,
@@ -392,7 +392,7 @@ pub(crate) enum ToCardWorkRbDescOpcode {
     ReadResp = 12, // Not defined in rdma-core
 }
 
-#[derive(TryFromPrimitive, PartialEq, Eq, Debug, Clone)]
+#[derive(TryFromPrimitive, PartialEq, Eq, Debug, Clone, IntoPrimitive)]
 #[repr(u8)]
 pub(crate) enum ToHostWorkRbDescOpcode {
     // SendFirst = 0x00,

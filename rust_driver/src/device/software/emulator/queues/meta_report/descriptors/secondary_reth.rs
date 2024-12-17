@@ -1,8 +1,7 @@
 //! Secondary RDMA Extended Transport Header
 
-use crate::device::software::emulator::queues::meta_report::common::{
-    SecondaryRdmaExtendedTransportHeader, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
-};
+use super::common::SecondaryRdmaExtendedTransportHeader;
+use super::{DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[repr(C, align(32))]
 struct SecondaryReth {

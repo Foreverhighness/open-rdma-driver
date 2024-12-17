@@ -1,3 +1,3 @@
-mod common;
-mod descriptors;
 mod queue;
+
+pub(crate) mod descriptors;

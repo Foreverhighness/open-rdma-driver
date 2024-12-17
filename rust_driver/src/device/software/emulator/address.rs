@@ -4,7 +4,7 @@ use derive_more::derive::{From, Into};
 
 /// Virtual Address, used in memory region
 #[derive(Clone, Copy, Default, PartialEq, Eq, From, Into)]
-pub struct VirtualAddress(u64);
+pub struct VirtualAddress(pub u64);
 
 impl fmt::Debug for VirtualAddress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -14,7 +14,7 @@ impl fmt::Debug for VirtualAddress {
 
 /// DMA Address, store in emulator
 #[derive(Clone, Copy, Default, PartialEq, Eq, From, Into)]
-pub struct DmaAddress(u64);
+pub struct DmaAddress(pub u64);
 
 impl fmt::Debug for DmaAddress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
