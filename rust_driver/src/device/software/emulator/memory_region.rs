@@ -54,4 +54,8 @@ impl MemoryRegionTable for Table {
 
         Ok(())
     }
+
+    fn query(&self, va: VirtualAddress) -> super::Result<super::address::DmaAddress> {
+        todo!()
+    }
 }

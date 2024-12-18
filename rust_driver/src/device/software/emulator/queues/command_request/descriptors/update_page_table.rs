@@ -2,6 +2,8 @@ use core::fmt;
 
 use super::Opcode;
 use crate::device::layout::CmdQueueReqDescUpdatePGT;
+use crate::device::software::emulator::address::DmaAddress;
+use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::{
     CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
@@ -24,7 +26,23 @@ impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
     type Output = ();
 
     fn handle(&self, request: &UpdatePageTable, _: &mut ()) -> Result<Self::Output> {
-        log::debug!("handle {request:?}");
+        log::debug!("handle {request:#?}");
+
+        let dma_addr = request.dma_addr();
+        let mut ptr = self.dma_client.with_dma_addr::<u64>(dma_addr);
+
+        let len = request.dma_read_length() / 8;
+        let mut entries = Vec::with_capacity(len.try_into().unwrap());
+
+        for _ in 0..len {
+            entries.push(unsafe { ptr.read() }.into());
+
+            ptr = unsafe { ptr.add(1) };
+        }
+
+        let page_table = self.page_table.pin();
+        let offset = request.start_index();
+        assert!(page_table.insert(offset, entries).is_none());
 
         let response = CommonHeader::new(UpdatePageTable::OPCODE, true, request.header().user_data());
         unsafe { self.command_response_queue().push(response) };
@@ -34,8 +52,8 @@ impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
 }
 
 impl UpdatePageTable {
-    pub fn dma_addr(&self) -> u64 {
-        self.0.get_dma_addr()
+    pub fn dma_addr(&self) -> DmaAddress {
+        self.0.get_dma_addr().into()
     }
 
     pub fn start_index(&self) -> u32 {
@@ -51,7 +69,7 @@ impl fmt::Debug for UpdatePageTable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("CommandRequestUpdatePageTable")
             .field("header", self.header())
-            .field("dma_addr", &format_args!("{:#018X}", self.dma_addr()))
+            .field("dma_addr", &self.dma_addr())
             .field("start_index", &self.start_index())
             .field("dma_read_len", &self.dma_read_length())
             .finish()

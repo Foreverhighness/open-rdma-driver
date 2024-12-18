@@ -8,7 +8,7 @@ pub trait Client {
     // type Ptr;
     // Currently use only one ptr type for simplicity
 
-    fn with_addr<T>(&self, addr: DmaAddress) -> impl PointerMut<Output = T>;
+    fn with_dma_addr<T>(&self, addr: DmaAddress) -> impl PointerMut<Output = T>;
 }
 
 pub trait PointerMut: Clone + Copy {
@@ -33,6 +33,8 @@ pub trait PointerMut: Clone + Copy {
     ///
     /// See [`core::ptr::copy_nonoverlapping`] for safety concerns and examples.
     unsafe fn copy_nonoverlapping(self, src: *const Self::Output, count: usize);
+
+    unsafe fn add(self, count: u64) -> Self;
 }
 
 // For zero copy, may not use

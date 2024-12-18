@@ -47,7 +47,7 @@ impl<UA: Agent, Desc> WorkQueue for SendQueue<'_, UA, Desc> {
             .unwrap()
             .into();
 
-        self.dev.dma_client.with_addr::<Self::Descriptor>(addr)
+        self.dev.dma_client.with_dma_addr::<Self::Descriptor>(addr)
     }
 
     fn advance(&self) {

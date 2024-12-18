@@ -124,7 +124,7 @@ pub(crate) struct SGListElement {
 /// A payload info, which contains the scatter-gather list and the total length of the payload.
 #[derive(Debug, Clone)]
 pub(crate) struct PayloadInfo {
-    sg_list: Vec<SGListElement>,
+    pub(crate) sg_list: Vec<SGListElement>,
     total_len: usize,
 }
 

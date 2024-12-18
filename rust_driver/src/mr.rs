@@ -68,6 +68,7 @@ impl Device {
                 .map_err(|e| Error::GetPhysAddrFailed(e.to_string()))?;
             // If we run with hardware DMA,
             // we must make sure va and pa are all allign to pg_size
+            // TODO(fh): Replace hard code page_size to inputs
             if va_in_usize & (PAGE_SIZE - 1) != 0 {
                 return Err(Error::AddressNotAlign("va", va_in_usize));
             }

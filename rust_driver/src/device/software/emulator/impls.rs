@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use flume::{Receiver, Sender};
 
+use super::address::DmaAddress;
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::{ControlStatusRegisters, RawDevice};
 use super::mr_table::MemoryRegionTable;
@@ -41,6 +42,9 @@ where
     /// Memory Region Table (Key -> Context)
     mr_table: MRT,
 
+    /// Page Table (index -> Vec<DmaAddress>)
+    pub(crate) page_table: papaya::HashMap<u32, Vec<DmaAddress>>,
+
     /// Queue Pair Table (QPN -> Context)
     qp_table: queue_pair::Table,
 
@@ -67,6 +71,7 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, M
             rx_command_request,
             tx_send,
             rx_send,
+            page_table: papaya::HashMap::new(),
         }
     }
 

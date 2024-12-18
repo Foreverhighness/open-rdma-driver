@@ -42,7 +42,7 @@ impl<UA: Agent, Desc> CompleteQueue for MetaReportQueue<'_, UA, Desc> {
             .checked_add(u64::from(index) * u64::try_from(size_of::<Self::Descriptor>()).unwrap())
             .unwrap()
             .into();
-        self.dev.dma_client.with_addr::<T>(addr)
+        self.dev.dma_client.with_dma_addr::<T>(addr)
     }
 
     fn advance(&self) {

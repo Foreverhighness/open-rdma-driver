@@ -281,10 +281,20 @@ impl<T, R: rpc::Client> dma::PointerMut for Ptr<'_, T, R> {
     unsafe fn copy_nonoverlapping(self, src: *const T, count: usize) {
         unsafe { self.client.copy_nonoverlapping(src, self.addr.into(), count) }
     }
+
+    unsafe fn add(mut self, count: u64) -> Self {
+        self.addr = self
+            .addr
+            .0
+            .checked_add(count.checked_mul(u64::try_from(size_of::<T>()).unwrap()).unwrap())
+            .unwrap()
+            .into();
+        self
+    }
 }
 
 impl<R: rpc::Client> dma::Client for DmaClient<R> {
-    fn with_addr<T>(&self, addr: DmaAddress) -> impl dma::PointerMut<Output = T> {
+    fn with_dma_addr<T>(&self, addr: DmaAddress) -> impl dma::PointerMut<Output = T> {
         Ptr::new(addr, self)
     }
 }

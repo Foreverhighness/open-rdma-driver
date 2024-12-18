@@ -6,25 +6,23 @@ mod write;
 mod handler {
     use core::net::Ipv4Addr;
 
-    use smoltcp::wire::{Ipv4Packet, Ipv4Repr, UdpPacket};
+    use smoltcp::wire::{Ipv4Packet, UdpPacket};
 
+    use crate::device::software::emulator::address::VirtualAddress;
     use crate::device::software::emulator::net::{Agent, RDMA_PROT};
     use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
     use crate::device::software::emulator::queues::{BaseTransportHeader, BthReth, RdmaExtendedTransportHeader};
     use crate::device::software::emulator::Emulator;
     use crate::device::software::packet::{AETH, BTH};
-    use crate::device::software::packet_processor::{PacketProcessor, PacketWriter};
+    use crate::device::software::packet_processor::PacketWriter;
     use crate::device::software::types::{AethHeader, Metadata, PayloadInfo, RdmaMessage};
     use crate::device::{
-        ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon, ToHostWorkRbDescOpcode, ToHostWorkRbDescStatus,
-        ToHostWorkRbDescTransType, ToHostWorkRbDescWriteOrReadResp,
+        ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescStatus, ToHostWorkRbDescTransType,
     };
-    use crate::types::{Msn, Psn};
 
     impl<UA: Agent> Emulator<UA> {
         pub(crate) fn handle_message(&self, msg: &RdmaMessage) {
-            let meta = &msg.meta_data;
-
+            let _meta = &msg.meta_data;
             // TODO(fh): validate part
 
             // TODO(fh): parse from raw part, currently RdmaMessage don't contains this field
@@ -35,7 +33,22 @@ mod handler {
                     .udp_agent
                     .send_to(&buf, core::net::IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)));
             }
+
             // TODO(fh): dma part
+            {
+                let data = &msg.payload.sg_list;
+                assert_eq!(data.len(), 1, "currently only consider one Sge");
+                let data = data[0];
+                // SAFETY: Message should contains original buffer's lifetime mark
+                let slice = unsafe { core::slice::from_raw_parts(data.data, data.len) };
+                log::debug!("wait dma from receive {slice:?}");
+
+                let Metadata::General(ref header) = msg.meta_data else {
+                    panic!("currently only consider write first and write last packet");
+                };
+                let va = VirtualAddress(header.reth.va);
+            }
+
             let descriptor = message_to_descriptor(msg);
             log::debug!("push meta report: {descriptor:?}");
             unsafe { self.meta_report_queue().push(descriptor) };
@@ -49,11 +62,6 @@ mod handler {
                     // TODO(fh): Add helper function to all operation
                     // Operation -> Descriptor
                     let descriptor = {
-                        let expect_psn = header.common_meta.psn.get();
-                        let req_status = ToHostWorkRbDescStatus::Normal.into();
-                        let msn = header.common_meta.pkey.get().into();
-                        let can_auto_ack = true;
-
                         let trans_type = ToHostWorkRbDescTransType::Rc.into();
                         let opcode = header.common_meta.opcode.clone().into();
                         let qpn = header.common_meta.dqpn.get();
@@ -71,6 +79,10 @@ mod handler {
                         let len = header.reth.len;
                         let reth = RdmaExtendedTransportHeader::new(local_va, local_key, len);
 
+                        let expect_psn = header.common_meta.psn.get();
+                        let req_status = ToHostWorkRbDescStatus::Normal.into();
+                        let msn = header.common_meta.pkey.get().into();
+                        let can_auto_ack = true;
                         BthReth::new(expect_psn, req_status, bth, reth, msn, can_auto_ack)
                     };
                     descriptor
@@ -119,13 +131,27 @@ mod handler {
     mod tests {
         use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
 
-        use super::generate_ack;
+        use super::{generate_ack, RdmaMessage};
         use crate::device::software::emulator::net::message::handler::message_to_descriptor;
         use crate::device::software::emulator::queues::{BthAeth, BthReth};
         use crate::device::software::packet_processor::PacketProcessor;
 
+        fn write_first_message() -> RdmaMessage {
+            let file = ".cache/captures/ethernet-frame-0.bin";
+
+            let buffer = std::fs::read(file).unwrap();
+
+            let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
+            let ipv4_packet = Ipv4Packet::new_checked(eth_frame.payload()).unwrap();
+            let udp_packet = UdpPacket::new_checked(ipv4_packet.payload()).unwrap();
+
+            let payload = udp_packet.payload();
+
+            PacketProcessor::to_rdma_message(payload).unwrap()
+        }
+
         #[test]
-        fn test_generate_ack() {
+        fn test_dma_copy() {
             let file = ".cache/captures/ethernet-frame-0.bin";
 
             let buffer = std::fs::read(file).unwrap();
@@ -137,6 +163,19 @@ mod handler {
             let payload = udp_packet.payload();
 
             let msg = PacketProcessor::to_rdma_message(payload).unwrap();
+
+            let data = &msg.payload.sg_list;
+            assert_eq!(data.len(), 1, "currently only consider one Sge");
+            let data = data[0];
+            let slice = unsafe { core::slice::from_raw_parts(data.data, data.len) };
+            // let mut slice = vec![0u8; data.len * 2];
+            // msg.payload.copy_to(slice.as_mut_ptr());
+            println!("wait dma from receive {slice:?}");
+        }
+
+        #[test]
+        fn test_generate_ack() {
+            let msg = write_first_message();
             let ack = generate_ack(&msg);
 
             println!("ack: {ack:?}, len: {}", ack.len());
