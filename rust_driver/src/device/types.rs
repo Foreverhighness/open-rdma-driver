@@ -485,7 +485,7 @@ impl ToHostWorkRbDescOpcode {
     }
 }
 
-#[derive(TryFromPrimitive, Clone, PartialEq, Eq, Debug)]
+#[derive(TryFromPrimitive, Clone, PartialEq, Eq, Debug, IntoPrimitive)]
 #[repr(u8)]
 pub(crate) enum ToHostWorkRbDescAethCode {
     // AETH_CODE_ACK  = 2'b00,

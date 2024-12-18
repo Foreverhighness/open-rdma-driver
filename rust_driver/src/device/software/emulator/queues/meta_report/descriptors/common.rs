@@ -2,7 +2,10 @@ use core::fmt;
 
 use crate::device::layout::MetaReportQueueDescFragAETH;
 use crate::device::software::emulator::address::VirtualAddress;
-use crate::device::software::emulator::types::{MemoryRegionKey, PacketSequenceNumber, QueuePairNumber};
+use crate::device::software::emulator::types::{
+    MemoryRegionKey, MessageSequenceNumber, PacketSequenceNumber, QueuePairNumber,
+};
+use crate::device::ToHostWorkRbDescAethCode;
 
 #[repr(C)]
 pub(crate) struct BaseTransportHeader(BTHPart0, BTHPart1);
@@ -101,6 +104,35 @@ impl RdmaExtendedTransportHeader {
 
 #[repr(transparent)]
 pub(super) struct AckExtendedTransportHeader(MetaReportQueueDescFragAETH<[u8; 8]>);
+
+impl AckExtendedTransportHeader {
+    pub fn packet_sequence_number(&self) -> PacketSequenceNumber {
+        self.0.get_psn().into()
+    }
+
+    pub fn message_sequence_number(&self) -> MessageSequenceNumber {
+        self.0.get_msn() as _
+    }
+
+    pub fn value(&self) -> u8 {
+        self.0.get_aeth_value() as _
+    }
+
+    pub fn code(&self) -> ToHostWorkRbDescAethCode {
+        (self.0.get_aeth_code() as u8).try_into().unwrap()
+    }
+}
+
+impl fmt::Debug for AckExtendedTransportHeader {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AckExtendedTransportHeader")
+            .field("psn", &self.packet_sequence_number())
+            .field("msn", &self.message_sequence_number())
+            .field("value", &self.value())
+            .field("code", &self.code())
+            .finish()
+    }
+}
 
 #[derive(Debug)]
 #[repr(C)]

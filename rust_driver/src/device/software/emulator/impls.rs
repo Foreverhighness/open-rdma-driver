@@ -27,7 +27,7 @@ where
     pub(crate) csrs: EmulatorCsrs,
 
     /// Udp agent
-    udp_agent: UA,
+    pub(crate) udp_agent: UA,
 
     /// DMA Client
     pub(crate) dma_client: DC,

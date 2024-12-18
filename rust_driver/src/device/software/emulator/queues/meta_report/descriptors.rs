@@ -5,6 +5,7 @@ mod common;
 mod imm_dt;
 mod secondary_reth;
 
+pub(crate) use bth_aeth::BthAeth;
 pub(crate) use bth_reth::BthReth;
 pub(crate) use common::{BaseTransportHeader, RdmaExtendedTransportHeader};
 
