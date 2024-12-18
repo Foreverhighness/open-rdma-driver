@@ -5,7 +5,7 @@ use eui48::MacAddress;
 use super::{common, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::types::{
-    PacketMtuKind, PacketSequenceNumber, QueuePairNumber, QueuePairType, SendFlag,
+    PacketSequenceNumber, PathMtuKind, QueuePairNumber, QueuePairType, SendFlag,
 };
 use crate::device::software::emulator::Result;
 
@@ -24,13 +24,13 @@ const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<Descriptor>() == DESCRIPTOR_ALIGN);
 
 impl Seg1 {
-    pub fn packet_mtu_kind(&self) -> Result<PacketMtuKind> {
-        let packet_mtu_kind = self.pmtu_send_flag_qp_type_sge_cnt.packet_mtu_kind();
-        let packet_mtu_kind = packet_mtu_kind
+    pub fn path_mtu_kind(&self) -> Result<PathMtuKind> {
+        let path_mtu_kind = self.pmtu_send_flag_qp_type_sge_cnt.path_mtu_kind();
+        let path_mtu_kind = path_mtu_kind
             .try_into()
-            .map_err(|_| ParseDescriptorError::InvalidPacketMTUKind(packet_mtu_kind))?;
+            .map_err(|_| ParseDescriptorError::InvalidPathMTUKind(path_mtu_kind))?;
 
-        Ok(packet_mtu_kind)
+        Ok(path_mtu_kind)
     }
 
     pub const fn send_flag(&self) -> SendFlag {
@@ -62,7 +62,7 @@ impl Seg1 {
 impl fmt::Debug for Seg1 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SendSeg1")
-            .field("packet_mtu_kind", &self.packet_mtu_kind().map_err(|_| fmt::Error))
+            .field("path_mtu_kind", &self.path_mtu_kind().map_err(|_| fmt::Error))
             .field("send_flag", &self.send_flag())
             .field("queue_pair_type", &self.queue_pair_type().map_err(|_| fmt::Error))
             .field("sge_count", &self.sge_count())

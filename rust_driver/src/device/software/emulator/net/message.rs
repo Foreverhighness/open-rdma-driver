@@ -6,12 +6,15 @@ mod write;
 mod handler {
     use core::net::Ipv4Addr;
 
-    use crate::device::software::emulator::net::Agent;
+    use smoltcp::wire::{Ipv4Packet, Ipv4Repr, UdpPacket};
+
+    use crate::device::software::emulator::net::{Agent, RDMA_PROT};
     use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
     use crate::device::software::emulator::queues::{BaseTransportHeader, BthReth, RdmaExtendedTransportHeader};
     use crate::device::software::emulator::Emulator;
     use crate::device::software::packet::{AETH, BTH};
-    use crate::device::software::types::{Metadata, RdmaMessage};
+    use crate::device::software::packet_processor::{PacketProcessor, PacketWriter};
+    use crate::device::software::types::{AethHeader, Metadata, PayloadInfo, RdmaMessage};
     use crate::device::{
         ToHostWorkRbDescAethCode, ToHostWorkRbDescCommon, ToHostWorkRbDescOpcode, ToHostWorkRbDescStatus,
         ToHostWorkRbDescTransType, ToHostWorkRbDescWriteOrReadResp,
@@ -78,25 +81,45 @@ mod handler {
         }
     }
 
-    fn generate_ack(msg: &RdmaMessage) -> [u8; 16] {
-        let buf = [0u8; 12 + 4];
-        let bth = BTH::from_bytes(&buf);
-        bth.set_opcode_and_type(ToHostWorkRbDescOpcode::Acknowledge, ToHostWorkRbDescTransType::Rc);
-        bth.set_destination_qpn(msg.meta_data.common_meta().dqpn.get());
-        bth.set_psn(msg.meta_data.common_meta().psn.get());
-        bth.set_ack_req(false);
-        bth.set_flags_solicited(false);
-        bth.set_pkey(msg.meta_data.common_meta().pkey.get());
-        let aeth = AETH::from_bytes(&buf[12..]);
-        aeth.set_aeth_code_and_value(ToHostWorkRbDescAethCode::Ack.into(), 0x1f);
-        aeth.set_msn(msg.meta_data.common_meta().pkey.get().into());
-        buf
+    fn generate_ack(msg: &RdmaMessage) -> Vec<u8> {
+        let ack = {
+            let buf = [0u8; 12 + 4];
+            let bth = BTH::from_bytes(&buf);
+            bth.set_opcode_and_type(ToHostWorkRbDescOpcode::Acknowledge, ToHostWorkRbDescTransType::Rc);
+            bth.set_destination_qpn(msg.meta_data.common_meta().dqpn.get());
+            bth.set_psn(msg.meta_data.common_meta().psn.get());
+            bth.set_ack_req(false);
+            bth.set_flags_solicited(false);
+            bth.set_pkey(msg.meta_data.common_meta().pkey.get());
+            let aeth = AETH::from_bytes(&buf[12..]);
+            aeth.set_aeth_code_and_value(ToHostWorkRbDescAethCode::Ack.into(), 0x1f);
+            aeth.set_msn(msg.meta_data.common_meta().pkey.get().into());
+            RdmaMessage {
+                meta_data: Metadata::Acknowledge(AethHeader::new_from_packet(bth, aeth).unwrap()),
+                payload: PayloadInfo::new(),
+            }
+        };
+        let mut buf = [0; 48];
+        let len = PacketWriter::new(&mut buf)
+            .src_addr(Ipv4Addr::new(192, 168, 0, 3))
+            .src_port(RDMA_PROT)
+            .dest_addr(Ipv4Addr::new(192, 168, 0, 2))
+            .dest_port(RDMA_PROT)
+            .ip_id(1)
+            .message(&ack)
+            .write()
+            .unwrap();
+        assert_eq!(buf.len(), len);
+        let ip_packet = Ipv4Packet::new_checked(&buf).unwrap();
+        let udp_datagram = UdpPacket::new_checked(ip_packet.payload()).unwrap();
+        udp_datagram.payload().to_vec()
     }
 
     #[cfg(test)]
     mod tests {
         use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
 
+        use super::generate_ack;
         use crate::device::software::emulator::net::message::handler::message_to_descriptor;
         use crate::device::software::emulator::queues::{BthAeth, BthReth};
         use crate::device::software::packet_processor::PacketProcessor;
@@ -114,6 +137,9 @@ mod handler {
             let payload = udp_packet.payload();
 
             let msg = PacketProcessor::to_rdma_message(payload).unwrap();
+            let ack = generate_ack(&msg);
+
+            println!("ack: {ack:?}, len: {}", ack.len());
         }
 
         #[test]

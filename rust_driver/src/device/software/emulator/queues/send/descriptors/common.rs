@@ -56,7 +56,7 @@ impl fmt::Debug for Header {
 #[bitfield_struct::bitfield(u32)]
 pub struct PMtuAndSendFlagAndQpTypeAndSgeCount {
     #[bits(3)]
-    pub packet_mtu_kind: u8,
+    pub path_mtu_kind: u8,
     #[bits(5)]
     __: (),
     #[bits(5)]

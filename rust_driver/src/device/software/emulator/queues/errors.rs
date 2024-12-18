@@ -17,6 +17,6 @@ pub enum ParseDescriptorError {
     #[error("Invalid queue pair type {0}")]
     InvalidQueuePairType(u8),
 
-    #[error("Invalid packet MTU kind {0}")]
-    InvalidPacketMTUKind(u8),
+    #[error("Invalid path MTU kind {0}")]
+    InvalidPathMTUKind(u8),
 }

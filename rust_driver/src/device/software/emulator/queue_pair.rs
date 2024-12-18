@@ -1,6 +1,6 @@
 use papaya::HashMap;
 
-use super::types::{MemoryAccessFlag, PacketMtuKind, ProtectDomainHandler, QueuePairNumber, QueuePairType};
+use super::types::{MemoryAccessFlag, PathMtuKind, ProtectDomainHandler, QueuePairNumber, QueuePairType};
 
 #[derive(Debug, PartialEq)]
 pub struct Context {
@@ -8,7 +8,7 @@ pub struct Context {
     protect_domain_handler: ProtectDomainHandler,
     queue_pair_type: QueuePairType,
     access_flag: MemoryAccessFlag,
-    packet_mtu_kind: PacketMtuKind,
+    path_mtu_kind: PathMtuKind,
 }
 
 impl Context {
@@ -17,14 +17,14 @@ impl Context {
         protect_domain_handler: ProtectDomainHandler,
         queue_pair_type: QueuePairType,
         access_flag: MemoryAccessFlag,
-        packet_mtu_kind: PacketMtuKind,
+        path_mtu_kind: PathMtuKind,
     ) -> Self {
         Self {
             queue_pair_number,
             protect_domain_handler,
             queue_pair_type,
             access_flag,
-            packet_mtu_kind,
+            path_mtu_kind,
         }
     }
 }

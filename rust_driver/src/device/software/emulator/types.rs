@@ -1,5 +1,5 @@
 // Common
-pub(crate) type PacketMtuKind = crate::types::Pmtu;
+pub(crate) type PathMtuKind = crate::types::Pmtu;
 pub(crate) type ProtectDomainHandler = u32;
 pub(crate) type MemoryAccessFlag = crate::types::MemAccessTypeFlag;
 pub(crate) type PacketSequenceNumber = u32;

@@ -11,7 +11,7 @@ use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::types::{
-    MemoryAccessFlag, PacketMtuKind, ProtectDomainHandler, QueuePairNumber, QueuePairType,
+    MemoryAccessFlag, PathMtuKind, ProtectDomainHandler, QueuePairNumber, QueuePairType,
 };
 use crate::device::software::emulator::{Emulator, Result};
 
@@ -57,7 +57,7 @@ impl Context {
             req.protect_domain_handler(),
             req.queue_pair_type()?,
             req.remote_queue_access_flag(),
-            req.packet_mtu_kind()?,
+            req.path_mtu_kind()?,
         ))
     }
 }
@@ -92,13 +92,13 @@ impl QueuePairManagement {
         MemoryAccessFlag::from_bits(self.0.get_rq_access_flags().try_into().unwrap()).unwrap()
     }
 
-    pub fn packet_mtu_kind(&self) -> Result<PacketMtuKind> {
-        let packet_mtu_kind = u8::try_from(self.0.get_pmtu()).unwrap();
-        let packet_mtu_kind = packet_mtu_kind
+    pub fn path_mtu_kind(&self) -> Result<PathMtuKind> {
+        let path_mtu_kind = u8::try_from(self.0.get_pmtu()).unwrap();
+        let path_mtu_kind = path_mtu_kind
             .try_into()
-            .map_err(|_| ParseDescriptorError::InvalidPacketMTUKind(packet_mtu_kind))?;
+            .map_err(|_| ParseDescriptorError::InvalidPathMTUKind(path_mtu_kind))?;
 
-        Ok(packet_mtu_kind)
+        Ok(path_mtu_kind)
     }
 
     pub fn peer_queue_pair_number(&self) -> QueuePairNumber {
@@ -116,7 +116,7 @@ impl fmt::Debug for QueuePairManagement {
             .field("protect_domain_handler", &self.protect_domain_handler())
             .field("queue_pair_type", &self.queue_pair_type().map_err(|_| fmt::Error))
             .field("remote_queue_access_flag", &self.remote_queue_access_flag())
-            .field("packet_mtu_kind", &self.packet_mtu_kind().map_err(|_| fmt::Error))
+            .field("path_mtu_kind", &self.path_mtu_kind().map_err(|_| fmt::Error))
             .field("peer_queue_pair_number", &self.peer_queue_pair_number())
             .finish()
     }

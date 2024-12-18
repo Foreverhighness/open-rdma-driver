@@ -5,8 +5,7 @@ use eui48::MacAddress;
 use crate::device::software::emulator::address::DmaAddress;
 use crate::device::software::emulator::queues::send::descriptors::{Seg0, Seg1};
 use crate::device::software::emulator::types::{
-    MemoryRegionKey, MessageSequenceNumber, PacketMtuKind, PacketSequenceNumber, QueuePairNumber, QueuePairType,
-    SendFlag,
+    MemoryRegionKey, MessageSequenceNumber, PacketSequenceNumber, PathMtuKind, QueuePairNumber, QueuePairType, SendFlag,
 };
 
 #[derive(Clone, Debug)]
@@ -17,7 +16,7 @@ pub(super) struct Common {
     pub dest_ip: Ipv4Addr,
     pub dest_qpn: QueuePairNumber,
     pub mac: MacAddress,
-    pub packet_mtu_kind: PacketMtuKind,
+    pub path_mtu_kind: PathMtuKind,
     pub send_flag: SendFlag,
     pub qp_type: QueuePairType,
     pub psn: PacketSequenceNumber,
@@ -41,7 +40,7 @@ impl Common {
             dest_ip,
             dest_qpn: 0,
             mac: MacAddress::default(),
-            packet_mtu_kind: PacketMtuKind::default(),
+            path_mtu_kind: PathMtuKind::default(),
             send_flag: SendFlag::default(),
             qp_type: QueuePairType::Rc,
             psn: 0,
@@ -53,7 +52,7 @@ impl Common {
     pub fn with_seg1(&mut self, seg1: &Seg1) {
         self.dest_qpn = seg1.dest_queue_pair_number();
         self.mac = seg1.mac;
-        self.packet_mtu_kind = seg1.packet_mtu_kind().unwrap();
+        self.path_mtu_kind = seg1.path_mtu_kind().unwrap();
         self.send_flag = seg1.send_flag();
         self.qp_type = seg1.queue_pair_type().unwrap();
         self.psn = seg1.packet_sequence_number();
