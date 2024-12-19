@@ -2,6 +2,7 @@
 
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
+use std::thread::JoinHandle;
 
 use super::config::WORD_WIDTH;
 use super::rpc;
@@ -47,7 +48,7 @@ impl<R: rpc::Client> DmaClient<R> {
         data
     }
 
-    fn write_at_most_64(&self, addr: u64, data: &[u8]) -> usize {
+    fn write_at_most_64(&self, addr: u64, data: &[u8], write_group: &mut Vec<JoinHandle<()>>) -> usize {
         let mut buf = [0u8; 64];
 
         let start = usize::try_from(addr & u64::from(BYTES_PER_WORD - 1)).unwrap();
@@ -72,15 +73,19 @@ impl<R: rpc::Client> DmaClient<R> {
             byte_en.to_ne_bytes()
         };
 
-        unsafe {
-            self.rpc.c_writeBRAM(
-                self.client_id,
+        let rpc = self.rpc.clone();
+        let client_id = self.client_id;
+        let handler = std::thread::spawn(move || unsafe {
+            rpc.c_writeBRAM(
+                client_id,
                 addr / u64::from(BYTES_PER_WORD),
                 buf.as_mut_ptr().cast::<u32>(),
                 byte_en.as_ptr().cast::<u32>().cast_mut(),
                 WORD_WIDTH,
             );
-        }
+        });
+        write_group.push(handler);
+
         len
     }
 
@@ -157,18 +162,11 @@ impl<R: rpc::Client> DmaClient<R> {
     /// Note that even if `T` has size `0`, the pointer must be properly aligned.
     unsafe fn write<T>(&self, dst: u64, src: T) {
         let size = size_of::<T>();
-        let mut addr = dst;
 
         // Safety: Byte slice
         let slice = unsafe { core::slice::from_raw_parts::<u8>((&raw const src).cast(), size) };
-        let mut data = slice;
 
-        while !data.is_empty() {
-            let n_written = self.write_at_most_64(addr, data);
-
-            data = &data[n_written..];
-            addr = addr.checked_add(u64::try_from(n_written).unwrap()).unwrap();
-        }
+        unsafe { self.write_bytes(dst, slice) };
 
         log::debug!("DMA: write @ {dst:#018X} {size:02} bytes: {slice:?}");
 
@@ -178,6 +176,21 @@ impl<R: rpc::Client> DmaClient<R> {
         //     let read_back_slice = unsafe { core::slice::from_raw_parts::<u8>((&raw const read_back).cast(), size) };
         //     debug_assert_eq!(read_back_slice, slice);
         // }
+    }
+
+    unsafe fn write_bytes(&self, mut addr: u64, mut data: &[u8]) {
+        let mut write_group = Vec::with_capacity(data.len() / 64 + 2);
+
+        while !data.is_empty() {
+            let n_written = self.write_at_most_64(addr, data, &mut write_group);
+
+            data = &data[n_written..];
+            addr = addr.checked_add(u64::try_from(n_written).unwrap()).unwrap();
+        }
+
+        for handler in write_group {
+            handler.join().unwrap();
+        }
     }
 
     /// Copies `count * size_of::<T>()` bytes from `src` to `dst`. The source
@@ -219,19 +232,13 @@ impl<R: rpc::Client> DmaClient<R> {
     /// [valid]: core::ptr#safety
     unsafe fn copy_nonoverlapping<T>(&self, mut src: *const T, dst: u64, count: usize) {
         let size = size_of::<T>();
-        let mut addr = dst;
 
         for _ in 0..count {
             // Safety: Byte slice
-            let mut data = unsafe { core::slice::from_raw_parts(src.cast(), size) };
+            let slice = unsafe { core::slice::from_raw_parts(src.cast(), size) };
             src = unsafe { src.add(1) };
 
-            while !data.is_empty() {
-                let n_written = self.write_at_most_64(addr, data);
-
-                data = &data[n_written..];
-                addr = addr.checked_add(n_written.try_into().unwrap()).unwrap();
-            }
+            unsafe { self.write_bytes(dst, slice) };
         }
     }
 }
@@ -291,6 +298,10 @@ impl<T, R: rpc::Client> dma::PointerMut for Ptr<'_, T, R> {
             .into();
         self
     }
+
+    unsafe fn write_bytes(self, data: &[u8]) {
+        unsafe { self.client.write_bytes(self.addr.into(), data) }
+    }
 }
 
 impl<R: rpc::Client> dma::Client for DmaClient<R> {
@@ -301,27 +312,28 @@ impl<R: rpc::Client> dma::Client for DmaClient<R> {
 
 #[cfg(test)]
 mod tests {
-    use core::cell::RefCell;
+    use std::sync::{Arc, Mutex};
 
     use rand::rngs::StdRng;
     use rand::Rng;
 
     use super::*;
 
+    #[derive(Clone)]
     struct MockRpc {
-        memory: RefCell<Vec<u8>>,
+        memory: Arc<Mutex<Vec<u8>>>,
     }
     impl MockRpc {
         fn new(size: usize) -> Self {
             MockRpc {
-                memory: RefCell::new(vec![0; size]),
+                memory: Arc::new(Mutex::new(vec![0; size])),
             }
         }
     }
 
     impl rpc::Client for MockRpc {
         unsafe fn c_readBRAM(&self, result: *mut u32, _client_id: u64, shrunk_addr: u64, word_width: u32) {
-            let memory = self.memory.borrow();
+            let memory = self.memory.lock().unwrap();
             let bytes_per_word = word_width / 8;
 
             let addr = usize::try_from(shrunk_addr * u64::from(bytes_per_word)).unwrap();
@@ -343,7 +355,7 @@ mod tests {
             byte_en: *mut u32,
             word_width: u32,
         ) {
-            let mut memory = self.memory.borrow_mut();
+            let mut memory = self.memory.lock().unwrap();
             let bytes_per_word = word_width / 8;
 
             let addr = usize::try_from(shrunk_addr * u64::from(bytes_per_word)).unwrap();

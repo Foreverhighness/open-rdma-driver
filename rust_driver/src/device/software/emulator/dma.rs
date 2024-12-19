@@ -35,6 +35,8 @@ pub trait PointerMut: Clone + Copy {
     unsafe fn copy_nonoverlapping(self, src: *const Self::Output, count: usize);
 
     unsafe fn add(self, count: u64) -> Self;
+
+    unsafe fn write_bytes(self, data: &[u8]);
 }
 
 // For zero copy, may not use

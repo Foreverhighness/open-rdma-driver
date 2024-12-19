@@ -4,7 +4,7 @@ use core::cell::RefCell;
 
 use super::{Client, RpcNetIfcRxTxPayload};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MockRpcClient {
     frame: RefCell<u32>,
     fragment: RefCell<u32>,

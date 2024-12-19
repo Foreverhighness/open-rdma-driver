@@ -9,6 +9,8 @@ mod handler {
     use smoltcp::wire::{Ipv4Packet, UdpPacket};
 
     use crate::device::software::emulator::address::VirtualAddress;
+    use crate::device::software::emulator::dma::{Client, PointerMut};
+    use crate::device::software::emulator::mr_table::MemoryRegionTable;
     use crate::device::software::emulator::net::{Agent, RDMA_PROT};
     use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
     use crate::device::software::emulator::queues::{BaseTransportHeader, BthReth, RdmaExtendedTransportHeader};
@@ -25,28 +27,38 @@ mod handler {
             let _meta = &msg.meta_data;
             // TODO(fh): validate part
 
-            // TODO(fh): parse from raw part, currently RdmaMessage don't contains this field
-            let need_auto_ack = true;
-            if need_auto_ack {
-                let buf = generate_ack(&msg);
-                let _ = self
-                    .udp_agent
-                    .send_to(&buf, core::net::IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)));
-            }
-
             // TODO(fh): dma part
             {
                 let data = &msg.payload.sg_list;
                 assert_eq!(data.len(), 1, "currently only consider one Sge");
                 let data = data[0];
-                // SAFETY: Message should contains original buffer's lifetime mark
-                let slice = unsafe { core::slice::from_raw_parts(data.data, data.len) };
-                log::debug!("wait dma from receive {slice:?}");
+
+                let data = unsafe { core::slice::from_raw_parts(data.data, data.len) };
 
                 let Metadata::General(ref header) = msg.meta_data else {
                     panic!("currently only consider write first and write last packet");
                 };
+                let key = header.reth.rkey.get().into();
                 let va = VirtualAddress(header.reth.va);
+                let access_flag = header.needed_permissions();
+
+                let dma_addr = self
+                    .memory_region_table()
+                    .query(key, va, access_flag, &self.page_table)
+                    .expect("validation failed");
+
+                let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
+                unsafe { ptr.write_bytes(data) };
+            }
+
+            // TODO(fh): parse from raw part, currently RdmaMessage don't contains this field
+            let need_auto_ack = true;
+            let is_write_last = msg.meta_data.common_meta().opcode == ToHostWorkRbDescOpcode::RdmaWriteLast;
+            if need_auto_ack && is_write_last {
+                let buf = generate_ack(&msg);
+                let _ = self
+                    .udp_agent
+                    .send_to(&buf, core::net::IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)));
             }
 
             let descriptor = message_to_descriptor(msg);

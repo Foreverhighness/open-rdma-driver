@@ -40,13 +40,13 @@ where
     state: State,
 
     /// Memory Region Table (Key -> Context)
-    mr_table: MRT,
+    pub(crate) mr_table: MRT,
 
     /// Page Table (index -> Vec<DmaAddress>)
     pub(crate) page_table: papaya::HashMap<u32, Vec<DmaAddress>>,
 
     /// Queue Pair Table (QPN -> Context)
-    qp_table: queue_pair::Table,
+    pub(crate) qp_table: queue_pair::Table,
 
     pub(crate) tx_command_request: Sender<()>,
     pub(crate) rx_command_request: Receiver<()>,

@@ -7,4 +7,7 @@ pub enum Error {
 
     #[error("net error: {0}")]
     Network(#[from] super::net::Error),
+
+    #[error("memory region error: {0}")]
+    MemoryRegion(#[from] super::mr_table::Error),
 }

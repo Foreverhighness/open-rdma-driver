@@ -5,7 +5,7 @@ use serde::ser::SerializeTuple;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[expect(non_snake_case, reason = "C library interface")]
-pub trait Client {
+pub trait Client: Clone + Send + 'static {
     unsafe fn c_createBRAM(&self, word_width: u32, memory_size: u64) -> u64 {
         unsafe { c_createBRAM(word_width, memory_size) }
     }
@@ -206,8 +206,7 @@ extern "C" {
     pub fn c_writeBRAM(client_id: u64, addr: u64, data: *mut u32, byte_en: *mut u32, word_width: u32);
 }
 
-#[expect(missing_copy_implementations, reason = "This type should not be clone or copy")]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RpcClient;
 
 impl Client for RpcClient {}
