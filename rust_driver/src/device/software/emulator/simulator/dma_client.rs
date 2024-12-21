@@ -188,6 +188,7 @@ impl<R: rpc::Client> DmaClient<R> {
             addr = addr.checked_add(u64::try_from(n_written).unwrap()).unwrap();
         }
 
+        // TODO(fh): replace with `std::thread::scope`?
         for handler in write_group {
             handler.join().unwrap();
         }

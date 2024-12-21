@@ -1,8 +1,10 @@
 //! Blue Rdma Emulator implementation
 
+use core::net::Ipv4Addr;
 use core::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
+use eui48::MacAddress;
 use flume::{Receiver, Sender};
 
 use super::address::DmaAddress;
@@ -18,6 +20,25 @@ enum State {
 }
 
 #[derive(Debug)]
+pub(crate) struct NetParameter {
+    pub ip: Ipv4Addr,
+    pub gateway: Ipv4Addr,
+    pub subnet_mask: Ipv4Addr,
+    pub mac: MacAddress,
+}
+
+impl NetParameter {
+    pub(crate) const fn new(ip: Ipv4Addr, gateway: Ipv4Addr, mask: Ipv4Addr, mac: MacAddress) -> Self {
+        Self {
+            ip,
+            gateway,
+            subnet_mask: mask,
+            mac,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Emulator<UA = simulator::UdpAgent, DC = simulator::DmaClient, MRT = memory_region::Table>
 where
     UA: net::Agent,
@@ -28,7 +49,8 @@ where
     pub(crate) csrs: EmulatorCsrs,
 
     /// Udp agent
-    pub(crate) udp_agent: UA,
+    pub(crate) udp_agent: std::sync::OnceLock<UA>,
+    pub(crate) net_parameter: std::sync::OnceLock<Sender<NetParameter>>,
 
     /// DMA Client
     pub(crate) dma_client: DC,
@@ -56,11 +78,12 @@ where
 }
 
 impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, MRT> {
-    pub fn new(udp_agent: UA, dma_client: DC, mr_table: MRT) -> Self {
+    pub fn new(dma_client: DC, mr_table: MRT) -> Self {
         let (tx_command_request, rx_command_request) = flume::unbounded();
         let (tx_send, rx_send) = flume::unbounded();
         Self {
-            udp_agent,
+            udp_agent: Default::default(),
+            net_parameter: Default::default(),
             dma_client,
             mr_table,
             csrs: EmulatorCsrs::default(),
@@ -88,16 +111,28 @@ impl<UA> Emulator<UA>
 where
     UA: net::Agent + Send + Sync + 'static,
 {
-    pub(super) fn start_net(self: &Arc<Self>) {
+    pub(super) fn start_net<F>(self: &Arc<Self>, f: F)
+    where
+        F: FnOnce(NetParameter) -> UA + Send + 'static,
+    {
         let dev = Arc::clone(self);
+        let (tx_net_para, rx_net_para) = flume::bounded(1);
+        let _ = self.net_parameter.get_or_init(move || tx_net_para);
 
         let (tx, rx) = flume::unbounded();
         // TODO(fh): Store this handler properly
         let _handler_recv = std::thread::spawn(move || {
+            let Ok(para) = rx_net_para.recv() else {
+                return;
+            };
+            log::info!("network started with para: {para:?}");
+            let udp_agent = f(para);
+            let _ = dev.udp_agent.get_or_init(move || udp_agent);
+
             while !dev.stop.load(core::sync::atomic::Ordering::Relaxed) {
                 // TODO(fh): Alloc buffer from MemoryPool.
                 let mut buf = vec![0u8; 8192];
-                let (len, src) = dev.udp_agent.recv_from(&mut buf).expect("recv error");
+                let (len, src) = dev.udp_agent.get().unwrap().recv_from(&mut buf).expect("recv error");
 
                 let ok = tx.send((buf, len, src)).is_ok();
                 assert!(ok);
@@ -108,7 +143,7 @@ where
         let _handler_packet = std::thread::spawn(move || {
             while let Ok((buf, len, src)) = rx.recv() {
                 let msg = PacketProcessor::to_rdma_message(&buf[..len]).unwrap();
-                log::debug!("receive data {msg:#?} from {src:?}");
+                log::debug!("receive data {msg:?} from {src:?}");
 
                 dev.handle_message(&msg);
             }

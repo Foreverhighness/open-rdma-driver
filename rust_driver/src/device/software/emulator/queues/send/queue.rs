@@ -65,7 +65,7 @@ impl<UA: Agent> SendQueue<'_, UA> {
             let raw = unsafe { self.pop() };
 
             let seg0 = Seg0::from_bytes(raw);
-            // TODO(fh): move assertions into from_bytes_checked.
+            // TODO(fh): move assertions into `Seg0::from_bytes_checked`.
             assert!(seg0.header.valid());
             let opcode = seg0.header.opcode().expect("send opcode parse failed");
 

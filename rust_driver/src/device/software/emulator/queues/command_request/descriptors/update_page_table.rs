@@ -26,7 +26,7 @@ impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
     type Output = ();
 
     fn handle(&self, request: &UpdatePageTable, _: &mut ()) -> Result<Self::Output> {
-        log::debug!("handle {request:#?}");
+        log::debug!("handle {request:?}");
 
         let dma_addr = request.dma_addr();
         let mut ptr = self.dma_client.with_dma_addr::<u64>(dma_addr);

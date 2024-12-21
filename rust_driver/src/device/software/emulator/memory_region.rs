@@ -52,7 +52,7 @@ impl MemoryRegionTable for Table {
         let mr_table = self.0.pin();
         let _ = mr_table.insert(mr_context.key, mr_context);
 
-        log::trace!("after update {self:#?}");
+        log::trace!("after update {self:?}");
 
         Ok(())
     }

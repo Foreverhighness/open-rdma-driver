@@ -11,7 +11,7 @@ use crate::device::software::emulator::queues::command_request::common::{
 };
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
-use crate::device::software::emulator::{Emulator, Result};
+use crate::device::software::emulator::{Emulator, NetParameter, Result};
 
 #[repr(C, align(32))]
 pub struct SetNetworkParameter(CmdQueueReqDescSetNetworkParam<[u8; DESCRIPTOR_SIZE]>);
@@ -29,7 +29,12 @@ impl<UA: Agent> HandleDescriptor<SetNetworkParameter> for Emulator<UA> {
     fn handle(&self, request: &SetNetworkParameter, _: &mut ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
-        // TODO(fh): start net agent here.
+        let net_parameter = NetParameter::new(request.ip(), request.gateway(), request.subnet_mask(), request.mac());
+        self.net_parameter
+            .get()
+            .unwrap()
+            .send(net_parameter)
+            .expect("network not started?");
 
         let response = CommonHeader::new(SetNetworkParameter::OPCODE, true, request.header().user_data());
         unsafe { self.command_response_queue().push(response) };
@@ -52,7 +57,7 @@ impl SetNetworkParameter {
     }
 
     pub fn mac(&self) -> MacAddress {
-        MacAddress::new(self.0.get_eth_mac_addr().to_ne_bytes()[..6].try_into().unwrap())
+        MacAddress::new(self.0.get_eth_mac_addr().to_be_bytes()[2..8].try_into().unwrap())
     }
 }
 

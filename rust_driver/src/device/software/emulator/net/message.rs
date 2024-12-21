@@ -58,6 +58,8 @@ mod handler {
                 let buf = generate_ack(&msg);
                 let _ = self
                     .udp_agent
+                    .get()
+                    .unwrap()
                     .send_to(&buf, core::net::IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)));
             }
 

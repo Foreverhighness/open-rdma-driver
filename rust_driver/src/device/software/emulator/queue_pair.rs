@@ -39,7 +39,7 @@ impl Table {
         let qp_table = self.0.pin();
         let exist = qp_table.insert(qp_context.queue_pair_number, qp_context).is_some();
 
-        log::trace!("after insertion qp_table: {self:#?}");
+        log::trace!("after insertion qp_table: {self:?}");
 
         exist
     }
@@ -50,7 +50,7 @@ impl Table {
         let qp_table = self.0.pin();
         let exist = qp_table.remove(&qpn).is_some();
 
-        log::trace!("after removal qp_table: {self:#?}");
+        log::trace!("after removal qp_table: {self:?}");
 
         exist
     }
