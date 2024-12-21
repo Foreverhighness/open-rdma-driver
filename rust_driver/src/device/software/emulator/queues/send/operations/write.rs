@@ -19,7 +19,7 @@ impl<UA: Agent> HandleDescriptor<Write> for Emulator<UA> {
     type Output = ();
 
     fn handle(&self, req: &Write, _: &mut ()) -> Result<Self::Output> {
-        log::info!("handle write op: {req:?}");
+        log::info!("handle write op: {req:#?}");
         todo!()
     }
 }

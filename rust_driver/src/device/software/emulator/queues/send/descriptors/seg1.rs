@@ -13,7 +13,7 @@ use crate::device::software::emulator::Result;
 pub(crate) struct Seg1 {
     pmtu_send_flag_qp_type_sge_cnt: common::PMtuAndSendFlagAndQpTypeAndSgeCount,
     psn_inner: common::PacketSequenceNumber,
-    pub mac: MacAddress,
+    mac: [u8; 6],
     _reserved0: [bool; 2],
     dest_qpn_inner: common::QueuePairNumber,
     pub immediate: u32,
@@ -35,6 +35,17 @@ impl Seg1 {
 
     pub const fn send_flag(&self) -> SendFlag {
         SendFlag::from_bits(self.pmtu_send_flag_qp_type_sge_cnt.send_flag()).unwrap()
+    }
+
+    pub const fn mac(&self) -> MacAddress {
+        MacAddress::new([
+            self.mac[5],
+            self.mac[4],
+            self.mac[3],
+            self.mac[2],
+            self.mac[1],
+            self.mac[0],
+        ])
     }
 
     pub fn queue_pair_type(&self) -> Result<QueuePairType> {

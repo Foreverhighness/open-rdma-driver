@@ -30,7 +30,7 @@ impl Common {
 
         let remote_addr = seg0.remote_addr;
         let remote_key = seg0.remote_key;
-        let dest_ip = seg0.dest_ip;
+        let dest_ip = seg0.dest_ip();
         let message_sequence_number = seg0.partition_key;
 
         Common {
@@ -51,7 +51,7 @@ impl Common {
     /// Update Common part from Seg1
     pub fn with_seg1(&mut self, seg1: &Seg1) {
         self.dest_qpn = seg1.dest_queue_pair_number();
-        self.mac = seg1.mac;
+        self.mac = seg1.mac();
         self.path_mtu_kind = seg1.path_mtu_kind().unwrap();
         self.send_flag = seg1.send_flag();
         self.qp_type = seg1.queue_pair_type().unwrap();

@@ -70,6 +70,7 @@ impl<UA: Agent> SendQueue<'_, UA> {
             let seg0 = Seg0::from_bytes(raw);
             // TODO(fh): move assertions into `Seg0::from_bytes_checked`.
             assert!(seg0.header.valid());
+            log::info!("recv send seg0: {seg0:?}");
             let opcode = seg0.header.opcode().expect("send opcode parse failed");
 
             match opcode {
@@ -77,13 +78,11 @@ impl<UA: Agent> SendQueue<'_, UA> {
                     // write use 3 descriptors
                     let builder = WriteBuilder::from_seg0(seg0);
 
-                    self.dev.rx_send.recv().expect("send recv failed");
                     let raw = unsafe { self.pop() };
                     let seg1 = Seg1::from_bytes(raw);
 
                     let builder = builder.with_seg1(seg1);
 
-                    self.dev.rx_send.recv().expect("send recv failed");
                     let raw = unsafe { self.pop() };
                     let sge = VariableLengthSge::from_bytes(raw);
 
