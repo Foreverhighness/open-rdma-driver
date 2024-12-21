@@ -47,7 +47,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersMetaReportHeadHandler<'_,
         let old = self.reg.read();
         self.reg.write(val);
 
-        trace!("Write meta_report tail {old:010X} -> {val:010X}",);
+        trace!("Write meta_report head {old:010X} -> {val:010X}");
     }
 }
 

@@ -47,7 +47,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersSendHeadHandler<'_, UA> {
         let old = self.reg.read();
         self.reg.write(val);
 
-        trace!("Write send tail {old:010X} -> {val:010X}",);
+        trace!("Write send head {old:010X} -> {val:010X}");
 
         self.dev.send_queue().doorbell(val);
     }

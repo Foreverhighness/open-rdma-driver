@@ -29,15 +29,15 @@ impl<UA: Agent, Desc> WorkQueue for SendQueue<'_, UA, Desc> {
     type Descriptor = Desc;
 
     fn addr(&self) -> u64 {
-        self.dev.csrs.cmd_request.addr.read()
+        self.dev.csrs.send.addr.read()
     }
 
     fn head(&self) -> u32 {
-        self.dev.csrs.cmd_request.head.read()
+        self.dev.csrs.send.head.read()
     }
 
     fn tail(&self) -> u32 {
-        self.dev.csrs.cmd_request.tail.read()
+        self.dev.csrs.send.tail.read()
     }
 
     fn index(&self, index: u32) -> impl PointerMut<Output = Self::Descriptor> {
@@ -51,7 +51,10 @@ impl<UA: Agent, Desc> WorkQueue for SendQueue<'_, UA, Desc> {
     }
 
     fn advance(&self) {
-        self.dev.csrs.cmd_request.tail.write(self.tail() + 1);
+        let old = self.tail();
+        let val = old + 1;
+        log::trace!("advance send tail {old:010x} -> {val:010x}");
+        self.dev.csrs.send.tail.write(self.tail() + 1);
     }
 }
 

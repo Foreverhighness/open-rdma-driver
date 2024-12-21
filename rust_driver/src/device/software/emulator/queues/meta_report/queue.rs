@@ -46,7 +46,10 @@ impl<UA: Agent, Desc> CompleteQueue for MetaReportQueue<'_, UA, Desc> {
     }
 
     fn advance(&self) {
-        self.dev.csrs.meta_report.head.write(self.head() + 1);
+        let old = self.head();
+        let val = old + 1;
+        log::trace!("advance meta_report head {old:010x} -> {val:010x}");
+        self.dev.csrs.meta_report.head.write(val);
     }
 }
 

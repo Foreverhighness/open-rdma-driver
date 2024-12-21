@@ -48,7 +48,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandRequestHeadHandler
         let old = self.reg.read();
         self.reg.write(val);
 
-        trace!("Write command_request tail {old:010X} -> {val:010X}",);
+        trace!("Write command_request head {old:010X} -> {val:010X}");
 
         self.dev.command_request_queue().doorbell(val);
     }

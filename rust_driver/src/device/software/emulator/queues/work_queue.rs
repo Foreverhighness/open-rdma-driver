@@ -16,7 +16,7 @@ pub(crate) trait WorkQueue {
     unsafe fn pop(&self) -> Self::Descriptor {
         let head = self.head();
         let tail = self.tail();
-        assert!(tail < head);
+        assert!(tail < head, "assertion failed: {tail} < {head}");
 
         let ptr = self.index(tail);
         // SAFETY: caller uphold

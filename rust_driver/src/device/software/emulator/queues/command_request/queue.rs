@@ -54,7 +54,10 @@ impl<UA: Agent, Desc> WorkQueue for CommandRequestQueue<'_, UA, Desc> {
     }
 
     fn advance(&self) {
-        self.dev.csrs.cmd_request.tail.write(self.tail() + 1);
+        let old = self.tail();
+        let val = old + 1;
+        log::trace!("advance command_request tail {old:010x} -> {val:010x}");
+        self.dev.csrs.cmd_request.tail.write(val);
     }
 }
 

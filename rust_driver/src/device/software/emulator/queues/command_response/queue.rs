@@ -46,7 +46,10 @@ impl<UA: Agent, Desc> CompleteQueue for CommandResponseQueue<'_, UA, Desc> {
     }
 
     fn advance(&self) {
-        self.dev.csrs.cmd_response.head.write(self.head() + 1);
+        let old = self.head();
+        let val = old + 1;
+        log::trace!("advance command_response head {old:010x} -> {val:010x}");
+        self.dev.csrs.cmd_response.head.write(val);
     }
 }
 
