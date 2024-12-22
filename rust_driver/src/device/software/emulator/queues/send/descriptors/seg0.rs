@@ -3,13 +3,13 @@ use core::net::Ipv4Addr;
 
 use super::common::Header;
 use super::{DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
-use crate::device::software::emulator::address::DmaAddress;
+use crate::device::software::emulator::address::VirtualAddress;
 use crate::device::software::emulator::types::MemoryRegionKey;
 
 #[repr(C, align(32))]
 pub(crate) struct Seg0 {
     pub header: Header,
-    pub remote_addr: DmaAddress,
+    pub remote_addr: VirtualAddress,
     pub remote_key: MemoryRegionKey,
     dest_ip: [u8; 4],
     pub partition_key: u16,

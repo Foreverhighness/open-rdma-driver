@@ -129,7 +129,6 @@ impl RpcNetIfcRxTxPayload {
 
         let mut data = [0u8; 64];
 
-        // Safety: 32 * 16 == 8 * 64
         data[..len].copy_from_slice(&buf[..len]);
 
         let byte_en = if len == 64 {

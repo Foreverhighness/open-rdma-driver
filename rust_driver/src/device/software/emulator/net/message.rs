@@ -154,8 +154,9 @@ mod handler {
             let file = ".cache/captures/ethernet-frame-0.bin";
 
             let buffer = std::fs::read(file).unwrap();
+            let buffer = &*buffer.leak();
 
-            let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
+            let eth_frame = EthernetFrame::new_checked(buffer).unwrap();
             let ipv4_packet = Ipv4Packet::new_checked(eth_frame.payload()).unwrap();
             let udp_packet = UdpPacket::new_checked(ipv4_packet.payload()).unwrap();
 
@@ -166,33 +167,29 @@ mod handler {
 
         #[test]
         fn test_dma_copy() {
-            let file = ".cache/captures/ethernet-frame-0.bin";
-
-            let buffer = std::fs::read(file).unwrap();
-
-            let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
-            let ipv4_packet = Ipv4Packet::new_checked(eth_frame.payload()).unwrap();
-            let udp_packet = UdpPacket::new_checked(ipv4_packet.payload()).unwrap();
-
-            let payload = udp_packet.payload();
-
-            let msg = PacketProcessor::to_rdma_message(payload).unwrap();
+            let msg = write_first_message();
 
             let data = &msg.payload.sg_list;
             assert_eq!(data.len(), 1, "currently only consider one Sge");
             let data = data[0];
-            let slice = unsafe { core::slice::from_raw_parts(data.data, data.len) };
-            // let mut slice = vec![0u8; data.len * 2];
-            // msg.payload.copy_to(slice.as_mut_ptr());
-            println!("wait dma from receive {slice:?}");
+            assert!(data.len >= 4);
+            // skip invariant crc
+            let slice = unsafe { core::slice::from_raw_parts(data.data, data.len - 4) };
+            for (i, &v) in slice.iter().enumerate() {
+                assert_eq!(i as u8, v);
+            }
         }
 
         #[test]
         fn test_generate_ack() {
+            let expected = &[
+                0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0xba,
+                0x11, 0xc7, 0x23,
+            ];
             let msg = write_first_message();
             let ack = generate_ack(&msg);
 
-            println!("ack: {ack:?}, len: {}", ack.len());
+            assert_eq!(&ack, expected);
         }
 
         #[test]

@@ -35,7 +35,11 @@ impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
         let mut entries = Vec::with_capacity(len.try_into().unwrap());
 
         for _ in 0..len {
-            entries.push(unsafe { ptr.read() }.into());
+            let dma_addr = unsafe { ptr.read() }.into();
+
+            log::trace!("insert pa: {dma_addr:?} into page table");
+
+            entries.push(dma_addr);
 
             ptr = unsafe { ptr.add(1) };
         }

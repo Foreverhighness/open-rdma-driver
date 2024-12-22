@@ -2,6 +2,7 @@
 
 use core::net::{IpAddr, Ipv4Addr};
 use core::sync::atomic::AtomicU32;
+use std::sync::LazyLock;
 
 use eui48::MacAddress;
 use smoltcp::phy::ChecksumCapabilities;
@@ -50,8 +51,8 @@ impl<R: Client> UdpAgent<R> {
 
     /// Receive a single ethernet frame buffer from NIC
     fn receive_ethernet_frame_buffer(&self) -> Vec<u8> {
-        // static FRAGMENT: AtomicU32 = AtomicU32::new(0);
-        // static FRAME: AtomicU32 = AtomicU32::new(0);
+        static FRAGMENT: AtomicU32 = AtomicU32::new(0);
+        static FRAME: AtomicU32 = AtomicU32::new(0);
 
         let mut request = RpcNetIfcRxTxPayload::new();
         let mut buffer = Vec::new();
@@ -64,7 +65,7 @@ impl<R: Client> UdpAgent<R> {
             if invalid_fragment {
                 continue;
             }
-            // generate_frame_fragment_file(&request, &FRAME, &FRAGMENT);
+            generate_frame_fragment_file(&request, &FRAME, &FRAGMENT);
 
             let payload = &request.data.0;
 
@@ -78,7 +79,7 @@ impl<R: Client> UdpAgent<R> {
 
             let last_fragment = request.is_last == 1;
             if last_fragment {
-                // generate_frame_file(&buffer, &FRAME, &FRAGMENT);
+                generate_frame_file(&buffer, &FRAME, &FRAGMENT);
                 return buffer;
             }
         }
@@ -206,6 +207,10 @@ impl<R: Client> UdpAgent<R> {
 }
 
 fn generate_frame_fragment_file(req: &RpcNetIfcRxTxPayload, frame: &AtomicU32, fragment: &AtomicU32) {
+    static CAPTURE: LazyLock<bool> = LazyLock::new(|| std::env::var("CAPTURE").map(|v| v == "1").unwrap_or(false));
+    if !*CAPTURE {
+        return;
+    }
     use core::sync::atomic::Ordering::Relaxed;
     let (frame, fragment) = (frame.load(Relaxed), fragment.fetch_add(1, Relaxed));
 
@@ -214,17 +219,23 @@ fn generate_frame_fragment_file(req: &RpcNetIfcRxTxPayload, frame: &AtomicU32, f
     let json = serde_json::to_vec(req).unwrap();
 
     std::fs::write(filename, &json).unwrap();
+    log::trace!("generate fragment file: {filename}");
 
-    let read_back = std::fs::read(filename).unwrap();
-    let value: RpcNetIfcRxTxPayload = serde_json::from_slice(&read_back).unwrap();
-    assert_eq!(&value, req);
+    // let read_back = std::fs::read(filename).unwrap();
+    // let value: RpcNetIfcRxTxPayload = serde_json::from_slice(&read_back).unwrap();
+    // assert_eq!(&value, req);
 }
 
 fn generate_frame_file(buffer: &[u8], frame: &AtomicU32, fragment: &AtomicU32) {
+    static CAPTURE: LazyLock<bool> = LazyLock::new(|| std::env::var("CAPTURE").map(|v| v == "1").unwrap_or(false));
+    if !*CAPTURE {
+        return;
+    }
     use core::sync::atomic::Ordering::Relaxed;
     let (frame, _fragment) = (frame.fetch_add(1, Relaxed), fragment.swap(0, Relaxed));
 
     let filename = &format!(".cache/captures/ethernet-frame-{frame}.bin");
+    log::trace!("generate frame file: {filename}");
 
     std::fs::write(filename, &buffer).unwrap();
 

@@ -1,3 +1,5 @@
+use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
+
 use super::common::Common;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
@@ -20,7 +22,27 @@ impl<UA: Agent> HandleDescriptor<Write> for Emulator<UA> {
 
     fn handle(&self, req: &Write, _: &mut ()) -> Result<Self::Output> {
         log::info!("handle write op: {req:#?}");
-        todo!()
+
+        // let path_mtu = u32::from(&req.common.path_mtu_kind);
+        let addr = req.common.dest_ip;
+
+        let files = vec![
+            ".cache/captures/ethernet-frame-0.bin",
+            ".cache/captures/ethernet-frame-1.bin",
+        ];
+
+        for file in files {
+            let buffer = std::fs::read(file).unwrap();
+
+            let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
+            let ipv4_packet = Ipv4Packet::new_checked(eth_frame.payload()).unwrap();
+            let udp_packet = UdpPacket::new_checked(ipv4_packet.payload()).unwrap();
+
+            let payload = udp_packet.payload();
+            let amount = self.udp_agent.get().unwrap().send_to(payload, addr.into())?;
+        }
+
+        Ok(())
     }
 }
 

@@ -2,7 +2,7 @@ use core::net::Ipv4Addr;
 
 use eui48::MacAddress;
 
-use crate::device::software::emulator::address::DmaAddress;
+use crate::device::software::emulator::address::VirtualAddress;
 use crate::device::software::emulator::queues::send::descriptors::{Seg0, Seg1};
 use crate::device::software::emulator::types::{
     MemoryRegionKey, MessageSequenceNumber, PacketSequenceNumber, PathMtuKind, QueuePairNumber, QueuePairType, SendFlag,
@@ -11,7 +11,7 @@ use crate::device::software::emulator::types::{
 #[derive(Clone, Debug)]
 pub(super) struct Common {
     pub total_len: u32,
-    pub remote_addr: DmaAddress,
+    pub remote_addr: VirtualAddress,
     pub remote_key: MemoryRegionKey,
     pub dest_ip: Ipv4Addr,
     pub dest_qpn: QueuePairNumber,

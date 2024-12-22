@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::device::software::emulator::address::DmaAddress;
+use crate::device::software::emulator::address::VirtualAddress;
 use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::queues::send::operations::Opcode;
 use crate::device::software::emulator::types::MemoryRegionKey;
@@ -93,7 +93,7 @@ pub struct QueuePairNumber {
 pub struct ScatterGatherElement {
     pub local_key: MemoryRegionKey,
     pub len: u32,
-    pub local_addr: DmaAddress,
+    pub local_addr: VirtualAddress,
 }
 
 impl fmt::Debug for ScatterGatherElement {

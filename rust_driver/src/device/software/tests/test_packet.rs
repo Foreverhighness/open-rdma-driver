@@ -272,7 +272,7 @@ fn test_packet_parse() {
     use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
 
     for i in 0..=1 {
-        let filename = &format!("ethernet-frame-{i}.bin");
+        let filename = &format!(".cache/captures/ethernet-frame-{i}.bin");
         let buffer = std::fs::read(filename).unwrap();
 
         let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
@@ -284,6 +284,6 @@ fn test_packet_parse() {
 
         let msg = PacketProcessor::to_rdma_message(payload).unwrap();
 
-        println!("msg: {msg:?}");
+        println!("msg: {msg:#?}");
     }
 }
