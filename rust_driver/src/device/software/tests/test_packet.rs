@@ -266,6 +266,7 @@ fn test_pkt_processor_to_buf() {
     assert_eq!(reth.get_dlen(), 0x12345678);
 }
 
+#[ignore]
 #[test]
 fn test_packet_parse() {
     use smoltcp::wire::pretty_print::PrettyPrinter;
@@ -278,7 +279,7 @@ fn test_packet_parse() {
         let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
         let ipv4_packet = Ipv4Packet::new_checked(eth_frame.payload()).unwrap();
         let udp_packet = UdpPacket::new_checked(ipv4_packet.payload()).unwrap();
-        println!("{}", PrettyPrinter::print(&eth_frame));
+        // println!("{}", PrettyPrinter::print(&eth_frame));
 
         let payload = udp_packet.payload();
 

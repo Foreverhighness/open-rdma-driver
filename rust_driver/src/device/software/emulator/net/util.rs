@@ -81,6 +81,7 @@ pub(super) fn message_to_bthaeth(msg: &RdmaMessage) -> BthAeth {
     BthAeth::new(req_status, bth, aeth)
 }
 
+/// hard code args, need rewrite.
 pub(super) fn generate_ack(msg: &RdmaMessage) -> Vec<u8> {
     let ack = {
         let buf = [0u8; 12 + 4];
@@ -110,6 +111,22 @@ pub(super) fn generate_ack(msg: &RdmaMessage) -> Vec<u8> {
         .write()
         .unwrap();
     assert_eq!(buf.len(), len);
+    let ip_packet = Ipv4Packet::new_checked(&buf).unwrap();
+    let udp_datagram = UdpPacket::new_checked(ip_packet.payload()).unwrap();
+    udp_datagram.payload().to_vec()
+}
+
+pub(crate) fn generate_payload_from_msg(msg: &RdmaMessage, src: Ipv4Addr, dst: Ipv4Addr) -> Vec<u8> {
+    let mut buf = vec![0; 8192];
+    let len = PacketWriter::new(&mut buf)
+        .src_addr(src)
+        .src_port(RDMA_PROT)
+        .dest_addr(dst)
+        .dest_port(RDMA_PROT)
+        .ip_id(1)
+        .message(&msg)
+        .write()
+        .unwrap();
     let ip_packet = Ipv4Packet::new_checked(&buf).unwrap();
     let udp_datagram = UdpPacket::new_checked(ip_packet.payload()).unwrap();
     udp_datagram.payload().to_vec()

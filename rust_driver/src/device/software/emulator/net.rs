@@ -1,6 +1,6 @@
 mod agent;
 mod message;
-mod util;
+pub(crate) mod util;
 
 pub(super) use agent::Agent;
 

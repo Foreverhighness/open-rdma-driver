@@ -112,27 +112,13 @@ impl<R: rpc::Client> DmaClient<R> {
         // let mut slice = ret.as_bytes_mut();
         // Safety: #![feature(maybe_uninit_as_bytes) <https://github.com/rust-lang/rust/issues/93092>
         let slice = unsafe { core::slice::from_raw_parts_mut::<MaybeUninit<u8>>((&raw mut ret).cast(), size) };
-        let mut n_read = 0;
-
-        let mut buf = [0u8; 64];
-        while n_read < size {
-            let result = self.read_at_64(src.checked_add(u64::try_from(n_read).unwrap()).unwrap(), &mut buf);
-            let len = result.len().min(size - n_read);
-
-            // #![feature(maybe_uninit_write_slice)] <https://github.com/rust-lang/rust/issues/79995>
-            for &val in &result[..len] {
-                let &mut _result = slice[n_read].write(val);
-                debug_assert_eq!(_result, val);
-
-                n_read += 1;
-            }
-        }
+        unsafe { self.read_bytes(src, slice) };
 
         log::debug!("DMA: read @ {src:#018X} {size:02} bytes: {:02X?}", unsafe {
             core::mem::transmute::<_, &mut [u8]>(slice)
         });
 
-        debug_assert_eq!(n_read, size);
+        // debug_assert_eq!(n_read, size);
 
         // Safety: Each byte has been written.
         unsafe { ret.assume_init() }
@@ -242,6 +228,21 @@ impl<R: rpc::Client> DmaClient<R> {
             unsafe { self.write_bytes(dst, slice) };
         }
     }
+
+    unsafe fn read_bytes(&self, mut addr: u64, mut data: &mut [MaybeUninit<u8>]) {
+        let mut buf = [0u8; 64];
+        while !data.is_empty() {
+            let result = self.read_at_64(addr, &mut buf);
+            let len = result.len().min(data.len());
+
+            data[..len].iter_mut().zip(&result[..len]).for_each(|(data, &val)| {
+                let _ = data.write(val);
+            });
+
+            data = &mut data[len..];
+            addr = addr.checked_add(u64::try_from(len).unwrap()).unwrap();
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -302,6 +303,14 @@ impl<T, R: rpc::Client> dma::PointerMut for Ptr<'_, T, R> {
 
     unsafe fn write_bytes(self, data: &[u8]) {
         unsafe { self.client.write_bytes(self.addr.into(), data) }
+    }
+
+    unsafe fn read_bytes(self, len: usize) -> Vec<u8> {
+        let mut vec = Vec::with_capacity(len);
+        let data = vec.spare_capacity_mut();
+        unsafe { self.client.read_bytes(self.addr.into(), data) };
+        unsafe { vec.set_len(len) };
+        vec
     }
 }
 

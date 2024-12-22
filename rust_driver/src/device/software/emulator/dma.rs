@@ -37,6 +37,8 @@ pub trait PointerMut: Clone + Copy {
     unsafe fn add(self, count: u64) -> Self;
 
     unsafe fn write_bytes(self, data: &[u8]);
+
+    unsafe fn read_bytes(self, len: usize) -> Vec<u8>;
 }
 
 // For zero copy, may not use
