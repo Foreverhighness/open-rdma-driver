@@ -1,5 +1,6 @@
 mod agent;
 mod message;
+mod util;
 
 pub(super) use agent::Agent;
 
@@ -13,4 +14,7 @@ pub const RDMA_PROT: u16 = 4791;
 pub enum Error {
     #[error("Ethernet frame is malformed")]
     MalformedFrame(#[from] smoltcp::wire::Error),
+
+    #[error("invalid rdma packet")]
+    InvalidPacket,
 }

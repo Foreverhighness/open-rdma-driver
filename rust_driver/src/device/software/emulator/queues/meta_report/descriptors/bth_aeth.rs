@@ -16,6 +16,16 @@ const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<Descriptor>() == DESCRIPTOR_ALIGN);
 
 impl BthAeth {
+    pub const fn new(req_status: u8, bth: BaseTransportHeader, aeth: AckExtendedTransportHeader) -> Self {
+        let req_status = PsnAndReqStatus::new().with_req_status(req_status);
+        Self {
+            req_status,
+            bth,
+            aeth,
+            _reserved: [false; 12],
+        }
+    }
+
     // TODO(fh): replace args with reference?
     pub const fn from_ne_bytes(bytes: [u8; DESCRIPTOR_SIZE]) -> Self {
         unsafe { core::mem::transmute(bytes) }

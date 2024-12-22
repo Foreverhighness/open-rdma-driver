@@ -29,15 +29,19 @@ impl BthReth {
         msn: MessageSequenceNumber,
         can_auto_ack: bool,
     ) -> Self {
+        let psn_and_req_status = PsnAndReqStatus::new()
+            .with_expected_psn(expect_psn)
+            .with_req_status(req_status);
+
+        let msn_and_can_auto_ack = MessageSequenceNumberAndCanAutoAck::new()
+            .with_message_sequence_number(msn as u32)
+            .with_can_auto_ack(can_auto_ack);
+
         Self {
-            psn_and_req_status: PsnAndReqStatus::new()
-                .with_expected_psn(expect_psn)
-                .with_req_status(req_status),
+            psn_and_req_status,
             bth,
             reth,
-            msn_and_can_auto_ack: MessageSequenceNumberAndCanAutoAck::new()
-                .with_message_sequence_number(msn as u32)
-                .with_can_auto_ack(can_auto_ack),
+            msn_and_can_auto_ack,
         }
     }
 

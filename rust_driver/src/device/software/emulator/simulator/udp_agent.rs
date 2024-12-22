@@ -208,13 +208,19 @@ impl<R: Client> UdpAgent<R> {
 
 fn generate_frame_fragment_file(req: &RpcNetIfcRxTxPayload, frame: &AtomicU32, fragment: &AtomicU32) {
     static CAPTURE: LazyLock<bool> = LazyLock::new(|| std::env::var("CAPTURE").map(|v| v == "1").unwrap_or(false));
+    static DIRNAME: LazyLock<&str> =
+        LazyLock::new(|| match &*std::env::var("MOCK_HOST_SERVER_PROT").unwrap_or_default() {
+            "9874" => "ack",
+            "9876" => "write",
+            _ => "",
+        });
     if !*CAPTURE {
         return;
     }
     use core::sync::atomic::Ordering::Relaxed;
     let (frame, fragment) = (frame.load(Relaxed), fragment.fetch_add(1, Relaxed));
 
-    let filename = &format!(".cache/captures/fragment-{frame}-{fragment}.bin");
+    let filename = &format!(".cache/{}/fragment-{frame}-{fragment}.bin", *DIRNAME);
 
     let json = serde_json::to_vec(req).unwrap();
 
@@ -228,13 +234,19 @@ fn generate_frame_fragment_file(req: &RpcNetIfcRxTxPayload, frame: &AtomicU32, f
 
 fn generate_frame_file(buffer: &[u8], frame: &AtomicU32, fragment: &AtomicU32) {
     static CAPTURE: LazyLock<bool> = LazyLock::new(|| std::env::var("CAPTURE").map(|v| v == "1").unwrap_or(false));
+    static DIRNAME: LazyLock<&str> =
+        LazyLock::new(|| match &*std::env::var("MOCK_HOST_SERVER_PROT").unwrap_or_default() {
+            "9874" => "ack",
+            "9876" => "write",
+            _ => "",
+        });
     if !*CAPTURE {
         return;
     }
     use core::sync::atomic::Ordering::Relaxed;
     let (frame, _fragment) = (frame.fetch_add(1, Relaxed), fragment.swap(0, Relaxed));
 
-    let filename = &format!(".cache/captures/ethernet-frame-{frame}.bin");
+    let filename = &format!(".cache/{}/ethernet-frame-{frame}.bin", *DIRNAME);
     log::trace!("generate frame file: {filename}");
 
     std::fs::write(filename, &buffer).unwrap();

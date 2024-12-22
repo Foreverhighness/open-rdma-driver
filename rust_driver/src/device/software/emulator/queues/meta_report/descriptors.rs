@@ -7,7 +7,7 @@ mod secondary_reth;
 
 pub(crate) use bth_aeth::BthAeth;
 pub(crate) use bth_reth::BthReth;
-pub(crate) use common::{BaseTransportHeader, RdmaExtendedTransportHeader};
+pub(crate) use common::{AckExtendedTransportHeader, BaseTransportHeader, RdmaExtendedTransportHeader};
 
 pub(super) const DESCRIPTOR_SIZE: usize = 32; // 256 bits
 pub(super) const DESCRIPTOR_ALIGN: usize = 32; // 256 bits

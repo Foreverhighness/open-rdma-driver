@@ -103,9 +103,24 @@ impl RdmaExtendedTransportHeader {
 }
 
 #[repr(transparent)]
-pub(super) struct AckExtendedTransportHeader(MetaReportQueueDescFragAETH<[u8; 8]>);
+pub(crate) struct AckExtendedTransportHeader(MetaReportQueueDescFragAETH<[u8; 8]>);
 
 impl AckExtendedTransportHeader {
+    pub fn new(
+        psn: PacketSequenceNumber,
+        msn: MessageSequenceNumber,
+        value: u8,
+        code: ToHostWorkRbDescAethCode,
+    ) -> Self {
+        let mut aeth = MetaReportQueueDescFragAETH([0u8; 8]);
+        aeth.set_psn(psn);
+        aeth.set_msn(msn as u32);
+        aeth.set_aeth_value(value as u32);
+        aeth.set_aeth_code(u8::from(code) as u32);
+
+        Self(aeth)
+    }
+
     pub fn packet_sequence_number(&self) -> PacketSequenceNumber {
         self.0.get_psn().into()
     }

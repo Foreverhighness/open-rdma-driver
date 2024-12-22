@@ -145,7 +145,8 @@ where
                 let msg = PacketProcessor::to_rdma_message(&buf[..len]).unwrap();
                 log::debug!("receive data {msg:?} from {src:?}");
 
-                dev.handle_message(&msg);
+                dev.handle_message(&msg)
+                    .expect(&format!("handle message error: {msg:?}"));
             }
         });
     }
