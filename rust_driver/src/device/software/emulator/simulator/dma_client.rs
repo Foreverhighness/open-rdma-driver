@@ -9,7 +9,7 @@ use super::rpc;
 use crate::device::software::emulator::address::DmaAddress;
 use crate::device::software::emulator::dma;
 
-const BYTES_PER_WORD: u32 = WORD_WIDTH / 8;
+const BYTES_PER_WORD: u64 = (WORD_WIDTH / 8) as u64;
 
 #[derive(Debug)]
 pub struct DmaClient<R: rpc::Client = rpc::RpcClient> {
@@ -21,31 +21,6 @@ pub struct DmaClient<R: rpc::Client = rpc::RpcClient> {
 impl<R: rpc::Client> DmaClient<R> {
     pub const fn new(client_id: u64, rpc: R) -> Self {
         Self { client_id, rpc }
-    }
-
-    fn read_at_64<'b>(&self, addr: u64, buf: &'b mut [u8]) -> &'b [u8] {
-        assert!(buf.len() >= 64);
-
-        let buf = &mut buf[..64];
-        let start = usize::try_from(addr & u64::from(BYTES_PER_WORD - 1)).unwrap();
-        unsafe {
-            self.rpc.c_readBRAM(
-                buf.as_mut_ptr().cast(),
-                self.client_id,
-                addr / BYTES_PER_WORD as u64,
-                WORD_WIDTH,
-            );
-        }
-
-        let data = &buf[start..];
-
-        log::trace!(
-            "read  at {addr:#018X}, start at {start:02}, buf: {buf:02X?}, data: {data:02X?}",
-            addr = addr & !(u64::from(BYTES_PER_WORD) - 1),
-            data = data
-        );
-
-        data
     }
 
     fn write_at_most_64(&self, addr: u64, data: &[u8], write_group: &mut Vec<JoinHandle<()>>) -> usize {
@@ -230,18 +205,33 @@ impl<R: rpc::Client> DmaClient<R> {
     }
 
     unsafe fn read_bytes(&self, mut addr: u64, mut data: &mut [MaybeUninit<u8>]) {
-        let mut buf = [0u8; 64];
-        while !data.is_empty() {
-            let result = self.read_at_64(addr, &mut buf);
-            let len = result.len().min(data.len());
+        std::thread::scope(move |s| {
+            let client_id = self.client_id;
+            while !data.is_empty() {
+                let start = usize::try_from(addr % BYTES_PER_WORD).unwrap();
+                let len = data.len().min(64 - start);
+                let (dst, remainder) = data.split_at_mut(len);
 
-            data[..len].iter_mut().zip(&result[..len]).for_each(|(data, &val)| {
-                let _ = data.write(val);
-            });
+                let rpc = self.rpc.clone();
+                let _ = s.spawn(move || {
+                    let mut buf = [0u8; 64];
+                    unsafe { rpc.c_readBRAM(buf.as_mut_ptr().cast(), client_id, addr / BYTES_PER_WORD, WORD_WIDTH) };
 
-            data = &mut data[len..];
-            addr = addr.checked_add(u64::try_from(len).unwrap()).unwrap();
-        }
+                    log::trace!(
+                        "read  at {addr:#018X}, start at {start:02}, buf: {buf:02X?}, data: {data:02X?}",
+                        addr = addr & !(BYTES_PER_WORD - 1),
+                        data = &buf[start..(start + len)]
+                    );
+
+                    dst.iter_mut().zip(&buf[start..(start + len)]).for_each(|(data, &val)| {
+                        let _ = data.write(val);
+                    });
+                });
+
+                addr = addr.checked_add(u64::try_from(len).unwrap()).unwrap();
+                data = remainder;
+            }
+        })
     }
 }
 
