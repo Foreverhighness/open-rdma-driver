@@ -1,7 +1,15 @@
 mod acknowledge;
 mod read_request;
-mod read_response;
-mod write;
+mod read_response_first;
+mod read_response_last;
+mod read_response_middle;
+mod read_response_only;
+mod write_first;
+mod write_last;
+mod write_last_with_immediate;
+mod write_middle;
+mod write_only;
+mod write_only_with_immediate;
 
 mod handler {
     use core::net::Ipv4Addr;
