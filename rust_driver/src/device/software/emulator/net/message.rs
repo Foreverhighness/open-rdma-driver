@@ -11,31 +11,48 @@ mod write_middle;
 mod write_only;
 mod write_only_with_immediate;
 
-mod handler {
-    use core::net::Ipv4Addr;
+use super::super::Result;
 
-    use crate::device::software::emulator::address::VirtualAddress;
-    use crate::device::software::emulator::dma::{Client, PointerMut};
+pub(crate) trait Message<Dev> {
+    fn handle(&self, dev: &Dev) -> Result;
+}
+
+// which is better?
+pub(crate) trait HandleMessage<Msg> {
+    fn handle(&self, msg: &Msg) -> Result;
+}
+
+mod handler {
+    use core::net::{IpAddr, Ipv4Addr};
+
+    use super::{HandleMessage, Message};
     use crate::device::software::emulator::errors::Error;
-    use crate::device::software::emulator::mr_table::MemoryRegionTable;
     use crate::device::software::emulator::net::message::acknowledge::Acknowledge;
-    use crate::device::software::emulator::net::util::{generate_ack, message_to_bthreth};
+    use crate::device::software::emulator::net::message::write_first::WriteFirst;
+    use crate::device::software::emulator::net::message::write_last::WriteLast;
+    use crate::device::software::emulator::net::util::generate_ack;
     use crate::device::software::emulator::net::Agent;
-    use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
     use crate::device::software::emulator::Emulator;
-    use crate::device::software::types::{Metadata, RdmaMessage};
+    use crate::device::software::types::RdmaMessage;
     use crate::device::ToHostWorkRbDescOpcode;
 
     impl<UA: Agent> Emulator<UA> {
-        pub(crate) fn handle_message(&self, msg: &RdmaMessage) -> Result<(), Error> {
+        pub(crate) fn handle_message(&self, msg: &RdmaMessage, src: IpAddr) -> Result<(), Error> {
             log::debug!("handle network message {msg:?}");
             match msg.meta_data.common_meta().opcode {
-                ToHostWorkRbDescOpcode::RdmaWriteFirst => todo!(),
+                ToHostWorkRbDescOpcode::RdmaWriteFirst => WriteFirst::parse(msg)?.handle(self)?,
                 ToHostWorkRbDescOpcode::RdmaWriteMiddle => todo!(),
-                ToHostWorkRbDescOpcode::RdmaWriteLast => todo!(),
+                ToHostWorkRbDescOpcode::RdmaWriteLast => self.handle(&WriteLast::parse(msg)?)?,
                 ToHostWorkRbDescOpcode::Acknowledge => self.handle_acknowledge(Acknowledge::parse(msg)?),
                 _ => todo!(),
             }
+
+            let need_ack = msg.meta_data.common_meta().ack_req;
+            if need_ack {
+                let buf = generate_ack(&msg);
+                let _ = self.udp_agent.get().unwrap().send_to(&buf, src);
+            }
+
             // TODO(fh): validate part
 
             // TODO(fh): dma part

@@ -17,4 +17,4 @@ mod types;
 
 pub use impls::*;
 
-pub type Result<T> = core::result::Result<T, errors::Error>;
+pub type Result<T = ()> = core::result::Result<T, errors::Error>;
