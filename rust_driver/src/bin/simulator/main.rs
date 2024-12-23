@@ -11,8 +11,8 @@ fn main() {
 
     let rpc = RpcClient;
     let client_id = unsafe {
-        std::env::set_var("MOCK_HOST_SERVER_ADDR", "0.0.0.0");
-        std::env::set_var("MOCK_HOST_SERVER_PORT", "9876");
+        // std::env::set_var("MOCK_HOST_SERVER_ADDR", "0.0.0.0");
+        // std::env::set_var("MOCK_HOST_SERVER_PORT", "9876");
         rpc.c_createBRAM(512, 1024 * 1024)
     };
     let dev = Emulator::new_testing(client_id);
