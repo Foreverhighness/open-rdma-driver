@@ -7,17 +7,17 @@ use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::queues::send::operations::Opcode;
 use crate::device::software::emulator::queues::work_queue::WorkQueue;
-use crate::device::software::emulator::Emulator;
+use crate::device::software::emulator::DeviceInner;
 
 // SendQueue is same type as RegistersSendHandle
 #[derive(Debug)]
 pub(crate) struct SendQueue<'q, UA: Agent, Desc = [u8; DESCRIPTOR_SIZE]> {
-    dev: &'q Emulator<UA>,
+    dev: &'q DeviceInner<UA>,
     _descriptors: PhantomData<*mut [Desc]>,
 }
 
 impl<'q, UA: Agent> SendQueue<'q, UA> {
-    pub(crate) fn new(dev: &'q Emulator<UA>) -> Self {
+    pub(crate) fn new(dev: &'q DeviceInner<UA>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -98,7 +98,7 @@ impl<UA: Agent> SendQueue<'_, UA> {
     }
 }
 
-impl<UA: Agent> Emulator<UA> {
+impl<UA: Agent> DeviceInner<UA> {
     pub(crate) fn send_queue(&self) -> SendQueue<'_, UA> {
         SendQueue::new(self)
     }

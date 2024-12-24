@@ -14,6 +14,8 @@ use super::mr_table::MemoryRegionTable;
 use super::{dma, memory_region, net, queue_pair, simulator};
 use crate::device::software::packet_processor::PacketProcessor;
 
+pub type Simulator = DeviceInner<simulator::UdpAgent, simulator::DmaClient>;
+
 #[derive(Debug)]
 enum State {
     NotReady,
@@ -39,7 +41,7 @@ impl NetParameter {
 }
 
 #[derive(Debug)]
-pub struct Emulator<UA = simulator::UdpAgent, DC = simulator::DmaClient, MRT = memory_region::Table>
+pub struct DeviceInner<UA = simulator::UdpAgent, DC = simulator::DmaClient, MRT = memory_region::Table>
 where
     UA: net::Agent,
     DC: dma::Client,
@@ -77,7 +79,7 @@ where
     pub(crate) rx_send: Receiver<()>,
 }
 
-impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, MRT> {
+impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> DeviceInner<UA, DC, MRT> {
     pub fn new(dma_client: DC, mr_table: MRT) -> Self {
         let (tx_command_request, rx_command_request) = flume::unbounded();
         let (tx_send, rx_send) = flume::unbounded();
@@ -107,7 +109,7 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Emulator<UA, DC, M
     }
 }
 
-impl<UA> Emulator<UA>
+impl<UA> DeviceInner<UA>
 where
     UA: net::Agent + Send + Sync + 'static,
 {
@@ -166,13 +168,13 @@ where
     }
 }
 
-impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Drop for Emulator<UA, DC, MRT> {
+impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Drop for DeviceInner<UA, DC, MRT> {
     fn drop(&mut self) {
         self.stop.store(true, core::sync::atomic::Ordering::Relaxed);
     }
 }
 
-impl<UA: net::Agent> RawDevice for Emulator<UA> {
+impl<UA: net::Agent> RawDevice for DeviceInner<UA> {
     fn csrs(&self) -> impl ControlStatusRegisters {
         EmulatorCsrsHandler::new(&self.csrs, self)
     }

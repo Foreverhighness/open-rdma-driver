@@ -6,12 +6,12 @@ use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::queues::work_queue::WorkQueue;
-use crate::device::software::emulator::Emulator;
+use crate::device::software::emulator::DeviceInner;
 
 // CommandRequestQueue is same type as RegistersCommandRequestHandle
 #[derive(Debug)]
 pub(crate) struct CommandRequestQueue<'q, UA: Agent, Desc = Unknown> {
-    dev: &'q Emulator<UA>,
+    dev: &'q DeviceInner<UA>,
     _descriptors: PhantomData<*mut [Desc]>,
     // addr: u64,
     // head: u32,
@@ -20,7 +20,7 @@ pub(crate) struct CommandRequestQueue<'q, UA: Agent, Desc = Unknown> {
 }
 
 impl<'q, UA: Agent> CommandRequestQueue<'q, UA> {
-    pub(crate) fn new(dev: &'q Emulator<UA>) -> Self {
+    pub(crate) fn new(dev: &'q DeviceInner<UA>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -86,7 +86,7 @@ impl<UA: Agent> CommandRequestQueue<'_, UA> {
     }
 }
 
-impl<UA: Agent> Emulator<UA> {
+impl<UA: Agent> DeviceInner<UA> {
     pub(crate) fn command_request_queue(&self) -> CommandRequestQueue<'_, UA> {
         CommandRequestQueue::new(self)
     }

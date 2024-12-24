@@ -9,7 +9,7 @@ use crate::device::software::emulator::queues::command_request::common::{
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::types::{PacketSequenceNumber, QueuePairNumber};
-use crate::device::software::emulator::{Emulator, Result};
+use crate::device::software::emulator::{DeviceInner, Result};
 
 #[repr(C, align(32))]
 pub struct UpdateErrorPacketSequenceNumberRecoverPoint(CmdQueueReqDescUpdateErrRecoverPoint<[u8; DESCRIPTOR_SIZE]>);
@@ -20,7 +20,7 @@ impl UpdateErrorPacketSequenceNumberRecoverPoint {
     const OPCODE: Opcode = Opcode::UpdateErrorPsnRecoverPoint;
 }
 
-impl<UA: Agent> HandleDescriptor<UpdateErrorPacketSequenceNumberRecoverPoint> for Emulator<UA> {
+impl<UA: Agent> HandleDescriptor<UpdateErrorPacketSequenceNumberRecoverPoint> for DeviceInner<UA> {
     type Context = ();
     type Output = ();
 

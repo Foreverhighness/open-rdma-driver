@@ -1,7 +1,7 @@
 use super::super::Error;
 use crate::device::software::emulator::net::{util, Agent};
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
-use crate::device::software::emulator::Emulator;
+use crate::device::software::emulator::DeviceInner;
 use crate::device::software::types::RdmaMessage;
 
 #[derive(Debug, Clone, Copy)]
@@ -20,7 +20,7 @@ impl<'msg> Acknowledge<'msg> {
     }
 }
 
-impl<UA: Agent> Emulator<UA> {
+impl<UA: Agent> DeviceInner<UA> {
     pub(crate) fn handle_acknowledge(&self, msg: Acknowledge) {
         let descriptor = util::message_to_bthaeth(msg.aeth);
 

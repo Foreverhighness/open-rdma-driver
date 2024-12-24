@@ -12,7 +12,7 @@ use crate::device::software::emulator::queues::command_request::common::{
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::types::{MemoryAccessFlag, MemoryRegionKey};
-use crate::device::software::emulator::{Emulator, Result};
+use crate::device::software::emulator::{DeviceInner, Result};
 
 #[repr(C, align(32))]
 pub struct UpdateMemoryRegionTable(CmdQueueReqDescUpdateMrTable<[u8; DESCRIPTOR_SIZE]>);
@@ -23,7 +23,7 @@ impl UpdateMemoryRegionTable {
     const OPCODE: Opcode = Opcode::UpdateMrTable;
 }
 
-impl<UA: Agent> HandleDescriptor<UpdateMemoryRegionTable> for Emulator<UA> {
+impl<UA: Agent> HandleDescriptor<UpdateMemoryRegionTable> for DeviceInner<UA> {
     type Context = ();
     type Output = ();
 

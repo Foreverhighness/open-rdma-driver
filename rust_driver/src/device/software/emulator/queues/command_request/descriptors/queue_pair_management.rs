@@ -13,7 +13,7 @@ use crate::device::software::emulator::queues::errors::ParseDescriptorError;
 use crate::device::software::emulator::types::{
     MemoryAccessFlag, PathMtuKind, ProtectDomainHandler, QueuePairNumber, QueuePairType,
 };
-use crate::device::software::emulator::{Emulator, Result};
+use crate::device::software::emulator::{DeviceInner, Result};
 
 #[repr(C, align(32))]
 pub struct QueuePairManagement(CmdQueueReqDescQpManagementSeg0<[u8; DESCRIPTOR_SIZE]>);
@@ -24,7 +24,7 @@ impl QueuePairManagement {
     const OPCODE: Opcode = Opcode::QpManagement;
 }
 
-impl<UA: Agent> HandleDescriptor<QueuePairManagement> for Emulator<UA> {
+impl<UA: Agent> HandleDescriptor<QueuePairManagement> for DeviceInner<UA> {
     type Context = ();
     type Output = ();
 

@@ -4,7 +4,7 @@ use core::time::Duration;
 
 use open_rdma_driver::device::software::emulator::simulator::csr_proxy::Proxy;
 use open_rdma_driver::device::software::emulator::simulator::rpc::{Client, RpcClient};
-use open_rdma_driver::device::software::emulator::Emulator;
+use open_rdma_driver::device::software::emulator::DeviceInner;
 
 fn main() {
     env_logger::init();
@@ -15,7 +15,7 @@ fn main() {
         // std::env::set_var("MOCK_HOST_SERVER_PORT", "9876");
         rpc.c_createBRAM(512, 1024 * 1024)
     };
-    let dev = Emulator::new_testing(client_id);
+    let dev = DeviceInner::new_simulator(client_id);
     let csr_proxy = Proxy::new(client_id, rpc, dev);
     let (read_thread, write_thread, stop) = csr_proxy.run();
 

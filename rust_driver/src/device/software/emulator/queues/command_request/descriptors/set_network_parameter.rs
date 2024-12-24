@@ -11,7 +11,7 @@ use crate::device::software::emulator::queues::command_request::common::{
 };
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
-use crate::device::software::emulator::{Emulator, NetParameter, Result};
+use crate::device::software::emulator::{DeviceInner, NetParameter, Result};
 
 #[repr(C, align(32))]
 pub struct SetNetworkParameter(CmdQueueReqDescSetNetworkParam<[u8; DESCRIPTOR_SIZE]>);
@@ -22,7 +22,7 @@ impl SetNetworkParameter {
     const OPCODE: Opcode = Opcode::SetNetworkParam;
 }
 
-impl<UA: Agent> HandleDescriptor<SetNetworkParameter> for Emulator<UA> {
+impl<UA: Agent> HandleDescriptor<SetNetworkParameter> for DeviceInner<UA> {
     type Context = ();
     type Output = ();
 

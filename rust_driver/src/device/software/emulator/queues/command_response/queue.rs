@@ -4,16 +4,16 @@ use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::Unknown;
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
-use crate::device::software::emulator::Emulator;
+use crate::device::software::emulator::DeviceInner;
 
 #[derive(Debug)]
 pub(crate) struct CommandResponseQueue<'q, UA: Agent, Desc = Unknown> {
-    dev: &'q Emulator<UA>,
+    dev: &'q DeviceInner<UA>,
     _descriptors: PhantomData<*mut [Desc]>,
 }
 
 impl<'q, UA: Agent> CommandResponseQueue<'q, UA> {
-    pub(crate) fn new(dev: &'q Emulator<UA>) -> Self {
+    pub(crate) fn new(dev: &'q DeviceInner<UA>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -53,7 +53,7 @@ impl<UA: Agent, Desc> CompleteQueue for CommandResponseQueue<'_, UA, Desc> {
     }
 }
 
-impl<UA: Agent> Emulator<UA> {
+impl<UA: Agent> DeviceInner<UA> {
     pub(crate) fn command_response_queue(&self) -> CommandResponseQueue<'_, UA> {
         CommandResponseQueue::new(self)
     }

@@ -4,16 +4,16 @@ use super::descriptors::DESCRIPTOR_SIZE;
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
-use crate::device::software::emulator::Emulator;
+use crate::device::software::emulator::DeviceInner;
 
 #[derive(Debug)]
 pub(crate) struct MetaReportQueue<'q, UA: Agent, Desc = [u8; DESCRIPTOR_SIZE]> {
-    dev: &'q Emulator<UA>,
+    dev: &'q DeviceInner<UA>,
     _descriptors: PhantomData<*mut [Desc]>,
 }
 
 impl<'q, UA: Agent> MetaReportQueue<'q, UA> {
-    pub(crate) fn new(dev: &'q Emulator<UA>) -> Self {
+    pub(crate) fn new(dev: &'q DeviceInner<UA>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -53,7 +53,7 @@ impl<UA: Agent, Desc> CompleteQueue for MetaReportQueue<'_, UA, Desc> {
     }
 }
 
-impl<UA: Agent> Emulator<UA> {
+impl<UA: Agent> DeviceInner<UA> {
     pub(crate) fn meta_report_queue(&self) -> MetaReportQueue<'_, UA> {
         MetaReportQueue::new(self)
     }

@@ -5,7 +5,7 @@ use crate::device::software::emulator::mr_table::MemoryRegionTable;
 use crate::device::software::emulator::net::util::message_to_bthreth;
 use crate::device::software::emulator::net::{Agent, Error};
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
-use crate::device::software::emulator::Emulator;
+use crate::device::software::emulator::DeviceInner;
 use crate::device::software::types::{Metadata, RdmaMessage};
 
 #[derive(Debug, Clone, Copy)]
@@ -26,7 +26,7 @@ impl<'msg> WriteLast<'msg> {
     }
 }
 
-impl<UA: Agent> HandleMessage<Message<'_>> for Emulator<UA> {
+impl<UA: Agent> HandleMessage<Message<'_>> for DeviceInner<UA> {
     fn handle(&self, msg: &Message) -> crate::device::software::emulator::Result {
         let msg = msg.bth;
         // TODO(fh): dma part

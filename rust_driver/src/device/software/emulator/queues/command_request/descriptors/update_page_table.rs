@@ -10,7 +10,7 @@ use crate::device::software::emulator::queues::command_request::common::{
 };
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
-use crate::device::software::emulator::{Emulator, Result};
+use crate::device::software::emulator::{DeviceInner, Result};
 
 #[repr(C, align(32))]
 pub struct UpdatePageTable(CmdQueueReqDescUpdatePGT<[u8; DESCRIPTOR_SIZE]>);
@@ -21,7 +21,7 @@ impl UpdatePageTable {
     const OPCODE: Opcode = Opcode::UpdatePageTable;
 }
 
-impl<UA: Agent> HandleDescriptor<UpdatePageTable> for Emulator<UA> {
+impl<UA: Agent> HandleDescriptor<UpdatePageTable> for DeviceInner<UA> {
     type Context = ();
     type Output = ();
 

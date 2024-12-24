@@ -18,7 +18,7 @@ use meta_report::EmulatorRegistersMetaReport;
 use send::EmulatorRegistersSend;
 
 use super::net::Agent;
-use super::Emulator;
+use super::DeviceInner;
 
 #[derive(Debug, Default)]
 pub struct EmulatorCsrs {
@@ -31,10 +31,10 @@ pub struct EmulatorCsrs {
 #[derive(Debug)]
 pub struct EmulatorCsrsHandler<'h, UA: Agent> {
     csrs: &'h EmulatorCsrs,
-    dev: &'h Emulator<UA>,
+    dev: &'h DeviceInner<UA>,
 }
 impl<'h, UA: Agent> EmulatorCsrsHandler<'h, UA> {
-    pub(super) fn new<'c, 'd>(csrs: &'c EmulatorCsrs, dev: &'d Emulator<UA>) -> Self
+    pub(super) fn new<'c, 'd>(csrs: &'c EmulatorCsrs, dev: &'d DeviceInner<UA>) -> Self
     where
         'c: 'h,
         'd: 'h,

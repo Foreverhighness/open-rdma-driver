@@ -17,10 +17,10 @@ macro_rules! declare_and_impl_basic_register {
             #[derive(Debug)]
             pub struct [<$prefix $csr_type $part Handler>]<'h, UA: Agent> {
                 reg: &'h [<$prefix $csr_type $part>],
-                dev: &'h Emulator<UA>,
+                dev: &'h DeviceInner<UA>,
             }
             impl<'h, UA: Agent> [<$prefix $csr_type $part Handler>]<'h, UA> {
-                pub(crate) fn new<'r, 'd>(reg: &'r [<$prefix $csr_type $part>], dev: &'d Emulator<UA>) -> Self
+                pub(crate) fn new<'r, 'd>(reg: &'r [<$prefix $csr_type $part>], dev: &'d DeviceInner<UA>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -59,10 +59,10 @@ macro_rules! declare_and_impl_address {
             #[derive(Debug)]
             pub struct [<$prefix $csr_type AddressHandler>]<'h, UA: Agent> {
                 addr: &'h [<$prefix $csr_type Address>],
-                dev: &'h Emulator<UA>,
+                dev: &'h DeviceInner<UA>,
             }
             impl<'h, UA: Agent> [<$prefix $csr_type AddressHandler>]<'h, UA> {
-                pub(crate) fn new<'r, 'd>(addr: &'r [<$prefix $csr_type Address>], dev: &'d Emulator<UA>) -> Self
+                pub(crate) fn new<'r, 'd>(addr: &'r [<$prefix $csr_type Address>], dev: &'d DeviceInner<UA>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -95,10 +95,10 @@ macro_rules! declare_and_impl_queue {
             #[derive(Debug)]
             pub struct [<$prefix $csr_type Handler>]<'h, UA: Agent> {
                 regs: &'h [<$prefix $csr_type>],
-                dev: &'h Emulator<UA>,
+                dev: &'h DeviceInner<UA>,
             }
             impl<'h, UA: Agent> [<$prefix $csr_type Handler>]<'h, UA> {
-                pub(crate) fn new<'r, 'd>(regs: &'r [<$prefix $csr_type>], dev: &'d Emulator<UA>) -> Self
+                pub(crate) fn new<'r, 'd>(regs: &'r [<$prefix $csr_type>], dev: &'d DeviceInner<UA>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -128,7 +128,7 @@ macro_rules! register_queue_csr {
     ($base_addr:literal, $prefix:ident, $csr_type:ident, $csr_type_upper:ident) => {
         use $crate::device::software::emulator::device_api::csr;
         use $crate::device::software::emulator::net::Agent;
-        use $crate::device::software::emulator::Emulator;
+        use $crate::device::software::emulator::DeviceInner;
 
         paste::paste! {
             pub const [<REGISTERS_ $csr_type_upper _BASE_ADDR>]: u64 = $base_addr;

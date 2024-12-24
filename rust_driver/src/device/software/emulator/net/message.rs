@@ -32,11 +32,11 @@ mod handler {
     use crate::device::software::emulator::net::message::write_last::WriteLast;
     use crate::device::software::emulator::net::util::generate_ack;
     use crate::device::software::emulator::net::Agent;
-    use crate::device::software::emulator::Emulator;
+    use crate::device::software::emulator::DeviceInner;
     use crate::device::software::types::RdmaMessage;
     use crate::device::ToHostWorkRbDescOpcode;
 
-    impl<UA: Agent> Emulator<UA> {
+    impl<UA: Agent> DeviceInner<UA> {
         pub(crate) fn handle_message(&self, msg: &RdmaMessage, src: IpAddr) -> Result<(), Error> {
             log::debug!("handle network message {msg:?}");
             match msg.meta_data.common_meta().opcode {

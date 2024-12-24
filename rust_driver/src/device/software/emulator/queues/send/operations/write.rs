@@ -12,7 +12,7 @@ use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::queues::send::descriptors::{
     ScatterGatherElement, Seg0, Seg1, VariableLengthSge,
 };
-use crate::device::software::emulator::{Emulator, Result};
+use crate::device::software::emulator::{DeviceInner, Result};
 use crate::device::software::types::{
     Key, Metadata, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon, RethHeader,
 };
@@ -64,7 +64,7 @@ fn generate_segments_from_request(mut va: u64, len: u32, path_mtu: u32) -> Vec<S
     segments
 }
 
-impl<UA: Agent> HandleDescriptor<Write> for Emulator<UA> {
+impl<UA: Agent> HandleDescriptor<Write> for DeviceInner<UA> {
     type Context = ();
     type Output = ();
 
