@@ -189,9 +189,6 @@ impl<R: Client> UdpAgent<R> {
             }
         };
 
-        ip_repr.emit(buffer, &ChecksumCapabilities::default());
-        let buffer = &mut frame.payload_mut()[ip_repr.header_len()..ip_repr.buffer_len()];
-
         let mut datagram = UdpPacket::new_unchecked(buffer);
         udp_repr.emit(
             &mut datagram,
@@ -335,7 +332,7 @@ mod tests {
         let mut buf = vec![0; 8192];
 
         for frame in 0..=1 {
-            let filename = &format!("ethernet-frame-{frame}.bin");
+            let filename = &format!(".cache/captures/ethernet-frame-{frame}.bin");
             let frame = std::fs::read(filename).unwrap();
             let (expected_payload, expected_origin) = udp_agent.parse_frame_and_extract_payload(&frame).unwrap();
 
@@ -353,7 +350,7 @@ mod tests {
         let dst_addr = RECEIVER.ip;
 
         for frame in 0..=1 {
-            let filename = &format!("ethernet-frame-{frame}.bin");
+            let filename = &format!(".cache/captures/ethernet-frame-{frame}.bin");
             let buffer = std::fs::read(filename).unwrap();
 
             let (expected_payload, origin) = RECEIVER.parse_frame_and_extract_payload(&buffer).unwrap();
@@ -372,7 +369,7 @@ mod tests {
         let dst_addr = RECEIVER.ip;
 
         for i in 0..=1 {
-            let filename = &format!("ethernet-frame-{i}.bin");
+            let filename = &format!(".cache/captures/ethernet-frame-{i}.bin");
             let buffer = std::fs::read(filename).unwrap();
 
             let (expected_payload, origin) = RECEIVER.parse_frame_and_extract_payload(&buffer).unwrap();
@@ -386,7 +383,7 @@ mod tests {
             let mut buf = frame.as_slice();
             let mut fragment = 0;
             while !buf.is_empty() {
-                let filename = &format!("fragment-{i}-{fragment}.bin");
+                let filename = &format!(".cache/captures/fragment-{i}-{fragment}.bin");
                 fragment += 1;
                 let json = std::fs::read(filename).unwrap();
                 let expected = serde_json::from_slice(&json).unwrap();

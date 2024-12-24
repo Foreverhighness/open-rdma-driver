@@ -1,5 +1,5 @@
 use core::fmt;
-use core::net::IpAddr;
+use core::net::{IpAddr, Ipv4Addr};
 
 use smoltcp::phy::ChecksumCapabilities;
 use smoltcp::wire::{IpProtocol, IpRepr, Ipv4Packet, Ipv6Packet, UdpPacket, UdpRepr};
@@ -8,22 +8,28 @@ use crate::device::software::emulator::net::{self, RDMA_PORT};
 
 pub(crate) struct NetAgent {
     tun: tun::Device,
+    tun_ip: IpAddr,
+
     ip: IpAddr,
 }
 
 impl fmt::Debug for NetAgent {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("NetAgent").field("ip", &self.ip).finish_non_exhaustive()
+        f.debug_struct("NetAgent")
+            .field("ip", &self.ip)
+            .field("tun", &self.tun_ip)
+            .finish_non_exhaustive()
     }
 }
 
 impl NetAgent {
-    pub fn new(ip: IpAddr, netmask: IpAddr) -> Self {
+    pub fn new(ip: IpAddr, netmask: IpAddr, tun_ip: IpAddr) -> Self {
+        log::info!("new tun {tun_ip} -> {ip}");
         let mut config = tun::configure();
-        let config = config.address(ip).netmask(netmask).up();
+        let config = config.address(tun_ip).netmask(netmask).destination(ip).up();
         let tun = tun::create(&config).unwrap();
 
-        Self { tun, ip }
+        Self { tun, tun_ip, ip }
     }
 
     fn parse_packet_and_extract_payload<'b>(&self, buffer: &'b [u8]) -> Result<(&'b [u8], IpAddr), net::Error> {
@@ -46,6 +52,7 @@ impl NetAgent {
                 )
             }
         };
+        assert_eq!(self.ip, IpAddr::from(dst_ip));
 
         let udp_datagram = UdpPacket::new_checked(datagram)?;
         let payload = udp_datagram.payload();
@@ -95,8 +102,8 @@ impl NetAgent {
             }
         };
 
-        ip_repr.emit(&mut *buffer, &ChecksumCapabilities::default());
-        let buffer = &mut buffer[ip_repr.header_len()..ip_repr.buffer_len()];
+        // ip_repr.emit(&mut *buffer, &ChecksumCapabilities::default());
+        // let buffer = &mut buffer[ip_repr.header_len()..ip_repr.buffer_len()];
 
         let mut datagram = UdpPacket::new_unchecked(buffer);
         udp_repr.emit(
@@ -114,7 +121,11 @@ impl NetAgent {
 
 impl net::Agent for NetAgent {
     fn send_to(&self, buf: &[u8], addr: IpAddr) -> net::Result<usize> {
-        todo!()
+        let buffer = self.construct_frame(addr, buf);
+        let len = self.tun.send(&buffer)?;
+
+        // FIXME(fh): len is not send packet len
+        Ok(len)
     }
 
     fn recv_from(&self, buf: &mut [u8]) -> net::Result<(usize, IpAddr)> {
@@ -139,28 +150,40 @@ mod tests {
 
     use super::*;
 
-    const SENDER_NIC_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)), RDMA_PORT);
-    const RECEIVER_NIC_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 1, 1)), RDMA_PORT);
+    const SENDER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)), RDMA_PORT);
+    const SENDER_TUN_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 0, 233)), RDMA_PORT);
+    const RECEIVER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 1, 1)), RDMA_PORT);
+    const RECEIVER_TUN_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 1, 233)), RDMA_PORT);
     const NETMASK: IpAddr = IpAddr::V4(Ipv4Addr::new(255, 255, 255, 0));
 
     #[test]
     fn test_recv_from() {
-        let _sender = NetAgent::new(SENDER_NIC_ADDR.ip(), NETMASK);
-        let _receiver = NetAgent::new(RECEIVER_NIC_ADDR.ip(), NETMASK);
+        let _sender = NetAgent::new(SENDER_ADDR.ip(), NETMASK, SENDER_TUN_ADDR.ip());
+        let receiver = NetAgent::new(RECEIVER_ADDR.ip(), NETMASK, RECEIVER_TUN_ADDR.ip());
 
-        let socket = UdpSocket::bind(SENDER_NIC_ADDR).unwrap();
+        let socket = UdpSocket::bind(SENDER_TUN_ADDR).unwrap();
         let expected: [u8; 32] = core::array::from_fn(|i| i as u8);
-        socket
-            .send_to(
-                &expected,
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 1, 2)), RDMA_PORT),
-            )
-            .unwrap();
+        socket.send_to(&expected, RECEIVER_ADDR).unwrap();
 
         let mut buf = [0u8; 64];
-        let (len, src) = _receiver.recv_from(&mut buf).unwrap();
+        let (len, src) = receiver.recv_from(&mut buf).unwrap();
 
         assert_eq!(expected, &buf[..len]);
-        assert_eq!(src, SENDER_NIC_ADDR.ip());
+        assert_eq!(SENDER_TUN_ADDR.ip(), src);
+    }
+
+    #[test]
+    fn test_sent_to() {
+        let sender = NetAgent::new(SENDER_ADDR.ip(), NETMASK, SENDER_TUN_ADDR.ip());
+        let receiver = NetAgent::new(RECEIVER_ADDR.ip(), NETMASK, RECEIVER_TUN_ADDR.ip());
+
+        let expected: [u8; 32] = core::array::from_fn(|i| i as u8);
+        let _len = sender.send_to(&expected, RECEIVER_ADDR.ip()).unwrap();
+
+        let mut buf = [0u8; 64];
+        let (len, src) = receiver.recv_from(&mut buf).unwrap();
+
+        assert_eq!(expected, &buf[..len]);
+        assert_eq!(src, SENDER_ADDR.ip());
     }
 }

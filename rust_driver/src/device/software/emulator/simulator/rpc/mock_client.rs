@@ -24,7 +24,7 @@ impl Client for MockRpcClient {
         let frame = *self.frame.borrow();
         let fragment = *self.fragment.borrow();
 
-        let filename = &format!("fragment-{frame}-{fragment}.bin");
+        let filename = &format!(".cache/captures/fragment-{frame}-{fragment}.bin");
         *self.fragment.borrow_mut() += 1;
 
         let json = std::fs::read(filename).unwrap();
