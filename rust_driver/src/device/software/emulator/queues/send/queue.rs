@@ -11,13 +11,13 @@ use crate::device::software::emulator::DeviceInner;
 
 // SendQueue is same type as RegistersSendHandle
 #[derive(Debug)]
-pub(crate) struct SendQueue<'q, UA: Agent, Desc = [u8; DESCRIPTOR_SIZE]> {
-    dev: &'q DeviceInner<UA>,
+pub(crate) struct SendQueue<'q, UA: Agent, DC: Client, Desc = [u8; DESCRIPTOR_SIZE]> {
+    dev: &'q DeviceInner<UA, DC>,
     _descriptors: PhantomData<*mut [Desc]>,
 }
 
-impl<'q, UA: Agent> SendQueue<'q, UA> {
-    pub(crate) fn new(dev: &'q DeviceInner<UA>) -> Self {
+impl<'q, UA: Agent, DC: Client> SendQueue<'q, UA, DC> {
+    pub(crate) fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -25,7 +25,7 @@ impl<'q, UA: Agent> SendQueue<'q, UA> {
     }
 }
 
-impl<UA: Agent, Desc> WorkQueue for SendQueue<'_, UA, Desc> {
+impl<UA: Agent, DC: Client, Desc> WorkQueue for SendQueue<'_, UA, DC, Desc> {
     type Descriptor = Desc;
 
     fn addr(&self) -> u64 {
@@ -58,7 +58,7 @@ impl<UA: Agent, Desc> WorkQueue for SendQueue<'_, UA, Desc> {
     }
 }
 
-impl<UA: Agent> SendQueue<'_, UA> {
+impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
     pub(crate) fn doorbell(&self, _head: u32) {
         self.dev.tx_send.send(()).unwrap();
     }
@@ -98,8 +98,8 @@ impl<UA: Agent> SendQueue<'_, UA> {
     }
 }
 
-impl<UA: Agent> DeviceInner<UA> {
-    pub(crate) fn send_queue(&self) -> SendQueue<'_, UA> {
+impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
+    pub(crate) fn send_queue(&self) -> SendQueue<'_, UA, DC> {
         SendQueue::new(self)
     }
 }

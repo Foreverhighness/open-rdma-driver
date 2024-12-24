@@ -5,6 +5,7 @@ use eui48::MacAddress;
 
 use super::Opcode;
 use crate::device::layout::CmdQueueReqDescSetNetworkParam;
+use crate::device::software::emulator::dma::Client;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::command_request::common::{
     CommonHeader, Header, Unknown, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE,
@@ -22,7 +23,7 @@ impl SetNetworkParameter {
     const OPCODE: Opcode = Opcode::SetNetworkParam;
 }
 
-impl<UA: Agent> HandleDescriptor<SetNetworkParameter> for DeviceInner<UA> {
+impl<UA: Agent, DC: Client> HandleDescriptor<SetNetworkParameter> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 

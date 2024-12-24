@@ -64,7 +64,7 @@ fn generate_segments_from_request(mut va: u64, len: u32, path_mtu: u32) -> Vec<S
     segments
 }
 
-impl<UA: Agent> HandleDescriptor<Write> for DeviceInner<UA> {
+impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 

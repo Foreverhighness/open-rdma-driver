@@ -15,12 +15,12 @@ macro_rules! declare_and_impl_basic_register {
             }
 
             #[derive(Debug)]
-            pub struct [<$prefix $csr_type $part Handler>]<'h, UA: Agent> {
+            pub struct [<$prefix $csr_type $part Handler>]<'h, UA: Agent, DC: Client> {
                 reg: &'h [<$prefix $csr_type $part>],
-                dev: &'h DeviceInner<UA>,
+                dev: &'h DeviceInner<UA, DC>,
             }
-            impl<'h, UA: Agent> [<$prefix $csr_type $part Handler>]<'h, UA> {
-                pub(crate) fn new<'r, 'd>(reg: &'r [<$prefix $csr_type $part>], dev: &'d DeviceInner<UA>) -> Self
+            impl<'h, UA: Agent, DC: Client> [<$prefix $csr_type $part Handler>]<'h, UA, DC> {
+                pub(crate) fn new<'r, 'd>(reg: &'r [<$prefix $csr_type $part>], dev: &'d DeviceInner<UA, DC>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -28,7 +28,7 @@ macro_rules! declare_and_impl_basic_register {
                     Self { reg, dev }
                 }
             }
-            impl<UA: Agent> csr::[<RegisterQueue $part>] for [<$prefix $csr_type $part Handler>]<'_, UA> {}
+            impl<UA: Agent, DC: Client> csr::[<RegisterQueue $part>] for [<$prefix $csr_type $part Handler>]<'_, UA, DC> {}
         }
     };
 }
@@ -57,12 +57,12 @@ macro_rules! declare_and_impl_address {
             }
 
             #[derive(Debug)]
-            pub struct [<$prefix $csr_type AddressHandler>]<'h, UA: Agent> {
+            pub struct [<$prefix $csr_type AddressHandler>]<'h, UA: Agent, DC: Client> {
                 addr: &'h [<$prefix $csr_type Address>],
-                dev: &'h DeviceInner<UA>,
+                dev: &'h DeviceInner<UA, DC>,
             }
-            impl<'h, UA: Agent> [<$prefix $csr_type AddressHandler>]<'h, UA> {
-                pub(crate) fn new<'r, 'd>(addr: &'r [<$prefix $csr_type Address>], dev: &'d DeviceInner<UA>) -> Self
+            impl<'h, UA: Agent, DC: Client> [<$prefix $csr_type AddressHandler>]<'h, UA, DC> {
+                pub(crate) fn new<'r, 'd>(addr: &'r [<$prefix $csr_type Address>], dev: &'d DeviceInner<UA, DC>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -70,7 +70,7 @@ macro_rules! declare_and_impl_address {
                     Self { addr, dev }
                 }
             }
-            impl<UA: Agent> csr::RegistersQueueAddress for [<$prefix $csr_type AddressHandler>]<'_, UA> {
+            impl<UA: Agent, DC: Client> csr::RegistersQueueAddress for [<$prefix $csr_type AddressHandler>]<'_, UA, DC> {
                 fn high(&self) -> impl csr::RegisterQueueAddressHigh {
                     [<$prefix $csr_type AddressHighHandler>]::new(&self.addr.high, self.dev)
                 }
@@ -93,12 +93,12 @@ macro_rules! declare_and_impl_queue {
             }
 
             #[derive(Debug)]
-            pub struct [<$prefix $csr_type Handler>]<'h, UA: Agent> {
+            pub struct [<$prefix $csr_type Handler>]<'h, UA: Agent, DC: Client> {
                 regs: &'h [<$prefix $csr_type>],
-                dev: &'h DeviceInner<UA>,
+                dev: &'h DeviceInner<UA, DC>,
             }
-            impl<'h, UA: Agent> [<$prefix $csr_type Handler>]<'h, UA> {
-                pub(crate) fn new<'r, 'd>(regs: &'r [<$prefix $csr_type>], dev: &'d DeviceInner<UA>) -> Self
+            impl<'h, UA: Agent, DC: Client> [<$prefix $csr_type Handler>]<'h, UA, DC> {
+                pub(crate) fn new<'r, 'd>(regs: &'r [<$prefix $csr_type>], dev: &'d DeviceInner<UA, DC>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -106,8 +106,8 @@ macro_rules! declare_and_impl_queue {
                     Self { regs, dev }
                 }
             }
-            impl<UA: Agent> csr::$csr_type for [<$prefix $csr_type Handler>]<'_, UA> {}
-            impl<UA: Agent> csr::RegistersQueue for [<$prefix $csr_type Handler>]<'_, UA> {
+            impl<UA: Agent, DC: Client> csr::$csr_type for [<$prefix $csr_type Handler>]<'_, UA, DC> {}
+            impl<UA: Agent, DC: Client> csr::RegistersQueue for [<$prefix $csr_type Handler>]<'_, UA, DC> {
                 fn addr(&self) -> impl csr::RegistersQueueAddress {
                     [<$prefix $csr_type AddressHandler>]::new(&self.regs.addr, self.dev)
                 }
@@ -127,6 +127,7 @@ macro_rules! declare_and_impl_queue {
 macro_rules! register_queue_csr {
     ($base_addr:literal, $prefix:ident, $csr_type:ident, $csr_type_upper:ident) => {
         use $crate::device::software::emulator::device_api::csr;
+        use $crate::device::software::emulator::dma::Client;
         use $crate::device::software::emulator::net::Agent;
         use $crate::device::software::emulator::DeviceInner;
 

@@ -26,7 +26,7 @@ impl<'msg> WriteLast<'msg> {
     }
 }
 
-impl<UA: Agent> HandleMessage<Message<'_>> for DeviceInner<UA> {
+impl<UA: Agent, DC: Client> HandleMessage<Message<'_>> for DeviceInner<UA, DC> {
     fn handle(&self, msg: &Message) -> crate::device::software::emulator::Result {
         let msg = msg.bth;
         // TODO(fh): dma part

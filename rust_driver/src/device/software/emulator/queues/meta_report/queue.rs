@@ -7,13 +7,13 @@ use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::DeviceInner;
 
 #[derive(Debug)]
-pub(crate) struct MetaReportQueue<'q, UA: Agent, Desc = [u8; DESCRIPTOR_SIZE]> {
-    dev: &'q DeviceInner<UA>,
+pub(crate) struct MetaReportQueue<'q, UA: Agent, DC: Client, Desc = [u8; DESCRIPTOR_SIZE]> {
+    dev: &'q DeviceInner<UA, DC>,
     _descriptors: PhantomData<*mut [Desc]>,
 }
 
-impl<'q, UA: Agent> MetaReportQueue<'q, UA> {
-    pub(crate) fn new(dev: &'q DeviceInner<UA>) -> Self {
+impl<'q, UA: Agent, DC: Client> MetaReportQueue<'q, UA, DC> {
+    pub(crate) fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -21,7 +21,7 @@ impl<'q, UA: Agent> MetaReportQueue<'q, UA> {
     }
 }
 
-impl<UA: Agent, Desc> CompleteQueue for MetaReportQueue<'_, UA, Desc> {
+impl<UA: Agent, DC: Client, Desc> CompleteQueue for MetaReportQueue<'_, UA, DC, Desc> {
     type Descriptor = Desc;
 
     fn addr(&self) -> u64 {
@@ -53,8 +53,8 @@ impl<UA: Agent, Desc> CompleteQueue for MetaReportQueue<'_, UA, Desc> {
     }
 }
 
-impl<UA: Agent> DeviceInner<UA> {
-    pub(crate) fn meta_report_queue(&self) -> MetaReportQueue<'_, UA> {
+impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
+    pub(crate) fn meta_report_queue(&self) -> MetaReportQueue<'_, UA, DC> {
         MetaReportQueue::new(self)
     }
 }

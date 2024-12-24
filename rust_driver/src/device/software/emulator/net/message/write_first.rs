@@ -27,8 +27,8 @@ impl<'msg> WriteFirst<'msg> {
     }
 }
 
-impl<UA: Agent> Message<DeviceInner<UA>> for WriteFirst<'_> {
-    fn handle(&self, dev: &DeviceInner<UA>) -> crate::device::software::emulator::Result {
+impl<UA: Agent, DC: Client> Message<DeviceInner<UA, DC>> for WriteFirst<'_> {
+    fn handle(&self, dev: &DeviceInner<UA, DC>) -> crate::device::software::emulator::Result {
         let msg = self.bth;
         // TODO(fh): dma part
         {

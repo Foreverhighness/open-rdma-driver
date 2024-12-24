@@ -6,7 +6,7 @@ use smoltcp::wire::{IpProtocol, IpRepr, Ipv4Packet, Ipv6Packet, UdpPacket, UdpRe
 
 use crate::device::software::emulator::net::{self, RDMA_PORT};
 
-pub(crate) struct NetAgent {
+pub struct NetAgent {
     tun: tun::Device,
     tun_ip: IpAddr,
 

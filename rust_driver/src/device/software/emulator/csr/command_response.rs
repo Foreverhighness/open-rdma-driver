@@ -4,7 +4,7 @@ use crate::device::software::emulator::device_api::csr::RegisterOperation;
 
 register_queue_csr!(0x0000, Emulator, CommandResponse, COMMAND_RESPONSE);
 
-impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandResponseAddressHighHandler<'_, UA> {
+impl<UA: Agent, DC: Client> RegisterOperation for EmulatorRegistersCommandResponseAddressHighHandler<'_, UA, DC> {
     type Output = u32;
 
     fn read(&self) -> Self::Output {
@@ -19,7 +19,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandResponseAddressHig
     }
 }
 
-impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandResponseAddressLowHandler<'_, UA> {
+impl<UA: Agent, DC: Client> RegisterOperation for EmulatorRegistersCommandResponseAddressLowHandler<'_, UA, DC> {
     type Output = u32;
 
     fn read(&self) -> Self::Output {
@@ -34,7 +34,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandResponseAddressLow
     }
 }
 
-impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandResponseHeadHandler<'_, UA> {
+impl<UA: Agent, DC: Client> RegisterOperation for EmulatorRegistersCommandResponseHeadHandler<'_, UA, DC> {
     type Output = u32;
 
     fn read(&self) -> Self::Output {
@@ -51,7 +51,7 @@ impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandResponseHeadHandle
     }
 }
 
-impl<UA: Agent> RegisterOperation for EmulatorRegistersCommandResponseTailHandler<'_, UA> {
+impl<UA: Agent, DC: Client> RegisterOperation for EmulatorRegistersCommandResponseTailHandler<'_, UA, DC> {
     type Output = u32;
 
     fn read(&self) -> Self::Output {

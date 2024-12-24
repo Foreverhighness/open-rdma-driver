@@ -2,6 +2,7 @@ use core::fmt;
 
 use super::Opcode;
 use crate::device::layout::CmdQueueReqDescQpManagementSeg0;
+use crate::device::software::emulator::dma::Client;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queue_pair::Context;
 use crate::device::software::emulator::queues::command_request::common::{
@@ -24,7 +25,7 @@ impl QueuePairManagement {
     const OPCODE: Opcode = Opcode::QpManagement;
 }
 
-impl<UA: Agent> HandleDescriptor<QueuePairManagement> for DeviceInner<UA> {
+impl<UA: Agent, DC: Client> HandleDescriptor<QueuePairManagement> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 

@@ -26,6 +26,7 @@ mod handler {
     use core::net::{IpAddr, Ipv4Addr};
 
     use super::{HandleMessage, Message};
+    use crate::device::software::emulator::dma::Client;
     use crate::device::software::emulator::errors::Error;
     use crate::device::software::emulator::net::message::acknowledge::Acknowledge;
     use crate::device::software::emulator::net::message::write_first::WriteFirst;
@@ -36,7 +37,7 @@ mod handler {
     use crate::device::software::types::RdmaMessage;
     use crate::device::ToHostWorkRbDescOpcode;
 
-    impl<UA: Agent> DeviceInner<UA> {
+    impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
         pub(crate) fn handle_message(&self, msg: &RdmaMessage, src: IpAddr) -> Result<(), Error> {
             log::debug!("handle network message {msg:?}");
             match msg.meta_data.common_meta().opcode {

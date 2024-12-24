@@ -11,10 +11,11 @@ use super::address::DmaAddress;
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::{ControlStatusRegisters, RawDevice};
 use super::mr_table::MemoryRegionTable;
-use super::{dma, memory_region, net, queue_pair, simulator};
+use super::{dma, emulator, memory_region, net, queue_pair, simulator};
 use crate::device::software::packet_processor::PacketProcessor;
 
 pub type Simulator = DeviceInner<simulator::UdpAgent, simulator::DmaClient>;
+pub type Emulator = DeviceInner<emulator::NetAgent, emulator::DmaClient>;
 
 #[derive(Debug)]
 enum State {
@@ -41,7 +42,7 @@ impl NetParameter {
 }
 
 #[derive(Debug)]
-pub struct DeviceInner<UA = simulator::UdpAgent, DC = simulator::DmaClient, MRT = memory_region::Table>
+pub struct DeviceInner<UA, DC, MRT = memory_region::Table>
 where
     UA: net::Agent,
     DC: dma::Client,
@@ -109,9 +110,10 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> DeviceInner<UA, DC
     }
 }
 
-impl<UA> DeviceInner<UA>
+impl<UA, DC> DeviceInner<UA, DC>
 where
     UA: net::Agent + Send + Sync + 'static,
+    DC: dma::Client + Send + Sync + 'static,
 {
     pub(super) fn start_net<F>(self: &Arc<Self>, f: F)
     where
@@ -174,7 +176,7 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Drop for DeviceInn
     }
 }
 
-impl<UA: net::Agent> RawDevice for DeviceInner<UA> {
+impl<UA: net::Agent, DC: dma::Client> RawDevice for DeviceInner<UA, DC> {
     fn csrs(&self) -> impl ControlStatusRegisters {
         EmulatorCsrsHandler::new(&self.csrs, self)
     }

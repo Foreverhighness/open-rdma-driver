@@ -10,17 +10,17 @@ use crate::device::software::emulator::DeviceInner;
 
 // CommandRequestQueue is same type as RegistersCommandRequestHandle
 #[derive(Debug)]
-pub(crate) struct CommandRequestQueue<'q, UA: Agent, Desc = Unknown> {
-    dev: &'q DeviceInner<UA>,
+pub(crate) struct CommandRequestQueue<'q, UA: Agent, DC: Client, Desc = Unknown> {
+    dev: &'q DeviceInner<UA, DC>,
     _descriptors: PhantomData<*mut [Desc]>,
     // addr: u64,
     // head: u32,
     // tail: u32,
-    // dev: Arc<Emulator<UA>>,
+    // dev: Arc<Emulator<UA, DC>>,
 }
 
-impl<'q, UA: Agent> CommandRequestQueue<'q, UA> {
-    pub(crate) fn new(dev: &'q DeviceInner<UA>) -> Self {
+impl<'q, UA: Agent, DC: Client> CommandRequestQueue<'q, UA, DC> {
+    pub(crate) fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -28,7 +28,7 @@ impl<'q, UA: Agent> CommandRequestQueue<'q, UA> {
     }
 }
 
-impl<UA: Agent, Desc> WorkQueue for CommandRequestQueue<'_, UA, Desc> {
+impl<UA: Agent, DC: Client, Desc> WorkQueue for CommandRequestQueue<'_, UA, DC, Desc> {
     type Descriptor = Desc;
 
     fn addr(&self) -> u64 {
@@ -61,7 +61,7 @@ impl<UA: Agent, Desc> WorkQueue for CommandRequestQueue<'_, UA, Desc> {
     }
 }
 
-impl<UA: Agent> CommandRequestQueue<'_, UA> {
+impl<UA: Agent, DC: Client> CommandRequestQueue<'_, UA, DC> {
     pub(crate) fn doorbell(&self, _head: u32) {
         self.dev.tx_command_request.send(()).unwrap();
     }
@@ -86,8 +86,8 @@ impl<UA: Agent> CommandRequestQueue<'_, UA> {
     }
 }
 
-impl<UA: Agent> DeviceInner<UA> {
-    pub(crate) fn command_request_queue(&self) -> CommandRequestQueue<'_, UA> {
+impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
+    pub(crate) fn command_request_queue(&self) -> CommandRequestQueue<'_, UA, DC> {
         CommandRequestQueue::new(self)
     }
 }

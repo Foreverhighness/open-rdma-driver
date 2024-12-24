@@ -3,6 +3,7 @@ use core::fmt;
 use super::Opcode;
 use crate::device::layout::CmdQueueReqDescUpdateMrTable;
 use crate::device::software::emulator::address::VirtualAddress;
+use crate::device::software::emulator::dma::Client;
 use crate::device::software::emulator::memory_region::Context;
 use crate::device::software::emulator::mr_table::MemoryRegionTable;
 use crate::device::software::emulator::net::Agent;
@@ -23,7 +24,7 @@ impl UpdateMemoryRegionTable {
     const OPCODE: Opcode = Opcode::UpdateMrTable;
 }
 
-impl<UA: Agent> HandleDescriptor<UpdateMemoryRegionTable> for DeviceInner<UA> {
+impl<UA: Agent, DC: Client> HandleDescriptor<UpdateMemoryRegionTable> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 

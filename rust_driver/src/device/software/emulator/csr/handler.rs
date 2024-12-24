@@ -4,9 +4,10 @@ use super::meta_report::EmulatorRegistersMetaReportHandler;
 use super::send::EmulatorRegistersSendHandler;
 use super::EmulatorCsrsHandler;
 use crate::device::software::emulator::device_api::{csr, ControlStatusRegisters};
+use crate::device::software::emulator::dma::Client;
 use crate::device::software::emulator::net::Agent;
 
-impl<UA: Agent> ControlStatusRegisters for EmulatorCsrsHandler<'_, UA> {
+impl<UA: Agent, DC: Client> ControlStatusRegisters for EmulatorCsrsHandler<'_, UA, DC> {
     fn cmd_request(&self) -> impl csr::RegistersCommandRequest {
         EmulatorRegistersCommandRequestHandler::new(&self.csrs.cmd_request, self.dev)
     }

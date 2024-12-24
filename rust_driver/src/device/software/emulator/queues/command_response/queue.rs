@@ -7,13 +7,13 @@ use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::DeviceInner;
 
 #[derive(Debug)]
-pub(crate) struct CommandResponseQueue<'q, UA: Agent, Desc = Unknown> {
-    dev: &'q DeviceInner<UA>,
+pub(crate) struct CommandResponseQueue<'q, UA: Agent, DC: Client, Desc = Unknown> {
+    dev: &'q DeviceInner<UA, DC>,
     _descriptors: PhantomData<*mut [Desc]>,
 }
 
-impl<'q, UA: Agent> CommandResponseQueue<'q, UA> {
-    pub(crate) fn new(dev: &'q DeviceInner<UA>) -> Self {
+impl<'q, UA: Agent, DC: Client> CommandResponseQueue<'q, UA, DC> {
+    pub(crate) fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -21,7 +21,7 @@ impl<'q, UA: Agent> CommandResponseQueue<'q, UA> {
     }
 }
 
-impl<UA: Agent, Desc> CompleteQueue for CommandResponseQueue<'_, UA, Desc> {
+impl<UA: Agent, DC: Client, Desc> CompleteQueue for CommandResponseQueue<'_, UA, DC, Desc> {
     type Descriptor = Desc;
 
     fn addr(&self) -> u64 {
@@ -53,8 +53,8 @@ impl<UA: Agent, Desc> CompleteQueue for CommandResponseQueue<'_, UA, Desc> {
     }
 }
 
-impl<UA: Agent> DeviceInner<UA> {
-    pub(crate) fn command_response_queue(&self) -> CommandResponseQueue<'_, UA> {
+impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
+    pub(crate) fn command_response_queue(&self) -> CommandResponseQueue<'_, UA, DC> {
         CommandResponseQueue::new(self)
     }
 }

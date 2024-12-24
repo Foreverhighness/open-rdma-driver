@@ -21,7 +21,7 @@ impl UpdatePageTable {
     const OPCODE: Opcode = Opcode::UpdatePageTable;
 }
 
-impl<UA: Agent> HandleDescriptor<UpdatePageTable> for DeviceInner<UA> {
+impl<UA: Agent, DC: Client> HandleDescriptor<UpdatePageTable> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 
