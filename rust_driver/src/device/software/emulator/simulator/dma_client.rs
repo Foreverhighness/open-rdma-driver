@@ -192,16 +192,13 @@ impl<R: rpc::Client> DmaClient<R> {
     /// [`read`]: core::ptr::read
     /// [read-ownership]: core::ptr::read#ownership-of-the-returned-value
     /// [valid]: core::ptr#safety
-    unsafe fn copy_nonoverlapping<T>(&self, mut src: *const T, dst: u64, count: usize) {
-        let size = size_of::<T>();
+    unsafe fn copy_from_nonoverlapping<T>(&self, src: *const T, dst: u64, count: usize) {
+        let len = size_of::<T>() * count;
 
-        for _ in 0..count {
-            // Safety: Byte slice
-            let slice = unsafe { core::slice::from_raw_parts(src.cast(), size) };
-            src = unsafe { src.add(1) };
+        // Safety: Byte slice
+        let slice = unsafe { core::slice::from_raw_parts(src.cast(), len) };
 
-            unsafe { self.write_bytes(dst, slice) };
-        }
+        unsafe { self.write_bytes(dst, slice) };
     }
 
     unsafe fn read_bytes(&self, mut addr: u64, mut data: &mut [MaybeUninit<u8>]) {
@@ -277,8 +274,8 @@ impl<T, R: rpc::Client> dma::PointerMut for Ptr<'_, T, R> {
     // Turn into more generic version? but it is hard to implement
     // unsafe fn copy_nonoverlapping(self, src: impl PointerConst<Output = T>, count: usize) {}
 
-    unsafe fn copy_nonoverlapping(self, src: *const T, count: usize) {
-        unsafe { self.client.copy_nonoverlapping(src, self.addr.into(), count) }
+    unsafe fn copy_from_nonoverlapping(self, src: *const T, count: usize) {
+        unsafe { self.client.copy_from_nonoverlapping(src, self.addr.into(), count) }
     }
 
     unsafe fn add(mut self, count: u64) -> Self {
@@ -291,16 +288,22 @@ impl<T, R: rpc::Client> dma::PointerMut for Ptr<'_, T, R> {
         self
     }
 
-    unsafe fn write_bytes(self, data: &[u8]) {
-        unsafe { self.client.write_bytes(self.addr.into(), data) }
-    }
+    // unsafe fn write_bytes(self, data: &[u8]) {
+    //     unsafe { self.client.write_bytes(self.addr.into(), data) }
+    // }
 
-    unsafe fn read_bytes(self, len: usize) -> Vec<u8> {
-        let mut vec = Vec::with_capacity(len);
-        let data = vec.spare_capacity_mut();
+    // unsafe fn read_bytes(self, len: usize) -> Vec<u8> {
+    //     let mut vec = Vec::with_capacity(len);
+    //     let data = vec.spare_capacity_mut();
+    //     unsafe { self.client.read_bytes(self.addr.into(), data) };
+    //     unsafe { vec.set_len(len) };
+    //     vec
+    // }
+
+    unsafe fn copy_to_nonoverlapping(self, dest: *mut Self::Output, count: usize) {
+        let len = size_of::<T>() * count;
+        let data = unsafe { core::slice::from_raw_parts_mut(dest.cast(), len) };
         unsafe { self.client.read_bytes(self.addr.into(), data) };
-        unsafe { vec.set_len(len) };
-        vec
     }
 }
 
@@ -382,7 +385,7 @@ mod tests {
             let val: $typ = $val;
             unsafe { $cli.write::<$typ>($addr, val) };
             assert_eq!(unsafe { $cli.read::<$typ>($addr) }, val);
-            unsafe { $cli.copy_nonoverlapping(&raw const val, $addr, 1) };
+            unsafe { $cli.copy_from_nonoverlapping(&raw const val, $addr, 1) };
             assert_eq!(unsafe { $cli.read::<$typ>($addr) }, val);
         };
     }

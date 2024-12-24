@@ -101,8 +101,10 @@ impl<UA: Agent> HandleDescriptor<Write> for DeviceInner<UA> {
                     .query(key, first.va, MemAccessTypeFlag::empty(), &self.page_table)
                     .unwrap();
                 let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
-                let data = unsafe { ptr.read_bytes(first.len as usize) };
-                let payload = PayloadInfo::new_with_data(data.as_ptr(), first.len as usize);
+                let len = first.len as usize;
+                let mut data = vec![0u8; len];
+                unsafe { ptr.copy_to_nonoverlapping(data.as_mut_ptr(), len) };
+                let payload = PayloadInfo::new_with_data(data.as_ptr(), len);
                 let write_first_msg = RdmaMessage {
                     meta_data: Metadata::General(RdmaGeneralMeta {
                         common_meta: common_meta(ToHostWorkRbDescOpcode::RdmaWriteFirst, psn, false),
@@ -132,7 +134,10 @@ impl<UA: Agent> HandleDescriptor<Write> for DeviceInner<UA> {
                     .query(key, last.va, MemAccessTypeFlag::empty(), &self.page_table)
                     .unwrap();
                 let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
-                let data = unsafe { ptr.read_bytes(last.len as usize) };
+                let len = last.len as usize;
+                let mut data = vec![0u8; len];
+                unsafe { ptr.copy_to_nonoverlapping(data.as_mut_ptr(), len) };
+
                 let payload = PayloadInfo::new_with_data(data.as_ptr(), last.len as usize);
                 let write_last_msg = RdmaMessage {
                     meta_data: Metadata::General(RdmaGeneralMeta {

@@ -36,8 +36,6 @@ impl<UA: Agent> Message<DeviceInner<UA>> for WriteFirst<'_> {
             assert_eq!(data.len(), 1, "currently only consider one Sge");
             let data = data[0];
 
-            let data = unsafe { core::slice::from_raw_parts(data.data, data.len) };
-
             let Metadata::General(ref header) = msg.meta_data else {
                 panic!("currently only consider write first and write last packet");
             };
@@ -51,7 +49,7 @@ impl<UA: Agent> Message<DeviceInner<UA>> for WriteFirst<'_> {
                 .expect("validation failed");
 
             let ptr = dev.dma_client.with_dma_addr::<u8>(dma_addr);
-            unsafe { ptr.write_bytes(data) };
+            unsafe { ptr.copy_from_nonoverlapping(data.data, data.len) };
         }
 
         let descriptor = message_to_bthreth(msg);

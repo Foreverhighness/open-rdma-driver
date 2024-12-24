@@ -32,13 +32,21 @@ pub trait PointerMut: Clone + Copy {
     /// NOTE: this has the *opposite* argument order of [`core::ptr::copy_nonoverlapping`].
     ///
     /// See [`core::ptr::copy_nonoverlapping`] for safety concerns and examples.
-    unsafe fn copy_nonoverlapping(self, src: *const Self::Output, count: usize);
+    unsafe fn copy_from_nonoverlapping(self, src: *const Self::Output, count: usize);
+
+    /// Copies `count * size_of<T>` bytes from `self` to `dest`. The source
+    /// and destination may *not* overlap.
+    ///
+    /// NOTE: this has the *same* argument order as [`core::ptr::copy_nonoverlapping`].
+    ///
+    /// See [`core::ptr::copy_nonoverlapping`] for safety concerns and examples.
+    unsafe fn copy_to_nonoverlapping(self, dest: *mut Self::Output, count: usize);
 
     unsafe fn add(self, count: u64) -> Self;
 
-    unsafe fn write_bytes(self, data: &[u8]);
+    // unsafe fn write_bytes(self, data: &[u8]);
 
-    unsafe fn read_bytes(self, len: usize) -> Vec<u8>;
+    // unsafe fn read_bytes(self, len: usize) -> Vec<u8>;
 }
 
 // For zero copy, may not use
