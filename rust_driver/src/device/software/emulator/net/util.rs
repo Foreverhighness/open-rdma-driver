@@ -2,7 +2,7 @@ use core::net::Ipv4Addr;
 
 use smoltcp::wire::{Ipv4Packet, UdpPacket};
 
-use crate::device::software::emulator::net::RDMA_PROT;
+use crate::device::software::emulator::net::RDMA_PORT;
 use crate::device::software::emulator::queues::{
     AckExtendedTransportHeader, BaseTransportHeader, BthAeth, BthReth, RdmaExtendedTransportHeader,
 };
@@ -103,9 +103,9 @@ pub(super) fn generate_ack(msg: &RdmaMessage) -> Vec<u8> {
     let mut buf = [0; 48];
     let len = PacketWriter::new(&mut buf)
         .src_addr(Ipv4Addr::new(192, 168, 0, 3))
-        .src_port(RDMA_PROT)
+        .src_port(RDMA_PORT)
         .dest_addr(Ipv4Addr::new(192, 168, 0, 2))
-        .dest_port(RDMA_PROT)
+        .dest_port(RDMA_PORT)
         .ip_id(1)
         .message(&ack)
         .write()
@@ -120,9 +120,9 @@ pub(crate) fn generate_payload_from_msg(msg: &RdmaMessage, src: Ipv4Addr, dst: I
     let mut buf = vec![0; 8192];
     let len = PacketWriter::new(&mut buf)
         .src_addr(src)
-        .src_port(RDMA_PROT)
+        .src_port(RDMA_PORT)
         .dest_addr(dst)
-        .dest_port(RDMA_PROT)
+        .dest_port(RDMA_PORT)
         .ip_id(1)
         .message(&msg)
         .write()

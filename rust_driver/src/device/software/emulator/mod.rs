@@ -1,6 +1,7 @@
 //! Emulator for blue rdma device
 
 pub mod device_api;
+pub mod emulator;
 pub mod simulator;
 
 mod address;

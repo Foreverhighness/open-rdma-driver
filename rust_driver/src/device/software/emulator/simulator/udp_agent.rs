@@ -11,7 +11,7 @@ use smoltcp::wire::{
     UdpPacket, UdpRepr,
 };
 
-use super::super::net::{Agent, Result, RDMA_PROT};
+use super::super::net::{Agent, Result, RDMA_PORT};
 use super::rpc::{Client, RpcClient, RpcNetIfcRxTxPayload};
 
 #[derive(Debug)]
@@ -140,8 +140,8 @@ impl<R: Client> UdpAgent<R> {
         const HOP_LIMIT: u8 = 64;
 
         let udp_repr = UdpRepr {
-            src_port: RDMA_PROT,
-            dst_port: RDMA_PROT,
+            src_port: RDMA_PORT,
+            dst_port: RDMA_PORT,
         };
 
         let ip_repr = IpRepr::new(
