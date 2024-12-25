@@ -149,6 +149,7 @@ use checker::{PacketChecker, PacketCheckerContext, RecvContextMap};
 use core_affinity::CoreId;
 use ctrl_poller::{ControlPoller, ControlPollerContext};
 use derive_builder::Builder;
+use device::software::emulator::emulator::device::EmulatorDevice;
 use device::{
     ToCardCtrlRbDescCommon, ToCardCtrlRbDescSetNetworkParam, ToCardCtrlRbDescSetRawPacketReceiveMeta, ToCardWorkRbDesc,
     ToCardWorkRbDescBuilder, ToCardWorkRbDescOpcode,
@@ -386,13 +387,17 @@ impl Device {
                 }))
             }
             DeviceType::Software => {
-                let adaptor = SoftwareDevice::new(
-                    config.network_config.ipaddr,
-                    DEFAULT_RMDA_PORT,
-                    config.strategy,
-                    config.scheduler_size,
-                )
-                .map_err(Error::Device)?;
+                // let adaptor = SoftwareDevice::new(
+                //     config.network_config.ipaddr,
+                //     DEFAULT_RMDA_PORT,
+                //     config.strategy,
+                //     config.scheduler_size,
+                // )
+                // .map_err(Error::Device)?;
+                let [a, b, c, _] = config.network_config.ipaddr.octets();
+                let tun_ip = Ipv4Addr::new(a, b, c, 233).into();
+                let adaptor = EmulatorDevice::new(config.strategy, scheduler_core, config.scheduler_size, tun_ip)
+                    .map_err(|e| Error::Device(Box::new(e)))?;
                 let use_hugepage = adaptor.use_hugepage();
                 let pg_table_buf = Buffer::new(MR_PGT_LENGTH * MR_PGT_ENTRY_SIZE, use_hugepage)
                     .map_err(|e| Error::ResourceNoAvailable(format!("hugepage {e}")))?;
