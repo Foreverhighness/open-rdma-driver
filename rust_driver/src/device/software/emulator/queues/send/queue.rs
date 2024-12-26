@@ -57,7 +57,7 @@ impl<UA: Agent, DC: Client, Desc> WorkQueue for SendQueue<'_, UA, DC, Desc> {
 
     fn advance(&self) {
         let old = self.tail();
-        let val = old + 1;
+        let val = (old + 1) % 128;
         log::trace!("advance send tail {old:010x} -> {val:010x}");
         self.dev.csrs.send.tail.write(self.tail() + 1);
     }
