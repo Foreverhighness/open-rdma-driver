@@ -4,7 +4,7 @@ use super::common::{BaseTransportHeader, MessageSequenceNumberAndCanAutoAck, Psn
 use super::{DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[repr(C, align(32))]
-struct Bth {
+pub struct Bth {
     psn_and_req_status: PsnAndReqStatus,
     bth: BaseTransportHeader,
     msn: MessageSequenceNumberAndCanAutoAck,

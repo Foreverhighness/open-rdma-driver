@@ -4,7 +4,8 @@ use smoltcp::wire::{Ipv4Packet, UdpPacket};
 
 use crate::device::software::emulator::net::RDMA_PORT;
 use crate::device::software::emulator::queues::{
-    AckExtendedTransportHeader, BaseTransportHeader, BthAeth, BthReth, RdmaExtendedTransportHeader,
+    AckExtendedTransportHeader, BaseTransportHeader, BthAeth, BthReth, ImmDt, RdmaExtendedTransportHeader,
+    SecondaryReth,
 };
 use crate::device::software::packet::{AETH, BTH};
 use crate::device::software::packet_processor::PacketWriter;
@@ -59,6 +60,45 @@ pub(super) fn message_to_bthreth(msg: &RdmaMessage) -> BthReth {
         },
         Metadata::Acknowledge(_header) => todo!(),
     }
+}
+
+pub(super) fn message_to_secondary_reth(msg: &RdmaMessage) -> SecondaryReth {
+    let Metadata::General(ref header) = msg.meta_data else {
+        unreachable!("logic error");
+    };
+
+    assert_eq!(
+        header.common_meta.opcode,
+        ToHostWorkRbDescOpcode::RdmaReadRequest,
+        "only read request contains secondary reth"
+    );
+
+    let header = header
+        .secondary_reth
+        .as_ref()
+        .expect("read request without secondary reth");
+
+    let addr = header.va.into();
+    let local_key = header.rkey.get().into();
+    SecondaryReth::new(addr, local_key)
+}
+
+pub(super) fn message_to_imm_dt(msg: &RdmaMessage) -> ImmDt {
+    let Metadata::General(ref header) = msg.meta_data else {
+        unreachable!("logic error");
+    };
+
+    assert!(
+        matches!(
+            header.common_meta.opcode,
+            ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate | ToHostWorkRbDescOpcode::RdmaWriteOnlyWithImmediate
+        ),
+        "opcode mismatch, contains immediate data"
+    );
+
+    let data = header.imm.expect("without immediate data");
+
+    ImmDt::new(data)
 }
 
 pub(super) fn message_to_bthaeth(msg: &RdmaMessage) -> BthAeth {

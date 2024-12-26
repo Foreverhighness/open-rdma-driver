@@ -8,7 +8,7 @@ use crate::device::software::emulator::types::{
 use crate::device::ToHostWorkRbDescAethCode;
 
 #[repr(C)]
-pub(crate) struct BaseTransportHeader(BTHPart0, BTHPart1);
+pub struct BaseTransportHeader(BTHPart0, BTHPart1);
 
 impl BaseTransportHeader {
     pub const fn new(
@@ -72,7 +72,7 @@ struct BTHPart1 {
 }
 
 #[repr(C)]
-pub(crate) struct RdmaExtendedTransportHeader {
+pub struct RdmaExtendedTransportHeader {
     local_virtual_addr: [u8; 8],
     local_key: MemoryRegionKey,
     len: u32,
@@ -103,7 +103,7 @@ impl RdmaExtendedTransportHeader {
 }
 
 #[repr(transparent)]
-pub(crate) struct AckExtendedTransportHeader(MetaReportQueueDescFragAETH<[u8; 8]>);
+pub struct AckExtendedTransportHeader(MetaReportQueueDescFragAETH<[u8; 8]>);
 
 impl AckExtendedTransportHeader {
     pub fn new(
@@ -156,10 +156,22 @@ pub(super) struct SecondaryRdmaExtendedTransportHeader {
     local_key: MemoryRegionKey,
 }
 
+impl SecondaryRdmaExtendedTransportHeader {
+    pub const fn new(addr: VirtualAddress, local_key: MemoryRegionKey) -> Self {
+        Self { addr, local_key }
+    }
+}
+
 #[derive(Debug)]
 #[repr(C)]
 pub(super) struct ImmediateExtendedTransportHeader {
     data: u32,
+}
+
+impl ImmediateExtendedTransportHeader {
+    pub const fn new(data: u32) -> Self {
+        Self { data }
+    }
 }
 
 #[bitfield_struct::bitfield(u32)]

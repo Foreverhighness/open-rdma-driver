@@ -1,6 +1,6 @@
 use super::HandleMessage;
 use crate::device::software::emulator::dma::Client;
-use crate::device::software::emulator::net::util::message_to_bthreth;
+use crate::device::software::emulator::net::util::{message_to_bthreth, message_to_imm_dt};
 use crate::device::software::emulator::net::{Agent, Error};
 use crate::device::software::emulator::queues::complete_queue::CompleteQueue;
 use crate::device::software::emulator::DeviceInner;
@@ -26,12 +26,17 @@ impl<'msg> Message<'msg> {
 impl<UA: Agent, DC: Client> HandleMessage<Message<'_>> for DeviceInner<UA, DC> {
     fn handle(&self, msg: Message) -> crate::device::software::emulator::Result {
         let msg = msg.bth;
-        // TODO(fh): dma part
+
         self.copy_to_with_key(msg)?;
 
-        let descriptor = message_to_bthreth(msg);
-        log::debug!("push meta report: {descriptor:?}");
-        unsafe { self.meta_report_queue().push(descriptor) };
+        let descriptor0 = message_to_bthreth(msg);
+        log::debug!("push meta report: {descriptor0:?}");
+        unsafe { self.meta_report_queue().push(descriptor0) };
+
+        let descriptor1 = message_to_imm_dt(msg);
+        log::debug!("push meta report: {descriptor1:?}");
+        unsafe { self.meta_report_queue().push(descriptor1) };
+
         Ok(())
     }
 }

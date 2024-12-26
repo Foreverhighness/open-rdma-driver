@@ -37,6 +37,7 @@ impl Segment {
     }
 }
 
+// TODO(fh): rewrite with gen block in Rust Edition 2024
 fn generate_segments_from_request(mut va: u64, len: u32, path_mtu: u32) -> Vec<Segment> {
     let mut segments = Vec::new();
 
@@ -92,12 +93,12 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
 
         match segments.as_slice() {
             [_only] => todo!(),
-            [first, _middles @ .., last] => {
+            [first, middles @ .., last] => {
                 let mut remote_va = req.common.remote_addr.0;
                 let dma_addr = self
                     .mr_table
                     .query(key, first.va, MemAccessTypeFlag::empty(), &self.page_table)
-                    .unwrap();
+                    .expect("verify key failed");
                 let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
                 let len = first.len as usize;
                 let mut data = vec![0u8; len];
@@ -126,6 +127,41 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
 
                 remote_va += first.len as u64;
                 psn = psn.wrapping_add(1);
+
+                for middle in middles {
+                    let dma_addr = self
+                        .mr_table
+                        .query(key, middle.va, MemAccessTypeFlag::empty(), &self.page_table)
+                        .expect("verify key failed");
+                    let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
+                    let len = middle.len as usize;
+                    let mut data = vec![0u8; len];
+                    unsafe { ptr.copy_to_nonoverlapping(data.as_mut_ptr(), len) };
+                    let payload = PayloadInfo::new_with_data(data.as_ptr(), len);
+                    let write_middle_msg = RdmaMessage {
+                        meta_data: Metadata::General(RdmaGeneralMeta {
+                            common_meta: common_meta(ToHostWorkRbDescOpcode::RdmaWriteMiddle, psn, false),
+                            reth: RethHeader {
+                                va: remote_va,
+                                rkey,
+                                len: req.common.total_len,
+                            },
+                            imm: None,
+                            secondary_reth: None,
+                        }),
+                        payload,
+                    };
+                    let payload = generate_payload_from_msg(&write_middle_msg, src, dst);
+                    let _ = self
+                        .udp_agent
+                        .get()
+                        .unwrap()
+                        .send_to(&payload, dst.into())
+                        .expect("send error");
+
+                    remote_va += middle.len as u64;
+                    psn = psn.wrapping_add(1);
+                }
 
                 let dma_addr = self
                     .mr_table

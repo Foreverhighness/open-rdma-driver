@@ -5,7 +5,7 @@ use super::{BaseTransportHeader, DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[derive(Debug)]
 #[repr(C, align(32))]
-pub(crate) struct BthAeth {
+pub struct BthAeth {
     req_status: PsnAndReqStatus,
     bth: BaseTransportHeader,
     aeth: AckExtendedTransportHeader,
