@@ -5,7 +5,9 @@ use super::operations::WriteBuilder;
 use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
-use crate::device::software::emulator::queues::send::operations::Opcode;
+use crate::device::software::emulator::queues::send::operations::{
+    Opcode, ReadBuilder, ReadResponseBuilder, WriteWithImmediateBuilder,
+};
 use crate::device::software::emulator::queues::work_queue::WorkQueue;
 use crate::device::software::emulator::DeviceInner;
 
@@ -95,9 +97,56 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
 
                     self.dev.handle(&write_req, &mut ()).unwrap();
                 }
-                Opcode::WriteWithImm => todo!(),
-                Opcode::Read => todo!(),
-                Opcode::ReadResp => todo!(),
+                Opcode::WriteWithImm => {
+                    // WriteWithImm use 3 descriptors
+                    let builder = WriteWithImmediateBuilder::from_seg0(seg0);
+
+                    let raw1 = unsafe { self.pop() };
+                    let seg1 = Seg1::from_bytes(raw1);
+
+                    let builder = builder.with_seg1(seg1);
+
+                    let raw2 = unsafe { self.pop() };
+                    let sge = VariableLengthSge::from_bytes(raw2);
+
+                    let write_with_immediate = builder.with_sge(sge);
+
+                    self.dev
+                        .handle(&write_with_immediate, &mut ())
+                        .expect("handle WriteWithImm error");
+                }
+                Opcode::Read => {
+                    // Read use 3 descriptors
+                    let builder = ReadBuilder::from_seg0(seg0);
+
+                    let raw1 = unsafe { self.pop() };
+                    let seg1 = Seg1::from_bytes(raw1);
+
+                    let builder = builder.with_seg1(seg1);
+
+                    let raw2 = unsafe { self.pop() };
+                    let sge = VariableLengthSge::from_bytes(raw2);
+
+                    let read = builder.with_sge(sge);
+
+                    self.dev.handle(&read, &mut ()).expect("handle Read error");
+                }
+                Opcode::ReadResp => {
+                    // ReadResp use 3 descriptors
+                    let builder = ReadResponseBuilder::from_seg0(seg0);
+
+                    let raw1 = unsafe { self.pop() };
+                    let seg1 = Seg1::from_bytes(raw1);
+
+                    let builder = builder.with_seg1(seg1);
+
+                    let raw2 = unsafe { self.pop() };
+                    let sge = VariableLengthSge::from_bytes(raw2);
+
+                    let read_response = builder.with_sge(sge);
+
+                    self.dev.handle(&read_response, &mut ()).expect("handle ReadResp error");
+                }
             }
         }
     }

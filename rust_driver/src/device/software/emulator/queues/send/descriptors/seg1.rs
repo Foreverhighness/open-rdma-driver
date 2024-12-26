@@ -16,7 +16,7 @@ pub(crate) struct Seg1 {
     mac: [u8; 6],
     _reserved0: core::mem::MaybeUninit<[u8; 2]>,
     dest_qpn_inner: common::QueuePairNumber,
-    pub immediate: u32,
+    pub immediate_data: u32,
     _reserved1: core::mem::MaybeUninit<[u8; 8]>,
 }
 type Descriptor = Seg1;
@@ -80,7 +80,7 @@ impl fmt::Debug for Seg1 {
             .field("packet_sequence_number", &self.psn_inner)
             .field("mac", &self.mac)
             .field("queue_pair_number", &self.dest_qpn_inner)
-            .field("immediate", &self.immediate)
+            .field("immediate_data", &self.immediate_data)
             .finish()
     }
 }

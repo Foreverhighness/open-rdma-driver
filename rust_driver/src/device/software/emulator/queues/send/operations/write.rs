@@ -74,8 +74,6 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
         let segments = generate_segments_from_request(req.sge.local_addr.0, req.sge.len, path_mtu);
         let rkey = Key::new(req.common.remote_key.get());
         let dst = req.common.dest_ip;
-        let src = Ipv4Addr::new(192, 168, 0, 2);
-        let mut psn = req.common.psn;
         let key = req.sge.local_key;
 
         let common_meta = move |opcode, psn, ack_req| {
@@ -91,129 +89,65 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
             }
         };
 
-        match segments.as_slice() {
-            [_only] => todo!(),
-            [first, middles @ .., last] => {
-                let mut remote_va = req.common.remote_addr.0;
-                let dma_addr = self
-                    .mr_table
-                    .query(key, first.va, MemAccessTypeFlag::empty(), &self.page_table)
-                    .expect("verify key failed");
-                let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
-                let len = first.len as usize;
-                let mut data = vec![0u8; len];
-                unsafe { ptr.copy_to_nonoverlapping(data.as_mut_ptr(), len) };
-                let payload = PayloadInfo::new_with_data(data.as_ptr(), len);
-                let write_first_msg = RdmaMessage {
-                    meta_data: Metadata::General(RdmaGeneralMeta {
-                        common_meta: common_meta(ToHostWorkRbDescOpcode::RdmaWriteFirst, psn, false),
-                        reth: RethHeader {
-                            va: remote_va,
-                            rkey,
-                            len: req.common.total_len,
-                        },
-                        imm: None,
-                        secondary_reth: None,
-                    }),
-                    payload,
-                };
-                let payload = generate_payload_from_msg(&write_first_msg, src, dst);
-                let _ = self
-                    .udp_agent
-                    .get()
-                    .unwrap()
-                    .send_to(&payload, dst.into())
-                    .expect("send error");
+        let send_write_message = move |opcode, psn, ack_req, remote_va, segment: &Segment| {
+            let dma_addr = self
+                .mr_table
+                .query(key, segment.va, MemAccessTypeFlag::empty(), &self.page_table)
+                .expect("verify key failed");
+            let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
+            let len = segment.len as usize;
+            let mut data = vec![0u8; len];
+            unsafe { ptr.copy_to_nonoverlapping(data.as_mut_ptr(), len) };
+
+            let payload = PayloadInfo::new_with_data(data.as_ptr(), len);
+
+            let write_msg = RdmaMessage {
+                meta_data: Metadata::General(RdmaGeneralMeta {
+                    common_meta: common_meta(opcode, psn, ack_req),
+                    reth: RethHeader {
+                        va: remote_va,
+                        rkey,
+                        len: req.common.total_len,
+                    },
+                    imm: None,
+                    secondary_reth: None,
+                }),
+                payload,
+            };
+            // TODO(fh): hardcode for calculate Invariant CRC, should remove
+            let src = Ipv4Addr::new(192, 168, 0, 2);
+            let payload = generate_payload_from_msg(&write_msg, src, dst);
+            let _ = self
+                .udp_agent
+                .get()
+                .unwrap()
+                .send_to(&payload, dst.into())
+                .expect("send error");
+        };
+
+        let mut remote_va = req.common.remote_addr.0;
+        let mut psn = req.common.psn;
+        match *segments.as_slice() {
+            [ref only] => {
+                send_write_message(ToHostWorkRbDescOpcode::RdmaWriteOnly, psn, false, remote_va, only);
+            }
+            [ref first, ref middles @ .., ref last] => {
+                send_write_message(ToHostWorkRbDescOpcode::RdmaWriteFirst, psn, false, remote_va, first);
 
                 remote_va += first.len as u64;
                 psn = psn.wrapping_add(1);
 
                 for middle in middles {
-                    let dma_addr = self
-                        .mr_table
-                        .query(key, middle.va, MemAccessTypeFlag::empty(), &self.page_table)
-                        .expect("verify key failed");
-                    let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
-                    let len = middle.len as usize;
-                    let mut data = vec![0u8; len];
-                    unsafe { ptr.copy_to_nonoverlapping(data.as_mut_ptr(), len) };
-                    let payload = PayloadInfo::new_with_data(data.as_ptr(), len);
-                    let write_middle_msg = RdmaMessage {
-                        meta_data: Metadata::General(RdmaGeneralMeta {
-                            common_meta: common_meta(ToHostWorkRbDescOpcode::RdmaWriteMiddle, psn, false),
-                            reth: RethHeader {
-                                va: remote_va,
-                                rkey,
-                                len: req.common.total_len,
-                            },
-                            imm: None,
-                            secondary_reth: None,
-                        }),
-                        payload,
-                    };
-                    let payload = generate_payload_from_msg(&write_middle_msg, src, dst);
-                    let _ = self
-                        .udp_agent
-                        .get()
-                        .unwrap()
-                        .send_to(&payload, dst.into())
-                        .expect("send error");
+                    send_write_message(ToHostWorkRbDescOpcode::RdmaWriteMiddle, psn, false, remote_va, middle);
 
                     remote_va += middle.len as u64;
                     psn = psn.wrapping_add(1);
                 }
 
-                let dma_addr = self
-                    .mr_table
-                    .query(key, last.va, MemAccessTypeFlag::empty(), &self.page_table)
-                    .unwrap();
-                let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
-                let len = last.len as usize;
-                let mut data = vec![0u8; len];
-                unsafe { ptr.copy_to_nonoverlapping(data.as_mut_ptr(), len) };
-
-                let payload = PayloadInfo::new_with_data(data.as_ptr(), last.len as usize);
-                let write_last_msg = RdmaMessage {
-                    meta_data: Metadata::General(RdmaGeneralMeta {
-                        common_meta: common_meta(ToHostWorkRbDescOpcode::RdmaWriteLast, psn, true),
-                        reth: RethHeader {
-                            va: remote_va,
-                            rkey,
-                            len: last.len,
-                        },
-                        imm: None,
-                        secondary_reth: None,
-                    }),
-                    payload,
-                };
-                let payload = generate_payload_from_msg(&write_last_msg, src, dst);
-                let _ = self
-                    .udp_agent
-                    .get()
-                    .unwrap()
-                    .send_to(&payload, dst.into())
-                    .expect("send error");
+                send_write_message(ToHostWorkRbDescOpcode::RdmaWriteLast, psn, true, remote_va, last);
             }
             [] => todo!(),
         }
-
-        // let addr = req.common.dest_ip;
-
-        // let files = vec![
-        //     ".cache/captures/ethernet-frame-0.bin",
-        //     ".cache/captures/ethernet-frame-1.bin",
-        // ];
-
-        // for file in files {
-        //     let buffer = std::fs::read(file).unwrap();
-
-        //     let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
-        //     let ipv4_packet = Ipv4Packet::new_checked(eth_frame.payload()).unwrap();
-        //     let udp_packet = UdpPacket::new_checked(ipv4_packet.payload()).unwrap();
-
-        //     let payload = udp_packet.payload();
-        //     let amount = self.udp_agent.get().unwrap().send_to(payload, addr.into())?;
-        // }
 
         Ok(())
     }

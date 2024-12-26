@@ -15,7 +15,7 @@ pub(super) struct Common {
     pub remote_key: MemoryRegionKey,
     pub dest_ip: Ipv4Addr,
     pub dest_qpn: QueuePairNumber,
-    pub mac: MacAddress,
+    pub dest_mac: MacAddress,
     pub path_mtu_kind: PathMtuKind,
     pub send_flag: SendFlag,
     pub qp_type: QueuePairType,
@@ -39,7 +39,7 @@ impl Common {
             remote_key,
             dest_ip,
             dest_qpn: 0,
-            mac: MacAddress::default(),
+            dest_mac: MacAddress::default(),
             path_mtu_kind: PathMtuKind::default(),
             send_flag: SendFlag::default(),
             qp_type: QueuePairType::Rc,
@@ -51,7 +51,7 @@ impl Common {
     /// Update Common part from Seg1
     pub fn with_seg1(&mut self, seg1: &Seg1) {
         self.dest_qpn = seg1.dest_queue_pair_number();
-        self.mac = seg1.mac();
+        self.dest_mac = seg1.mac();
         self.path_mtu_kind = seg1.path_mtu_kind().unwrap();
         self.send_flag = seg1.send_flag();
         self.qp_type = seg1.queue_pair_type().unwrap();
