@@ -9,7 +9,7 @@ pub(crate) struct BthAeth {
     req_status: PsnAndReqStatus,
     bth: BaseTransportHeader,
     aeth: AckExtendedTransportHeader,
-    _reserved: [bool; 12],
+    _reserved: core::mem::MaybeUninit<[u8; 12]>,
 }
 type Descriptor = BthAeth;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
@@ -22,7 +22,7 @@ impl BthAeth {
             req_status,
             bth,
             aeth,
-            _reserved: [false; 12],
+            _reserved: core::mem::MaybeUninit::uninit(),
         }
     }
 

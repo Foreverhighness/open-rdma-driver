@@ -6,7 +6,7 @@ use super::{DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 #[repr(C, align(32))]
 struct SecondaryReth {
     secondary_reth: SecondaryRdmaExtendedTransportHeader,
-    _reserved: [bool; 16],
+    _reserved: core::mem::MaybeUninit<[u8; 16]>,
 }
 type Descriptor = SecondaryReth;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);

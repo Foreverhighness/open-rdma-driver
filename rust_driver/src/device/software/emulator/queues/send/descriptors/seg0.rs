@@ -13,7 +13,7 @@ pub(crate) struct Seg0 {
     pub remote_key: MemoryRegionKey,
     dest_ip: [u8; 4],
     pub partition_key: u16,
-    _reserved: [bool; 6],
+    _reserved: core::mem::MaybeUninit<[u8; 6]>,
 }
 type Descriptor = Seg0;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);

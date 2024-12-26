@@ -14,10 +14,10 @@ pub(crate) struct Seg1 {
     pmtu_send_flag_qp_type_sge_cnt: common::PMtuAndSendFlagAndQpTypeAndSgeCount,
     psn_inner: common::PacketSequenceNumber,
     mac: [u8; 6],
-    _reserved0: [bool; 2],
+    _reserved0: core::mem::MaybeUninit<[u8; 2]>,
     dest_qpn_inner: common::QueuePairNumber,
     pub immediate: u32,
-    _reserved1: [bool; 8],
+    _reserved1: core::mem::MaybeUninit<[u8; 8]>,
 }
 type Descriptor = Seg1;
 const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);

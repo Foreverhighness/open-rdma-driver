@@ -8,7 +8,7 @@ struct Bth {
     psn_and_req_status: PsnAndReqStatus,
     bth: BaseTransportHeader,
     msn: MessageSequenceNumberAndCanAutoAck,
-    _reserved: [bool; 12],
+    _reserved: core::mem::MaybeUninit<[u8; 12]>,
     can_auto_ack: MessageSequenceNumberAndCanAutoAck,
 }
 type Descriptor = Bth;
