@@ -12,7 +12,10 @@ use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::{ControlStatusRegisters, RawDevice};
 use super::mr_table::MemoryRegionTable;
 use super::{dma, emulator, memory_region, net, queue_pair, simulator};
+use crate::device::software::emulator::address::VirtualAddress;
+use crate::device::software::emulator::dma::PointerMut;
 use crate::device::software::packet_processor::PacketProcessor;
+use crate::device::software::types::{Metadata, RdmaMessage};
 
 pub type Simulator = DeviceInner<simulator::UdpAgent, simulator::DmaClient>;
 pub type Emulator = DeviceInner<emulator::NetAgent, emulator::DmaClient>;
@@ -179,5 +182,30 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> Drop for DeviceInn
 impl<UA: net::Agent, DC: dma::Client> RawDevice for DeviceInner<UA, DC> {
     fn csrs(&self) -> impl ControlStatusRegisters {
         EmulatorCsrsHandler::new(&self.csrs, self)
+    }
+}
+
+impl<UA: net::Agent, DC: dma::Client> DeviceInner<UA, DC> {
+    // TODO(fh): refactor to `copy_to_with_key(&self, src: &[u8], dst: &mut [u8], key: Key) -> super::Result`
+    // or `copy_to_with_key(&self, src: &[u8], dst: ScatterGatherElement) -> super::Result`
+    pub(crate) fn copy_to_with_key(&self, msg: &RdmaMessage) -> super::Result {
+        let data = &msg.payload.sg_list;
+        assert_eq!(data.len(), 1, "currently only consider one Sge");
+        let data = data[0];
+
+        let Metadata::General(ref header) = msg.meta_data else {
+            panic!("currently only consider write first and write last packet");
+        };
+        let key = header.reth.rkey.get().into();
+        let va = VirtualAddress(header.reth.va);
+        let access_flag = header.needed_permissions();
+
+        let dma_addr = self
+            .memory_region_table()
+            .query(key, va, access_flag, &self.page_table)?;
+
+        let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
+        unsafe { ptr.copy_from_nonoverlapping(data.data, data.len) };
+        Ok(())
     }
 }

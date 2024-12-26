@@ -1,10 +1,8 @@
 use core::net::Ipv4Addr;
 
-use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
-
 use super::common::Common;
 use crate::device::software::emulator::address::VirtualAddress;
-use crate::device::software::emulator::dma::{self, Client, PointerMut};
+use crate::device::software::emulator::dma::{Client, PointerMut};
 use crate::device::software::emulator::mr_table::MemoryRegionTable;
 use crate::device::software::emulator::net::util::generate_payload_from_msg;
 use crate::device::software::emulator::net::Agent;
@@ -234,9 +232,9 @@ mod tests {
     use core::ffi::{c_int, c_void};
 
     use libc::{off_t, size_t};
+    use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
 
     use super::*;
-    use crate::device::software::packet_processor::PacketProcessor;
 
     #[test]
     fn test_generate_segments_from_request() {

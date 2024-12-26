@@ -43,7 +43,12 @@ impl<UA: Agent, DC: Client, Desc> WorkQueue for SendQueue<'_, UA, DC, Desc> {
     fn index(&self, index: u32) -> impl PointerMut<Output = Self::Descriptor> {
         let addr = self
             .addr()
-            .checked_add(u64::from(index) * u64::try_from(size_of::<Self::Descriptor>()).unwrap())
+            .checked_add(
+                u64::try_from(size_of::<Self::Descriptor>())
+                    .unwrap()
+                    .checked_mul(u64::from(index))
+                    .unwrap(),
+            )
             .unwrap()
             .into();
 
@@ -65,11 +70,11 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
 
     pub(crate) fn run(&self) {
         while let Ok(()) = self.dev.rx_send.recv() {
-            let raw = unsafe { self.pop() };
+            let raw0 = unsafe { self.pop() };
 
-            let seg0 = Seg0::from_bytes(raw);
+            let seg0 = Seg0::from_bytes(raw0);
             // TODO(fh): move assertions into `Seg0::from_bytes_checked`.
-            assert!(seg0.header.valid());
+            assert!(seg0.header.valid(), "invalid seg0 header");
             log::info!("recv send seg0: {seg0:?}");
             let opcode = seg0.header.opcode().expect("send opcode parse failed");
 
@@ -78,13 +83,13 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
                     // write use 3 descriptors
                     let builder = WriteBuilder::from_seg0(seg0);
 
-                    let raw = unsafe { self.pop() };
-                    let seg1 = Seg1::from_bytes(raw);
+                    let raw1 = unsafe { self.pop() };
+                    let seg1 = Seg1::from_bytes(raw1);
 
                     let builder = builder.with_seg1(seg1);
 
-                    let raw = unsafe { self.pop() };
-                    let sge = VariableLengthSge::from_bytes(raw);
+                    let raw2 = unsafe { self.pop() };
+                    let sge = VariableLengthSge::from_bytes(raw2);
 
                     let write_req = builder.with_sge(sge);
 

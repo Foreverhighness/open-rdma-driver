@@ -20,4 +20,7 @@ pub enum Error {
 
     #[error("net io error: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("crc check failed")]
+    Crc,
 }

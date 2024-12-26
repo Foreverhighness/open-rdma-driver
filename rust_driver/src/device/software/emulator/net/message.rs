@@ -11,26 +11,34 @@ mod write_middle;
 mod write_only;
 mod write_only_with_immediate;
 
-use super::super::Result;
+pub use acknowledge::Acknowledge;
+pub use read_request::ReadRequest;
+pub use read_response_first::ReadResponseFirst;
+pub use read_response_last::ReadResponseLast;
+pub use read_response_middle::ReadResponseMiddle;
+pub use read_response_only::ReadResponseOnly;
+pub use write_first::WriteFirst;
+pub use write_last::WriteLast;
+pub use write_last_with_immediate::WriteLastWithImmediate;
+pub use write_middle::WriteMiddle;
+pub use write_only::WriteOnly;
+pub use write_only_with_immediate::WriteOnlyWithImmediate;
 
 pub(crate) trait Message<Dev> {
-    fn handle(&self, dev: &Dev) -> Result;
+    fn handle(&self, dev: &Dev) -> super::super::Result;
 }
 
 // which is better?
 pub(crate) trait HandleMessage<Msg> {
-    fn handle(&self, msg: &Msg) -> Result;
+    fn handle(&self, msg: Msg) -> super::super::Result;
 }
 
 mod handler {
-    use core::net::{IpAddr, Ipv4Addr};
+    use core::net::IpAddr;
 
-    use super::{HandleMessage, Message};
+    use super::*;
     use crate::device::software::emulator::dma::Client;
     use crate::device::software::emulator::errors::Error;
-    use crate::device::software::emulator::net::message::acknowledge::Acknowledge;
-    use crate::device::software::emulator::net::message::write_first::WriteFirst;
-    use crate::device::software::emulator::net::message::write_last::WriteLast;
     use crate::device::software::emulator::net::util::generate_ack;
     use crate::device::software::emulator::net::Agent;
     use crate::device::software::emulator::DeviceInner;
@@ -41,11 +49,22 @@ mod handler {
         pub(crate) fn handle_message(&self, msg: &RdmaMessage, src: IpAddr) -> Result<(), Error> {
             log::debug!("handle network message {msg:?}");
             match msg.meta_data.common_meta().opcode {
-                ToHostWorkRbDescOpcode::RdmaWriteFirst => WriteFirst::parse(msg)?.handle(self)?,
-                ToHostWorkRbDescOpcode::RdmaWriteMiddle => todo!(),
-                ToHostWorkRbDescOpcode::RdmaWriteLast => self.handle(&WriteLast::parse(msg)?)?,
-                ToHostWorkRbDescOpcode::Acknowledge => self.handle_acknowledge(Acknowledge::parse(msg)?),
-                _ => todo!(),
+                ToHostWorkRbDescOpcode::RdmaWriteFirst => self.handle(WriteFirst::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaWriteMiddle => self.handle(WriteMiddle::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaWriteLast => self.handle(WriteLast::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate => {
+                    self.handle(WriteLastWithImmediate::parse(msg)?)?
+                }
+                ToHostWorkRbDescOpcode::RdmaWriteOnly => self.handle(WriteOnly::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaWriteOnlyWithImmediate => {
+                    self.handle(WriteOnlyWithImmediate::parse(msg)?)?
+                }
+                ToHostWorkRbDescOpcode::RdmaReadResponseFirst => self.handle(ReadResponseFirst::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaReadResponseMiddle => self.handle(ReadResponseMiddle::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaReadResponseLast => self.handle(ReadResponseLast::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaReadResponseOnly => self.handle(ReadResponseOnly::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaReadRequest => self.handle(ReadRequest::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::Acknowledge => self.handle(Acknowledge::parse(msg)?)?,
             }
 
             let need_ack = msg.meta_data.common_meta().ack_req;
@@ -53,48 +72,6 @@ mod handler {
                 let buf = generate_ack(&msg);
                 let _ = self.udp_agent.get().unwrap().send_to(&buf, src);
             }
-
-            // TODO(fh): validate part
-
-            // TODO(fh): dma part
-            // {
-            //     let data = &msg.payload.sg_list;
-            //     assert_eq!(data.len(), 1, "currently only consider one Sge");
-            //     let data = data[0];
-
-            //     let data = unsafe { core::slice::from_raw_parts(data.data, data.len) };
-
-            //     let Metadata::General(ref header) = msg.meta_data else {
-            //         panic!("currently only consider write first and write last packet");
-            //     };
-            //     let key = header.reth.rkey.get().into();
-            //     let va = VirtualAddress(header.reth.va);
-            //     let access_flag = header.needed_permissions();
-
-            //     let dma_addr = self
-            //         .memory_region_table()
-            //         .query(key, va, access_flag, &self.page_table)
-            //         .expect("validation failed");
-
-            //     let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
-            //     unsafe { ptr.write_bytes(data) };
-            // }
-
-            // // TODO(fh): parse from raw part, currently RdmaMessage don't contains this field
-            // let need_auto_ack = true;
-            // let is_write_last = msg.meta_data.common_meta().opcode == ToHostWorkRbDescOpcode::RdmaWriteLast;
-            // if need_auto_ack && is_write_last {
-            //     let buf = generate_ack(&msg);
-            //     let _ = self
-            //         .udp_agent
-            //         .get()
-            //         .unwrap()
-            //         .send_to(&buf, core::net::IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)));
-            // }
-
-            // let descriptor = message_to_bthreth(msg);
-            // log::debug!("push meta report: {descriptor:?}");
-            // unsafe { self.meta_report_queue().push(descriptor) };
 
             Ok(())
         }

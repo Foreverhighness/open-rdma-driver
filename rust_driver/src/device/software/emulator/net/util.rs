@@ -17,7 +17,17 @@ pub(super) fn message_to_bthreth(msg: &RdmaMessage) -> BthReth {
     let meta = &msg.meta_data;
     match meta {
         Metadata::General(header) => match header.common_meta.opcode {
-            ToHostWorkRbDescOpcode::RdmaWriteFirst | ToHostWorkRbDescOpcode::RdmaWriteLast => {
+            ToHostWorkRbDescOpcode::RdmaWriteFirst
+            | ToHostWorkRbDescOpcode::RdmaWriteMiddle
+            | ToHostWorkRbDescOpcode::RdmaWriteLast
+            | ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate
+            | ToHostWorkRbDescOpcode::RdmaWriteOnly
+            | ToHostWorkRbDescOpcode::RdmaWriteOnlyWithImmediate
+            | ToHostWorkRbDescOpcode::RdmaReadRequest
+            | ToHostWorkRbDescOpcode::RdmaReadResponseFirst
+            | ToHostWorkRbDescOpcode::RdmaReadResponseMiddle
+            | ToHostWorkRbDescOpcode::RdmaReadResponseLast
+            | ToHostWorkRbDescOpcode::RdmaReadResponseOnly => {
                 // TODO(fh): Add helper function to all operation
                 // Operation -> Descriptor
                 let descriptor = {
@@ -45,7 +55,7 @@ pub(super) fn message_to_bthreth(msg: &RdmaMessage) -> BthReth {
                 };
                 descriptor
             }
-            _ => todo!(),
+            ToHostWorkRbDescOpcode::Acknowledge => todo!(),
         },
         Metadata::Acknowledge(_header) => todo!(),
     }

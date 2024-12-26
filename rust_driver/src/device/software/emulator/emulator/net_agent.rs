@@ -1,5 +1,5 @@
 use core::fmt;
-use core::net::{IpAddr, Ipv4Addr};
+use core::net::IpAddr;
 
 use smoltcp::phy::ChecksumCapabilities;
 use smoltcp::wire::{IpProtocol, IpRepr, Ipv4Packet, Ipv6Packet, UdpPacket, UdpRepr};
@@ -37,6 +37,10 @@ impl NetAgent {
         let (src_ip, dst_ip, datagram) = match self.ip {
             IpAddr::V4(_) => {
                 let packet = Ipv4Packet::new_checked(buffer)?;
+                if !packet.verify_checksum() {
+                    return Err(net::Error::Crc);
+                }
+
                 (
                     packet.src_addr().into_address(),
                     packet.dst_addr().into_address(),
@@ -130,14 +134,20 @@ impl net::Agent for NetAgent {
 
     fn recv_from(&self, buf: &mut [u8]) -> net::Result<(usize, IpAddr)> {
         let mut buffer = vec![0u8; 8192];
-        let len = self.tun.recv(&mut buffer)?;
-        log::trace!("tun recv {:?}", &buffer[..len]);
+        loop {
+            let len = self.tun.recv(&mut buffer)?;
+            log::trace!("tun recv {:?}", &buffer[..len]);
 
-        let (payload, origin) = self.parse_packet_and_extract_payload(&buffer[..len])?;
-        let len = buf.len().min(payload.len());
-        buf[..len].copy_from_slice(&payload[..len]);
+            let (payload, origin) = match self.parse_packet_and_extract_payload(&buffer[..len]) {
+                Ok(res) => res,
+                Err(net::Error::Crc) => continue,
+                _ => todo!(),
+            };
+            let len = buf.len().min(payload.len());
+            buf[..len].copy_from_slice(&payload[..len]);
 
-        Ok((len, origin))
+            return Ok((len, origin));
+        }
     }
 }
 
