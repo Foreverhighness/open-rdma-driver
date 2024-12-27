@@ -29,20 +29,16 @@ impl<UA: Agent, DC: Client> HandleDescriptor<UpdatePageTable> for DeviceInner<UA
         log::debug!("handle {request:?}");
 
         let dma_addr = request.dma_addr();
-        let mut ptr = self.dma_client.with_dma_addr::<u64>(dma_addr);
+        let ptr = self.dma_client.with_dma_addr(dma_addr);
 
-        let len = request.dma_read_length() / 8;
-        let mut entries = Vec::with_capacity(len.try_into().unwrap());
+        let len = usize::try_from(request.dma_read_length() / 8).unwrap();
+        let mut entries = Vec::with_capacity(len);
 
-        for _ in 0..len {
-            let dma_addr = unsafe { ptr.read() }.into();
+        let entries_uninit = entries.spare_capacity_mut();
 
-            log::trace!("insert pa: {dma_addr:?} into page table");
-
-            entries.push(dma_addr);
-
-            ptr = unsafe { ptr.add(1) };
-        }
+        unsafe { ptr.copy_to_nonoverlapping(entries_uninit.as_mut_ptr(), len) };
+        // SAFETY: entries are init
+        unsafe { entries.set_len(len) };
 
         let page_table = self.page_table.pin();
         let offset = request.start_index();

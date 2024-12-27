@@ -431,4 +431,17 @@ mod tests {
             assert_eq!(expect, val);
         }
     }
+
+    #[test]
+    fn test_client_u64() {
+        use rand::SeedableRng;
+        let rpc = MockRpc::new(1024);
+        let client = DmaClient::new(0, rpc);
+
+        let mut rng = StdRng::seed_from_u64(0);
+
+        case!(client, 0, [1u8, 2, 3, 4], [u8; 4]);
+        case!(client, 0, core::array::from_fn::<u64, 66, _>(|_| rng.gen()), [u64; 66]);
+        case!(client, 32, core::array::from_fn::<u64, 20, _>(|_| rng.gen()), [u64; 20]);
+    }
 }

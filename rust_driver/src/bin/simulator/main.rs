@@ -20,7 +20,7 @@ fn main() {
     let (read_thread, write_thread, stop) = csr_proxy.run();
 
     println!("running simulator");
-    std::thread::sleep(Duration::from_secs(180));
+    std::thread::sleep(Duration::from_secs(1800));
     println!("exit simulator");
 
     stop.store(true, core::sync::atomic::Ordering::Relaxed);
