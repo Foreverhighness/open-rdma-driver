@@ -129,7 +129,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
         let mut psn = req.common.psn;
         match *segments.as_slice() {
             [ref only] => {
-                send_write_message(ToHostWorkRbDescOpcode::RdmaWriteOnly, psn, false, remote_va, only);
+                send_write_message(ToHostWorkRbDescOpcode::RdmaWriteOnly, psn, true, remote_va, only);
             }
             [ref first, ref middles @ .., ref last] => {
                 send_write_message(ToHostWorkRbDescOpcode::RdmaWriteFirst, psn, false, remote_va, first);

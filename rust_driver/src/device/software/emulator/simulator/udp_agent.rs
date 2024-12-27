@@ -24,13 +24,16 @@ pub struct UdpAgent<R: Client = RpcClient> {
     rpc: R,
 }
 
+// FIXME(fh): remove this hardcode `ip2mac` function, modify `net::Agent` interface?
 fn ip2mac(ip: IpAddr) -> MacAddress {
     if ip == IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)) {
         MacAddress::new([0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xFE])
     } else if ip == IpAddr::V4(Ipv4Addr::new(192, 168, 0, 3)) {
         MacAddress::new([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF])
+    } else if ip == IpAddr::V4(Ipv4Addr::new(0x11, 0x22, 0x33, 0x44)) {
+        MacAddress::new([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF])
     } else {
-        unimplemented!()
+        unimplemented!("{ip}")
     }
 }
 
