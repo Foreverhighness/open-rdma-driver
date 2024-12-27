@@ -115,10 +115,12 @@ mod csr {
     use super::super::super::csr::command_request::REGISTERS_COMMAND_REQUEST_BASE_ADDR;
     use super::super::super::csr::command_response::REGISTERS_COMMAND_RESPONSE_BASE_ADDR;
     use super::super::super::csr::meta_report::REGISTERS_META_REPORT_BASE_ADDR;
+    use super::super::super::csr::reset::REGISTERS_SOFT_RESET;
     use super::super::super::csr::send::REGISTERS_SEND_BASE_ADDR;
     use super::device_api::csr::{RegisterOperation, RegistersQueue, RegistersQueueAddress};
     use super::device_api::ControlStatusRegisters;
     use super::ControlStatusRegistersExt;
+    use crate::device::software::emulator::csr::reset::{HARDWARE_VERSION, REGISTERS_HW_VERSION};
 
     const REGISTERS_SEND_BASE_ADDR_END: u64 = REGISTERS_SEND_BASE_ADDR + 16;
     const REGISTERS_META_REPORT_BASE_ADDR_END: u64 = REGISTERS_META_REPORT_BASE_ADDR + 16;
@@ -168,7 +170,12 @@ mod csr {
                         _ => unreachable!(),
                     }
                 }
-                _ => unimplemented!(),
+                REGISTERS_SOFT_RESET => {
+                    let csr = self.reset();
+                    csr.read()
+                }
+                REGISTERS_HW_VERSION => HARDWARE_VERSION,
+                _ => unimplemented!("read at addr {addr:#018x}"),
             }
         }
 
@@ -214,7 +221,11 @@ mod csr {
                         _ => unreachable!(),
                     }
                 }
-                _ => unimplemented!(),
+                REGISTERS_SOFT_RESET => {
+                    let csr = self.reset();
+                    csr.write(val);
+                }
+                _ => unimplemented!("write at addr {addr:#018x}, val: {val}"),
             };
         }
     }

@@ -37,3 +37,4 @@ pub trait RegistersCommandRequest: RegistersQueue {}
 pub trait RegistersCommandResponse: RegistersQueue {}
 pub trait RegistersSend: RegistersQueue {}
 pub trait RegistersMetaReport: RegistersQueue {}
+pub trait RegisterReset: RegisterOperation<Output = u32> {}

@@ -10,11 +10,13 @@ pub mod handler;
 pub mod meta_report;
 pub mod send;
 
+pub mod reset;
 // mod types;
 
 use command_request::EmulatorRegistersCommandRequest;
 use command_response::EmulatorRegistersCommandResponse;
 use meta_report::EmulatorRegistersMetaReport;
+use reset::EmulatorRegisterReset;
 use send::EmulatorRegistersSend;
 
 use super::dma::Client;
@@ -27,6 +29,7 @@ pub struct EmulatorCsrs {
     pub(crate) cmd_response: EmulatorRegistersCommandResponse,
     pub(crate) meta_report: EmulatorRegistersMetaReport,
     pub(crate) send: EmulatorRegistersSend,
+    pub(crate) reset: EmulatorRegisterReset,
 }
 
 #[derive(Debug)]

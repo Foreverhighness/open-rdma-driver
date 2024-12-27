@@ -1,6 +1,7 @@
 use super::command_request::EmulatorRegistersCommandRequestHandler;
 use super::command_response::EmulatorRegistersCommandResponseHandler;
 use super::meta_report::EmulatorRegistersMetaReportHandler;
+use super::reset::EmulatorRegisterResetHandler;
 use super::send::EmulatorRegistersSendHandler;
 use super::EmulatorCsrsHandler;
 use crate::device::software::emulator::device_api::{csr, ControlStatusRegisters};
@@ -22,5 +23,9 @@ impl<UA: Agent, DC: Client> ControlStatusRegisters for EmulatorCsrsHandler<'_, U
 
     fn send(&self) -> impl csr::RegistersSend {
         EmulatorRegistersSendHandler::new(&self.csrs.send, self.dev)
+    }
+
+    fn reset(&self) -> impl csr::RegisterReset {
+        EmulatorRegisterResetHandler::new(&self.csrs.reset, self.dev)
     }
 }

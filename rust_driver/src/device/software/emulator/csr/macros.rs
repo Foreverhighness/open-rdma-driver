@@ -48,7 +48,7 @@ macro_rules! declare_and_impl_address {
 
                     (high << 32) | low
                 }
-                fn write(&self, val: u64) {
+                pub(super) fn write(&self, val: u64) {
                     let low: u32 = val as u32;
                     let high: u32 = (val >> 32) as u32;
                     self.low.write(low);
