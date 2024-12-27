@@ -114,7 +114,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
                 }),
                 payload,
             };
-            // TODO(fh): hardcode for calculate Invariant CRC, should remove
+            // FIXME(fh): hardcode for calculate Invariant CRC, should remove
             let src = Ipv4Addr::new(192, 168, 0, 2);
             let payload = generate_payload_from_msg(&write_msg, src, dst);
             let _ = self

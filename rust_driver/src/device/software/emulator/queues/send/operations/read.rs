@@ -10,6 +10,7 @@ use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::queues::send::descriptors::{
     ScatterGatherElement, Seg0, Seg1, VariableLengthSge,
 };
+use crate::device::software::emulator::types::SendFlag;
 use crate::device::software::emulator::{DeviceInner, Result};
 use crate::device::software::types::{
     Key, Metadata, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon, RethHeader,
@@ -27,8 +28,62 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Read> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 
-    fn handle(&self, request: &Read, cx: &mut Self::Context) -> Result<Self::Output> {
-        todo!()
+    fn handle(&self, req: &Read, _: &mut Self::Context) -> Result<Self::Output> {
+        log::info!("handle read op: {req:#?}");
+
+        // Question here: When to send ack?
+        let ack_req = req.common.send_flag == SendFlag::IbvSendSignaled;
+
+        let common_meta = {
+            let tran_type = req.common.qp_type.into();
+            let pkey = PKey::new(req.common.msn);
+            let dqpn = Qpn::new(req.common.dest_qpn);
+            move |opcode, psn, ack_req| {
+                RdmaMessageMetaCommon {
+                    tran_type,
+                    opcode,
+                    solicited: false,
+                    // We use the pkey to store msn
+                    pkey,
+                    dqpn,
+                    ack_req,
+                    psn: Psn::new(psn),
+                }
+            }
+        };
+
+        let remote_va = req.common.remote_addr.0;
+        let psn = req.common.psn;
+        let read_msg = RdmaMessage {
+            meta_data: Metadata::General(RdmaGeneralMeta {
+                common_meta: common_meta(ToHostWorkRbDescOpcode::RdmaReadRequest, psn, ack_req),
+                reth: RethHeader {
+                    va: remote_va,
+                    rkey: Key::new(req.common.remote_key.get()),
+                    len: req.common.total_len,
+                },
+                imm: None,
+                secondary_reth: Some(RethHeader {
+                    va: req.sge.local_addr.into(),
+                    rkey: Key::new(req.sge.local_key.get()),
+                    len: req.sge.len,
+                }),
+            }),
+            payload: PayloadInfo::new(),
+        };
+
+        // FIXME(fh): hardcode for calculate Invariant CRC, should remove
+        let src = Ipv4Addr::new(192, 168, 0, 2);
+        let dst = req.common.dest_ip;
+        let payload = generate_payload_from_msg(&read_msg, src, dst);
+        let _ = self
+            .udp_agent
+            .get()
+            .unwrap()
+            .send_to(&payload, dst.into())
+            .expect("send error");
+
+        Ok(())
     }
 }
 

@@ -29,9 +29,9 @@ impl<UA: Agent, DC: Client> HandleMessage<Message<'_>> for DeviceInner<UA, DC> {
 
         self.copy_to_with_key(msg)?;
 
-        let descriptor = message_to_bthreth(msg);
-        log::debug!("push meta report: {descriptor:?}");
-        unsafe { self.meta_report_queue().push(descriptor) };
+        // let descriptor = message_to_bthreth(msg);
+        // log::debug!("push meta report: {descriptor:?}");
+        // unsafe { self.meta_report_queue().push(descriptor) };
 
         Ok(())
     }
