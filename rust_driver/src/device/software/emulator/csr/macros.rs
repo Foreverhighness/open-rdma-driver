@@ -7,10 +7,10 @@ macro_rules! declare_and_impl_basic_register {
             }
             impl [<$prefix $csr_type $part>] {
                 pub fn read(&self) -> u32 {
-                    self.val.load(core::sync::atomic::Ordering::Relaxed)
+                    self.val.load(core::sync::atomic::Ordering::Acquire)
                 }
                 pub fn write(&self, val: u32) {
-                    self.val.store(val, core::sync::atomic::Ordering::Relaxed)
+                    self.val.store(val, core::sync::atomic::Ordering::Release)
                 }
             }
 

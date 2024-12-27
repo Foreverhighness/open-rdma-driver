@@ -20,7 +20,7 @@ pub(crate) trait CompleteQueue {
         let tail = self.tail();
         assert!(tail <= head, "assertion failed: {tail} <= {head}");
 
-        let ptr = self.index(tail);
+        let ptr = self.index(head);
         // SAFETY: caller uphold
         unsafe { ptr.write(val) };
 

@@ -27,7 +27,7 @@ impl<UA: Agent, DC: Client> HandleMessage<Message<'_>> for DeviceInner<UA, DC> {
     fn handle(&self, msg: Acknowledge) -> crate::device::software::emulator::Result {
         let descriptor = util::message_to_bthaeth(msg.aeth);
 
-        log::debug!("push meta report: {descriptor:?}");
+        log::debug!("push meta report: {descriptor:#?}");
         unsafe { self.meta_report_queue().push(descriptor) };
 
         Ok(())

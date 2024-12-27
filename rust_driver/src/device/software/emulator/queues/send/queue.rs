@@ -72,80 +72,80 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
 
     pub(crate) fn run(&self) {
         while let Ok(()) = self.dev.rx_send.recv() {
-            let raw0 = unsafe { self.pop() };
+            while let Some(raw0) = unsafe { self.pop() } {
+                let seg0 = Seg0::from_bytes(raw0);
+                // TODO(fh): move assertions into `Seg0::from_bytes_checked`.
+                assert!(seg0.header.valid(), "invalid seg0 header");
+                log::info!("recv send seg0: {seg0:?}");
+                let opcode = seg0.header.opcode().expect("send opcode parse failed");
 
-            let seg0 = Seg0::from_bytes(raw0);
-            // TODO(fh): move assertions into `Seg0::from_bytes_checked`.
-            assert!(seg0.header.valid(), "invalid seg0 header");
-            log::info!("recv send seg0: {seg0:?}");
-            let opcode = seg0.header.opcode().expect("send opcode parse failed");
+                match opcode {
+                    Opcode::Write => {
+                        // write use 3 descriptors
+                        let builder = WriteBuilder::from_seg0(seg0);
 
-            match opcode {
-                Opcode::Write => {
-                    // write use 3 descriptors
-                    let builder = WriteBuilder::from_seg0(seg0);
+                        let raw1 = unsafe { self.pop() }.expect("partial write operator");
+                        let seg1 = Seg1::from_bytes(raw1);
 
-                    let raw1 = unsafe { self.pop() };
-                    let seg1 = Seg1::from_bytes(raw1);
+                        let builder = builder.with_seg1(seg1);
 
-                    let builder = builder.with_seg1(seg1);
+                        let raw2 = unsafe { self.pop() }.expect("partial write operator");
+                        let sge = VariableLengthSge::from_bytes(raw2);
 
-                    let raw2 = unsafe { self.pop() };
-                    let sge = VariableLengthSge::from_bytes(raw2);
+                        let write = builder.with_sge(sge);
 
-                    let write_req = builder.with_sge(sge);
+                        self.dev.handle(&write, &mut ()).unwrap();
+                    }
+                    Opcode::WriteWithImm => {
+                        // WriteWithImm use 3 descriptors
+                        let builder = WriteWithImmediateBuilder::from_seg0(seg0);
 
-                    self.dev.handle(&write_req, &mut ()).unwrap();
-                }
-                Opcode::WriteWithImm => {
-                    // WriteWithImm use 3 descriptors
-                    let builder = WriteWithImmediateBuilder::from_seg0(seg0);
+                        let raw1 = unsafe { self.pop() }.expect("partial write_with_immediate operator");
+                        let seg1 = Seg1::from_bytes(raw1);
 
-                    let raw1 = unsafe { self.pop() };
-                    let seg1 = Seg1::from_bytes(raw1);
+                        let builder = builder.with_seg1(seg1);
 
-                    let builder = builder.with_seg1(seg1);
+                        let raw2 = unsafe { self.pop() }.expect("partial write_with_immediate operator");
+                        let sge = VariableLengthSge::from_bytes(raw2);
 
-                    let raw2 = unsafe { self.pop() };
-                    let sge = VariableLengthSge::from_bytes(raw2);
+                        let write_with_immediate = builder.with_sge(sge);
 
-                    let write_with_immediate = builder.with_sge(sge);
+                        self.dev
+                            .handle(&write_with_immediate, &mut ())
+                            .expect("handle WriteWithImm error");
+                    }
+                    Opcode::Read => {
+                        // Read use 3 descriptors
+                        let builder = ReadBuilder::from_seg0(seg0);
 
-                    self.dev
-                        .handle(&write_with_immediate, &mut ())
-                        .expect("handle WriteWithImm error");
-                }
-                Opcode::Read => {
-                    // Read use 3 descriptors
-                    let builder = ReadBuilder::from_seg0(seg0);
+                        let raw1 = unsafe { self.pop() }.expect("partial read operator");
+                        let seg1 = Seg1::from_bytes(raw1);
 
-                    let raw1 = unsafe { self.pop() };
-                    let seg1 = Seg1::from_bytes(raw1);
+                        let builder = builder.with_seg1(seg1);
 
-                    let builder = builder.with_seg1(seg1);
+                        let raw2 = unsafe { self.pop() }.expect("partial read operator");
+                        let sge = VariableLengthSge::from_bytes(raw2);
 
-                    let raw2 = unsafe { self.pop() };
-                    let sge = VariableLengthSge::from_bytes(raw2);
+                        let read = builder.with_sge(sge);
 
-                    let read = builder.with_sge(sge);
+                        self.dev.handle(&read, &mut ()).expect("handle Read error");
+                    }
+                    Opcode::ReadResp => {
+                        // ReadResp use 3 descriptors
+                        let builder = ReadResponseBuilder::from_seg0(seg0);
 
-                    self.dev.handle(&read, &mut ()).expect("handle Read error");
-                }
-                Opcode::ReadResp => {
-                    // ReadResp use 3 descriptors
-                    let builder = ReadResponseBuilder::from_seg0(seg0);
+                        let raw1 = unsafe { self.pop() }.expect("partial read_response operator");
+                        let seg1 = Seg1::from_bytes(raw1);
 
-                    let raw1 = unsafe { self.pop() };
-                    let seg1 = Seg1::from_bytes(raw1);
+                        let builder = builder.with_seg1(seg1);
 
-                    let builder = builder.with_seg1(seg1);
+                        let raw2 = unsafe { self.pop() }.expect("partial read_response operator");
+                        let sge = VariableLengthSge::from_bytes(raw2);
 
-                    let raw2 = unsafe { self.pop() };
-                    let sge = VariableLengthSge::from_bytes(raw2);
+                        let read_response = builder.with_sge(sge);
 
-                    let read_response = builder.with_sge(sge);
-
-                    self.dev.handle(&read_response, &mut ()).expect("handle ReadResp error");
+                        self.dev.handle(&read_response, &mut ()).expect("handle ReadResp error");
+                    }
                 }
             }
         }

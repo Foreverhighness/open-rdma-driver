@@ -13,9 +13,12 @@ pub(crate) trait WorkQueue {
     fn advance(&self);
 
     // SAFETY: caller should grantee queue is initialized
-    unsafe fn pop(&self) -> Self::Descriptor {
+    unsafe fn pop(&self) -> Option<Self::Descriptor> {
         let head = self.head();
         let tail = self.tail();
+        if head == tail {
+            return None;
+        }
         assert!(tail < head, "assertion failed: {tail} < {head}");
 
         let ptr = self.index(tail);
@@ -25,6 +28,6 @@ pub(crate) trait WorkQueue {
         // pop item
         self.advance();
 
-        raw
+        Some(raw)
     }
 }
