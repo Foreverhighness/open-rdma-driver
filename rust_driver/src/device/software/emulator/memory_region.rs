@@ -96,6 +96,15 @@ impl MemoryRegionTable for Table {
             .get(&offset)
             .expect("logic error: page table entry not found");
 
-        Ok(dma_address[idx as usize].0.checked_add(addr).unwrap().into())
+        let dma_address = dma_address
+            .get(usize::try_from(idx).unwrap())
+            .expect("index out of bound")
+            .0
+            .checked_add(addr)
+            .unwrap();
+
+        // 48 bits
+        let dma_address = dma_address & (1u64 << 48 - 1);
+        Ok(dma_address.into())
     }
 }
