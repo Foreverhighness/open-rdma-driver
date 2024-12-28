@@ -25,15 +25,23 @@ impl<UA: Agent, DC: Client> HandleDescriptor<UpdateErrorPacketSequenceNumberReco
     type Context = ();
     type Output = ();
 
-    #[expect(unreachable_code, reason = "testing")]
-    fn handle(&self, request: &UpdateErrorPacketSequenceNumberRecoverPoint, _: &mut ()) -> Result<Self::Output> {
-        log::debug!("handle {request:?}");
+    fn handle(&self, req: &UpdateErrorPacketSequenceNumberRecoverPoint, _: &mut ()) -> Result<Self::Output> {
+        log::debug!("handle {req:?}");
 
-        todo!();
+        let psn = req.packet_sequence_number();
+        let qpn = req.queue_pair_number();
+
+        let guard = self.queue_pair_table().guard();
+        let success = if let Some(qp_context) = self.queue_pair_table().get(qpn, &guard) {
+            qp_context.try_recover(psn)
+        } else {
+            false
+        };
+
         let response = CommonHeader::new(
             UpdateErrorPacketSequenceNumberRecoverPoint::OPCODE,
-            true,
-            request.header().user_data(),
+            success,
+            req.header().user_data(),
         );
         unsafe { self.command_response_queue().push(response) };
 

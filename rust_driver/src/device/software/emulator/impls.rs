@@ -10,7 +10,7 @@ use flume::{Receiver, Sender};
 use super::address::DmaAddress;
 use super::csr::{EmulatorCsrs, EmulatorCsrsHandler};
 use super::device_api::{ControlStatusRegisters, RawDevice};
-use super::mr_table::MemoryRegionTable;
+use super::mr_table::{self, MemoryRegionTable};
 use super::{dma, emulator, memory_region, net, queue_pair, simulator};
 use crate::device::software::emulator::address::VirtualAddress;
 use crate::device::software::emulator::dma::PointerMut;
@@ -188,7 +188,7 @@ impl<UA: net::Agent, DC: dma::Client> RawDevice for DeviceInner<UA, DC> {
 impl<UA: net::Agent, DC: dma::Client> DeviceInner<UA, DC> {
     // TODO(fh): refactor to `copy_to_with_key(&self, src: &[u8], dst: &mut [u8], key: Key) -> super::Result`
     // or `copy_to_with_key(&self, src: &[u8], dst: ScatterGatherElement) -> super::Result`
-    pub(crate) fn copy_to_with_key(&self, msg: &RdmaMessage) -> super::Result {
+    pub(crate) fn copy_to_with_key(&self, msg: &RdmaMessage) -> Result<(), mr_table::Error> {
         let data = &msg.payload.sg_list;
         assert_eq!(data.len(), 1, "currently only consider one Sge");
         let data = data[0];

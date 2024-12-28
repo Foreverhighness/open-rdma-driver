@@ -16,6 +16,7 @@ pub trait MemoryRegionTable {
     ) -> Result<DmaAddress, Error>;
 }
 
+// should move to memory_region module
 #[expect(variant_size_differences, reason = "TODO(fh): move into Box")]
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

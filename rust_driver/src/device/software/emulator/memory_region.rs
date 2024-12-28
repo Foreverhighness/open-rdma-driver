@@ -98,7 +98,7 @@ impl MemoryRegionTable for Table {
 
         let dma_address = dma_address
             .get(usize::try_from(idx).unwrap())
-            .expect("index out of bound")
+            .expect("logic error: page table offset out of bound")
             .0
             .checked_add(addr)
             .unwrap();
