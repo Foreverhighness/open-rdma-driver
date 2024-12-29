@@ -30,47 +30,39 @@ pub(crate) trait Message<Dev> {
 
 // which is better?
 pub(crate) trait HandleMessage<Msg> {
-    fn handle(&self, msg: Msg) -> super::super::Result;
+    fn handle(&self, msg: Msg, src: core::net::IpAddr) -> super::super::Result;
 }
 
 mod handler {
-    use core::net::IpAddr;
-
     use super::*;
     use crate::device::software::emulator::dma::Client;
     use crate::device::software::emulator::errors::Error;
-    use crate::device::software::emulator::net::util::generate_ack;
     use crate::device::software::emulator::net::Agent;
     use crate::device::software::emulator::DeviceInner;
     use crate::device::software::types::RdmaMessage;
     use crate::device::ToHostWorkRbDescOpcode;
 
     impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
-        pub(crate) fn handle_message(&self, msg: &RdmaMessage, src: IpAddr) -> Result<(), Error> {
+        pub(crate) fn handle_message(&self, msg: &RdmaMessage, src: core::net::IpAddr) -> Result<(), Error> {
             log::debug!("handle network message {msg:#?}");
             match msg.meta_data.common_meta().opcode {
-                ToHostWorkRbDescOpcode::RdmaWriteFirst => self.handle(WriteFirst::parse(msg)?)?,
-                ToHostWorkRbDescOpcode::RdmaWriteMiddle => self.handle(WriteMiddle::parse(msg)?)?,
-                ToHostWorkRbDescOpcode::RdmaWriteLast => self.handle(WriteLast::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaWriteFirst => self.handle(WriteFirst::parse(msg)?, src)?,
+                ToHostWorkRbDescOpcode::RdmaWriteMiddle => self.handle(WriteMiddle::parse(msg)?, src)?,
+                ToHostWorkRbDescOpcode::RdmaWriteLast => self.handle(WriteLast::parse(msg)?, src)?,
                 ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate => {
-                    self.handle(WriteLastWithImmediate::parse(msg)?)?
+                    self.handle(WriteLastWithImmediate::parse(msg)?, src)?
                 }
-                ToHostWorkRbDescOpcode::RdmaWriteOnly => self.handle(WriteOnly::parse(msg)?)?,
+                ToHostWorkRbDescOpcode::RdmaWriteOnly => self.handle(WriteOnly::parse(msg)?, src)?,
                 ToHostWorkRbDescOpcode::RdmaWriteOnlyWithImmediate => {
-                    self.handle(WriteOnlyWithImmediate::parse(msg)?)?
+                    self.handle(WriteOnlyWithImmediate::parse(msg)?, src)?
                 }
-                ToHostWorkRbDescOpcode::RdmaReadResponseFirst => self.handle(ReadResponseFirst::parse(msg)?)?,
-                ToHostWorkRbDescOpcode::RdmaReadResponseMiddle => self.handle(ReadResponseMiddle::parse(msg)?)?,
-                ToHostWorkRbDescOpcode::RdmaReadResponseLast => self.handle(ReadResponseLast::parse(msg)?)?,
-                ToHostWorkRbDescOpcode::RdmaReadResponseOnly => self.handle(ReadResponseOnly::parse(msg)?)?,
-                ToHostWorkRbDescOpcode::RdmaReadRequest => self.handle(ReadRequest::parse(msg)?)?,
-                ToHostWorkRbDescOpcode::Acknowledge => self.handle(Acknowledge::parse(msg)?)?,
-            }
+                ToHostWorkRbDescOpcode::RdmaReadResponseFirst => self.handle(ReadResponseFirst::parse(msg)?, src)?,
+                ToHostWorkRbDescOpcode::RdmaReadResponseMiddle => self.handle(ReadResponseMiddle::parse(msg)?, src)?,
+                ToHostWorkRbDescOpcode::RdmaReadResponseLast => self.handle(ReadResponseLast::parse(msg)?, src)?,
+                ToHostWorkRbDescOpcode::RdmaReadResponseOnly => self.handle(ReadResponseOnly::parse(msg)?, src)?,
 
-            let need_ack = msg.meta_data.common_meta().ack_req;
-            if need_ack {
-                let buf = generate_ack(&msg);
-                let _ = self.udp_agent.get().unwrap().send_to(&buf, src);
+                ToHostWorkRbDescOpcode::RdmaReadRequest => self.handle(ReadRequest::parse(msg)?, src)?,
+                ToHostWorkRbDescOpcode::Acknowledge => self.handle(Acknowledge::parse(msg)?, src)?,
             }
 
             Ok(())

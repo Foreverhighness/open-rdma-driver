@@ -7,6 +7,7 @@ use crate::device::software::emulator::queues::{
     AckExtendedTransportHeader, BaseTransportHeader, BthAeth, BthReth, ImmDt, RdmaExtendedTransportHeader,
     SecondaryReth,
 };
+use crate::device::software::emulator::types::PacketSequenceNumber;
 use crate::device::software::packet::{AETH, BTH};
 use crate::device::software::packet_processor::PacketWriter;
 use crate::device::software::types::{AethHeader, Metadata, PayloadInfo, RdmaMessage};
@@ -14,7 +15,12 @@ use crate::device::{
     ToHostWorkRbDescAethCode, ToHostWorkRbDescOpcode, ToHostWorkRbDescStatus, ToHostWorkRbDescTransType,
 };
 
-pub(super) fn message_to_bthreth(msg: &RdmaMessage) -> BthReth {
+pub(super) fn message_to_bthreth(
+    msg: &RdmaMessage,
+    expected_psn: PacketSequenceNumber,
+    req_status: u8,
+    can_auto_ack: bool,
+) -> BthReth {
     let meta = &msg.meta_data;
     match meta {
         Metadata::General(header) => match header.common_meta.opcode {
@@ -48,11 +54,8 @@ pub(super) fn message_to_bthreth(msg: &RdmaMessage) -> BthReth {
                     let len = header.reth.len;
                     let reth = RdmaExtendedTransportHeader::new(local_va, local_key, len);
 
-                    let expect_psn = header.common_meta.psn.get();
-                    let req_status = ToHostWorkRbDescStatus::Normal.into();
                     let msn = header.common_meta.pkey.get().into();
-                    let can_auto_ack = true;
-                    BthReth::new(expect_psn, req_status, bth, reth, msn, can_auto_ack)
+                    BthReth::new(expected_psn, req_status, bth, reth, msn, can_auto_ack)
                 };
                 descriptor
             }
@@ -186,8 +189,7 @@ pub(crate) fn generate_payload_from_msg(msg: &RdmaMessage, src: Ipv4Addr, dst: I
 mod tests {
     use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
 
-    use super::{generate_ack, message_to_bthreth, RdmaMessage};
-    use crate::device::software::emulator::queues::{BthAeth, BthReth};
+    use super::*;
     use crate::device::software::packet_processor::PacketProcessor;
 
     fn write_first_message() -> RdmaMessage {
@@ -263,7 +265,12 @@ mod tests {
 
             let msg = PacketProcessor::to_rdma_message(payload).unwrap();
 
-            let bth_reth = message_to_bthreth(&msg);
+            let bth_reth = message_to_bthreth(
+                &msg,
+                msg.meta_data.common_meta().psn.get(),
+                ToHostWorkRbDescStatus::Normal.into(),
+                true,
+            );
 
             // println!("{:#?}", bth_reth);
         }
