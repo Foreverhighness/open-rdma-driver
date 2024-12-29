@@ -7,7 +7,7 @@ use crate::device::software::emulator::queues::{
     AckExtendedTransportHeader, BaseTransportHeader, BthAeth, BthReth, ImmDt, RdmaExtendedTransportHeader,
     SecondaryReth,
 };
-use crate::device::software::emulator::types::PacketSequenceNumber;
+use crate::device::software::emulator::types::{PacketSequenceNumber, QueuePairNumber};
 use crate::device::software::packet::{AETH, BTH};
 use crate::device::software::packet_processor::PacketWriter;
 use crate::device::software::types::{AethHeader, Metadata, PayloadInfo, RdmaMessage};
@@ -128,20 +128,24 @@ pub(super) fn message_to_bthaeth(msg: &RdmaMessage) -> BthAeth {
     let msn = header.msn as u16;
     let value = header.aeth_value;
     let code = header.aeth_code.clone();
-    let aeth = AckExtendedTransportHeader::new(psn, msn, value, code);
+    let aeth = AckExtendedTransportHeader::new(0, msn, value, code);
 
     let req_status = ToHostWorkRbDescStatus::Normal.into();
     BthAeth::new(req_status, bth, aeth)
 }
 
 /// hard code args, need rewrite.
-pub(super) fn generate_ack(msg: &RdmaMessage) -> Vec<u8> {
+pub(super) fn generate_ack(
+    msg: &RdmaMessage,
+    peer_qpn: QueuePairNumber,
+    expected_psn: PacketSequenceNumber,
+) -> Vec<u8> {
     let ack = {
         let buf = [0u8; 12 + 4];
         let bth = BTH::from_bytes(&buf);
         bth.set_opcode_and_type(ToHostWorkRbDescOpcode::Acknowledge, ToHostWorkRbDescTransType::Rc);
-        bth.set_destination_qpn(msg.meta_data.common_meta().dqpn.get());
-        bth.set_psn(msg.meta_data.common_meta().psn.get());
+        bth.set_destination_qpn(peer_qpn);
+        bth.set_psn(expected_psn);
         bth.set_ack_req(false);
         bth.set_flags_solicited(false);
         bth.set_pkey(msg.meta_data.common_meta().pkey.get());
@@ -229,7 +233,11 @@ mod tests {
             0xc7, 0x23,
         ];
         let msg = write_first_message();
-        let ack = generate_ack(&msg);
+        let ack = generate_ack(
+            &msg,
+            msg.meta_data.common_meta().dqpn.get(),
+            msg.meta_data.common_meta().psn.get(),
+        );
 
         assert_eq!(&ack, expected);
     }

@@ -81,7 +81,7 @@ impl<UA: Agent, DC: Client> HandleMessage<Message<'_>> for DeviceInner<UA, DC> {
 
         let need_ack = can_auto_ack && msg.meta_data.common_meta().ack_req;
         if need_ack {
-            let buf = generate_ack(&msg);
+            let buf = generate_ack(&msg, qp_context.unwrap().peer_qpn(), expected_psn_option.unwrap());
             let _ = self.udp_agent.get().unwrap().send_to(&buf, src);
         }
 

@@ -10,6 +10,7 @@ use super::types::{
 #[derive(Debug)]
 pub struct Context {
     queue_pair_number: QueuePairNumber,
+    peer_queue_pair_number: QueuePairNumber,
     protect_domain_handler: ProtectDomainHandler,
     queue_pair_type: QueuePairType,
     access_flag: MemoryAccessFlag,
@@ -21,6 +22,7 @@ pub struct Context {
 impl Context {
     pub const fn new(
         queue_pair_number: QueuePairNumber,
+        peer_queue_pair_number: QueuePairNumber,
         protect_domain_handler: ProtectDomainHandler,
         queue_pair_type: QueuePairType,
         access_flag: MemoryAccessFlag,
@@ -28,6 +30,7 @@ impl Context {
     ) -> Self {
         Self {
             queue_pair_number,
+            peer_queue_pair_number,
             protect_domain_handler,
             queue_pair_type,
             access_flag,
@@ -35,6 +38,10 @@ impl Context {
             error_psn: AtomicU32::new(u32::MAX),
             expected_psn: AtomicU32::new(0),
         }
+    }
+
+    pub const fn peer_qpn(&self) -> QueuePairNumber {
+        self.peer_queue_pair_number
     }
 
     /// try recover from error state, return true if current state is not error state

@@ -55,6 +55,7 @@ impl Context {
     fn from_req(req: &QueuePairManagement) -> Result<Self> {
         Ok(Self::new(
             req.queue_pair_number(),
+            req.peer_queue_pair_number(),
             req.protect_domain_handler(),
             req.queue_pair_type()?,
             req.remote_queue_access_flag(),
