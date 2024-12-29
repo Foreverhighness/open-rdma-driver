@@ -63,14 +63,14 @@ impl<UA: Agent, DC: Client> HandleMessage<Message<'_>> for DeviceInner<UA, DC> {
             expected_psn_option = Some(expected_psn);
 
             let new_expected_psn = (psn >= expected_psn).then_some(psn + 1);
-            let psn_exceed_expected = psn > expected_psn;
+            let new_error_psn = (psn > expected_psn).then_some(psn);
 
             if let Some(new_expected_psn) = new_expected_psn {
                 qp_context.set_expect_psn(new_expected_psn);
             }
 
-            if psn_exceed_expected {
-                qp_context.set_error();
+            if let Some(new_error_psn) = new_error_psn {
+                qp_context.set_error_psn(new_error_psn);
             }
         }
 

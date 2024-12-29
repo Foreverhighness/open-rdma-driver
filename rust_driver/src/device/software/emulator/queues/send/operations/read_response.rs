@@ -1,21 +1,12 @@
-use core::net::Ipv4Addr;
 
 use super::common::Common;
-use crate::device::software::emulator::address::VirtualAddress;
-use crate::device::software::emulator::dma::{Client, PointerMut};
-use crate::device::software::emulator::mr_table::MemoryRegionTable;
-use crate::device::software::emulator::net::util::generate_payload_from_msg;
+use crate::device::software::emulator::dma::Client;
 use crate::device::software::emulator::net::Agent;
 use crate::device::software::emulator::queues::descriptor::HandleDescriptor;
 use crate::device::software::emulator::queues::send::descriptors::{
     ScatterGatherElement, Seg0, Seg1, VariableLengthSge,
 };
 use crate::device::software::emulator::{DeviceInner, Result};
-use crate::device::software::types::{
-    Key, Metadata, PKey, PayloadInfo, Qpn, RdmaGeneralMeta, RdmaMessage, RdmaMessageMetaCommon, RethHeader,
-};
-use crate::device::ToHostWorkRbDescOpcode;
-use crate::types::{MemAccessTypeFlag, Psn};
 
 #[derive(Debug)]
 pub struct ReadResponse {

@@ -1,4 +1,5 @@
-use core::sync::atomic::{AtomicBool, AtomicU32};
+use core::sync::atomic::AtomicU32;
+use core::u32;
 
 use papaya::HashMap;
 
@@ -13,7 +14,7 @@ pub struct Context {
     queue_pair_type: QueuePairType,
     access_flag: MemoryAccessFlag,
     path_mtu_kind: PathMtuKind,
-    error_state: AtomicBool,
+    error_psn: AtomicU32,
     expected_psn: AtomicU32,
 }
 
@@ -31,19 +32,24 @@ impl Context {
             queue_pair_type,
             access_flag,
             path_mtu_kind,
-            error_state: AtomicBool::new(false),
+            error_psn: AtomicU32::new(u32::MAX),
             expected_psn: AtomicU32::new(0),
         }
     }
 
     /// try recover from error state, return true if current state is not error state
     pub fn try_recover(&self, psn: PacketSequenceNumber) -> bool {
-        let expected_psn = self.expected_psn();
-        let is_error = self.is_error();
+        let error_psn = self.error_psn();
+        log::warn!(
+            "QPN: {qpn} try recover {psn} at {error_psn}",
+            qpn = self.queue_pair_number,
+            error_psn = i64::from(error_psn)
+        );
+        let is_error = error_psn != u32::MAX;
         if !is_error {
             panic!("logic_error: not error state but get recover")
         }
-        if expected_psn == psn {
+        if error_psn == psn {
             self.clear_error();
             true
         } else {
@@ -51,19 +57,33 @@ impl Context {
         }
     }
 
-    /// set to error state
-    pub fn set_error(&self) {
-        self.error_state.store(true, core::sync::atomic::Ordering::SeqCst);
+    /// set error psn
+    pub fn set_error_psn(&self, error_psn: PacketSequenceNumber) {
+        let old_error_psn = self.error_psn.swap(error_psn, core::sync::atomic::Ordering::SeqCst);
+        log::warn!(
+            "QPN: {}: set error_psn {} -> {error_psn}",
+            self.queue_pair_number,
+            i64::from(old_error_psn)
+        );
+        assert!(
+            old_error_psn < error_psn || old_error_psn == u32::MAX,
+            "logic error, new error psn should greater than old, but {old_error_psn} < {error_psn}"
+        );
     }
 
     /// clear error state
-    pub fn clear_error(&self) {
-        self.error_state.store(false, core::sync::atomic::Ordering::SeqCst);
+    fn clear_error(&self) {
+        self.error_psn.store(u32::MAX, core::sync::atomic::Ordering::SeqCst);
+    }
+
+    /// get error psn
+    fn error_psn(&self) -> PacketSequenceNumber {
+        self.error_psn.load(core::sync::atomic::Ordering::SeqCst)
     }
 
     /// get error state
     pub fn is_error(&self) -> bool {
-        self.error_state.load(core::sync::atomic::Ordering::SeqCst)
+        self.error_psn() != u32::MAX
     }
 
     /// set expected_psn

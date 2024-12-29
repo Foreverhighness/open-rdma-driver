@@ -5,7 +5,6 @@ mod common;
 mod imm_dt;
 mod secondary_reth;
 
-pub use bth::Bth;
 pub use bth_aeth::BthAeth;
 pub use bth_reth::BthReth;
 pub use common::{AckExtendedTransportHeader, BaseTransportHeader, RdmaExtendedTransportHeader};

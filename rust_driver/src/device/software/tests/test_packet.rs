@@ -269,7 +269,7 @@ fn test_pkt_processor_to_buf() {
 #[ignore]
 #[test]
 fn test_packet_parse() {
-    use smoltcp::wire::pretty_print::PrettyPrinter;
+    
     use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
 
     for i in 0..=1 {

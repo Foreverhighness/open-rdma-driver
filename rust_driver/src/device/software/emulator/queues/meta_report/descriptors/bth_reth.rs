@@ -1,6 +1,5 @@
 //! Base Transport Header and RDMA Extended Transport Header
 
-use core::fmt;
 
 use super::common::{
     BaseTransportHeader, MessageSequenceNumberAndCanAutoAck, PsnAndReqStatus, RdmaExtendedTransportHeader,
