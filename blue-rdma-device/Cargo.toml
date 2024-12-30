@@ -1,0 +1,40 @@
+[package]
+name = "blue-rdma-device"
+version = "0.1.0"
+authors = ["Hange Shen <Foreverhighness@outlook.com>"]
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+derive_more = { version = "1", features = ["from", "into"] }
+paste = "1"
+papaya = "0.1"
+tun = "0.7"
+thiserror = "2.0"
+flume = "0.11"
+log = "0.4.22"
+smoltcp = { version = "0.12", features = ["verbose"] }
+eui48 = "1.1"
+
+bitfield-struct = { version = "0.10", optional = true }
+bitfield = { version = "0.17", optional = true }
+bitflags = { version = "2.6", optional = true }
+num_enum = { version = "0.7", optional = true }
+crc32fast = { version = "1", optional = true }
+
+serde_json = { version = "1", optional = true }
+env_logger = { version = "0.11", optional = true }
+serde = { version = "1", optional = true, features = ["derive"] }
+
+[dev-dependencies]
+rand = "0.8.5"
+libc = "0.2"
+
+[features]
+default = ["simulator", "third_party"]
+simulator = ["serde_json", "serde", "env_logger"]
+third_party = ["bitfield", "bitfield-struct", "bitflags", "num_enum", "crc32fast"]
+
+# [[bin]]
+# name = "simulator"
+# required-features = ["simulator"]

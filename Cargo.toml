@@ -1,0 +1,8 @@
+[workspace]
+resolver = "2"
+members = ["blue-rdma-device", "blue-rdma-protocol"]
+
+[workspace.package]
+edition = "2024"
+license = "GPL 2.0"
+homepage = "https://github.com/datenlord/open-rdma-driver"
