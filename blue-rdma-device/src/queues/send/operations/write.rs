@@ -299,7 +299,7 @@ mod tests {
         // println!("{msg_first:#?}");
         // println!("{msg_last:#?}");
 
-        let filename = &format!(".cache/captures/ethernet-frame-0.bin");
+        let filename = &".cache/captures/ethernet-frame-0.bin".to_string();
         let buffer = std::fs::read(filename).unwrap();
 
         let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
@@ -309,7 +309,7 @@ mod tests {
         let expected = udp_packet.payload();
         assert_eq!(expected, payload_first);
 
-        let filename = &format!(".cache/captures/ethernet-frame-1.bin");
+        let filename = &".cache/captures/ethernet-frame-1.bin".to_string();
         let buffer = std::fs::read(filename).unwrap();
 
         let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();

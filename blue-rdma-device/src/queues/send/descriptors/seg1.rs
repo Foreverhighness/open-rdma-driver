@@ -59,10 +59,12 @@ impl Seg1 {
         self.pmtu_send_flag_qp_type_sge_cnt.sge_count()
     }
 
+    #[expect(clippy::useless_conversion, reason = "PacketSequenceNumber should change later")]
     pub fn packet_sequence_number(&self) -> PacketSequenceNumber {
         self.psn_inner.packet_sequence_number().into()
     }
 
+    #[expect(clippy::useless_conversion, reason = "QueuePairNumber should change later")]
     pub fn dest_queue_pair_number(&self) -> QueuePairNumber {
         self.dest_qpn_inner.queue_pair_number().into()
     }
@@ -86,7 +88,7 @@ impl fmt::Debug for Seg1 {
 impl Descriptor {
     // TODO(fh): validate here
     pub fn from_bytes(raw: [u8; DESCRIPTOR_SIZE]) -> Self {
-        let descriptor = unsafe { core::mem::transmute::<_, Self>(raw) };
+        let descriptor = unsafe { core::mem::transmute::<[u8; 32], Self>(raw) };
         assert!((&raw const descriptor).is_aligned());
         descriptor
     }

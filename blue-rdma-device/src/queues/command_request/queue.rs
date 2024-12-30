@@ -67,7 +67,7 @@ impl<UA: Agent, DC: Client> CommandRequestQueue<'_, UA, DC> {
     }
 
     pub(crate) fn run(&self) {
-        while let Ok(_) = self.dev.rx_command_request.recv() {
+        while self.dev.rx_command_request.recv().is_ok() {
             while let Some(raw) = unsafe { self.pop() } {
                 let descriptor_ref = DescriptorRef::parse(&raw).unwrap();
 

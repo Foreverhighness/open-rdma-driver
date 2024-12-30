@@ -26,7 +26,7 @@ impl<R: rpc::Client> DmaClient<R> {
     fn write_at_most_64(&self, addr: u64, data: &[u8], write_group: &mut Vec<JoinHandle<()>>) -> usize {
         let mut buf = [0u8; 64];
 
-        let start = usize::try_from(addr & u64::from(BYTES_PER_WORD - 1)).unwrap();
+        let start = usize::try_from(addr & (BYTES_PER_WORD - 1)).unwrap();
         let len = data
             .len()
             .min(usize::try_from(BYTES_PER_WORD).unwrap().checked_sub(start).unwrap());
@@ -35,7 +35,7 @@ impl<R: rpc::Client> DmaClient<R> {
 
         log::trace!(
             "write at {addr:#018X}, start at {start:02}, buf: {buf:02X?}, data: {data:02X?}",
-            addr = addr & !(u64::from(BYTES_PER_WORD) - 1),
+            addr = addr & !(BYTES_PER_WORD - 1),
             data = &data[..len]
         );
 
@@ -53,7 +53,7 @@ impl<R: rpc::Client> DmaClient<R> {
         let handler = std::thread::spawn(move || unsafe {
             rpc.c_writeBRAM(
                 client_id,
-                addr / u64::from(BYTES_PER_WORD) & 0xFFFF_FFFF,
+                (addr / BYTES_PER_WORD) & 0xFFFF_FFFF,
                 buf.as_mut_ptr().cast::<u32>(),
                 byte_en.as_ptr().cast::<u32>().cast_mut(),
                 WORD_WIDTH,
@@ -216,7 +216,7 @@ impl<R: rpc::Client> DmaClient<R> {
                         rpc.c_readBRAM(
                             buf.as_mut_ptr().cast(),
                             client_id,
-                            addr / BYTES_PER_WORD & 0xFFFF_FFFF,
+                            (addr / BYTES_PER_WORD) & 0xFFFF_FFFF,
                             WORD_WIDTH,
                         )
                     };
@@ -370,7 +370,7 @@ mod tests {
 
             let addr = usize::try_from(shrunk_addr * u64::from(bytes_per_word)).unwrap();
 
-            println!("byte_en {:?}", unsafe { core::mem::transmute::<_, &[u8; 8]>(byte_en) });
+            println!("byte_en {:?}", unsafe { &*byte_en.cast::<[u8; 8]>() });
             let byte_en = unsafe { byte_en.cast::<u64>().read() };
             assert_ne!(byte_en, 0);
 

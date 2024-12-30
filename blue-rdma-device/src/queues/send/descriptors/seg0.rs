@@ -39,7 +39,7 @@ impl fmt::Debug for Seg0 {
 
 impl Descriptor {
     pub fn from_bytes(raw: [u8; DESCRIPTOR_SIZE]) -> Self {
-        let descriptor = unsafe { core::mem::transmute::<_, Self>(raw) };
+        let descriptor = unsafe { core::mem::transmute::<[u8; 32], Self>(raw) };
         assert!((&raw const descriptor).is_aligned());
         descriptor
     }

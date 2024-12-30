@@ -152,7 +152,7 @@ where
                 log::debug!("receive data {msg:?} from {src:?}");
 
                 dev.handle_message(&msg, src)
-                    .expect(&format!("handle message error: {msg:?}"));
+                    .unwrap_or_else(|_| panic!("handle message error: {msg:?}"));
             }
         });
     }

@@ -1,5 +1,4 @@
 use core::sync::atomic::AtomicU32;
-use core::u32;
 
 use papaya::HashMap;
 

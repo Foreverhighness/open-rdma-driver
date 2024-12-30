@@ -119,12 +119,13 @@ impl AckExtendedTransportHeader {
         Self(aeth)
     }
 
+    #[expect(clippy::useless_conversion, reason = "PacketSequenceNumber should change later")]
     pub fn packet_sequence_number(&self) -> PacketSequenceNumber {
         self.0.get_psn().into()
     }
 
     pub fn message_sequence_number(&self) -> MessageSequenceNumber {
-        self.0.get_msn() as _
+        self.0.get_msn().try_into().unwrap()
     }
 
     pub fn value(&self) -> u8 {

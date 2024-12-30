@@ -62,11 +62,11 @@ impl Context {
 
 impl QueuePairManagement {
     pub fn valid(&self) -> bool {
-        self.0.get_is_valid().try_into().unwrap()
+        self.0.get_is_valid()
     }
 
     pub fn error(&self) -> bool {
-        self.0.get_is_error().try_into().unwrap()
+        self.0.get_is_error()
     }
 
     pub fn queue_pair_number(&self) -> QueuePairNumber {

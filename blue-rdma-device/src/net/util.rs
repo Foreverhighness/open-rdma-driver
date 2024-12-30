@@ -35,27 +35,25 @@ pub(super) fn message_to_bthreth(
             | ToHostWorkRbDescOpcode::RdmaReadResponseOnly => {
                 // TODO(fh): Add helper function to all operation
                 // Operation -> Descriptor
-                let descriptor = {
-                    let trans_type = ToHostWorkRbDescTransType::Rc.into();
-                    let opcode = header.common_meta.opcode.clone().into();
-                    let qpn = header.common_meta.dqpn.get();
-                    let psn = header.common_meta.psn.get();
-                    let pad_cnt = msg.payload.get_pad_cnt() as u8;
-                    // from software copy snip
-                    let solicited = false;
-                    let is_ack_req = false;
+                let trans_type = ToHostWorkRbDescTransType::Rc.into();
+                let opcode = header.common_meta.opcode.clone().into();
+                let qpn = header.common_meta.dqpn.get();
+                let psn = header.common_meta.psn.get();
+                let pad_cnt = msg.payload.get_pad_cnt() as u8;
+                // from software copy snip
+                let solicited = false;
+                let is_ack_req = false;
 
-                    let bth = BaseTransportHeader::new(trans_type, opcode, qpn, psn, solicited, is_ack_req, pad_cnt);
+                let bth = BaseTransportHeader::new(trans_type, opcode, qpn, psn, solicited, is_ack_req, pad_cnt);
 
-                    let local_va = header.reth.va.into();
-                    let local_key = header.reth.rkey.get().into();
-                    let len = header.reth.len;
-                    let reth = RdmaExtendedTransportHeader::new(local_va, local_key, len);
+                let local_va = header.reth.va.into();
+                let local_key = header.reth.rkey.get().into();
+                let len = header.reth.len;
+                let reth = RdmaExtendedTransportHeader::new(local_va, local_key, len);
 
-                    let msn = header.common_meta.pkey.get().into();
-                    BthReth::new(expected_psn, req_status, bth, reth, msn, can_auto_ack)
-                };
-                descriptor
+                let msn = header.common_meta.pkey.get();
+
+                BthReth::new(expected_psn, req_status, bth, reth, msn, can_auto_ack)
             }
             ToHostWorkRbDescOpcode::Acknowledge => todo!(),
         },
@@ -179,7 +177,7 @@ pub(crate) fn generate_payload_from_msg(msg: &RdmaMessage, src: Ipv4Addr, dst: I
         .dest_addr(dst)
         .dest_port(RDMA_PORT)
         .ip_id(1)
-        .message(&msg)
+        .message(msg)
         .write()
         .unwrap();
     let ip_packet = Ipv4Packet::new_checked(&buf).unwrap();

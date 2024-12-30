@@ -48,10 +48,12 @@ impl<UA: Agent, DC: Client> HandleDescriptor<UpdateErrorPacketSequenceNumberReco
 }
 
 impl UpdateErrorPacketSequenceNumberRecoverPoint {
+    #[expect(clippy::useless_conversion, reason = "PacketSequenceNumber should change later")]
     pub fn packet_sequence_number(&self) -> PacketSequenceNumber {
         self.0.get_psn().try_into().unwrap()
     }
 
+    #[expect(clippy::useless_conversion, reason = "QueuePairNumber should change later")]
     pub fn queue_pair_number(&self) -> QueuePairNumber {
         self.0.get_qpn().try_into().unwrap()
     }

@@ -198,7 +198,7 @@ impl<R: Client> UdpAgent<R> {
             &self.ip.into(),
             &dst_addr.into(),
             payload.len(),
-            |p| p.copy_from_slice(&payload),
+            |p| p.copy_from_slice(payload),
             &ChecksumCapabilities::ignored(),
         );
 
@@ -249,7 +249,7 @@ fn generate_frame_file(buffer: &[u8], frame: &AtomicU32, fragment: &AtomicU32) {
     let filename = &format!(".cache/{}/ethernet-frame-{frame}.bin", *DIRNAME);
     log::trace!("generate frame file: {filename}");
 
-    std::fs::write(filename, &buffer).unwrap();
+    std::fs::write(filename, buffer).unwrap();
 
     assert_eq!(std::fs::read(filename).unwrap(), buffer);
 }

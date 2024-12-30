@@ -107,6 +107,12 @@ impl<'de> Deserialize<'de> for Payload {
     }
 }
 
+impl Default for RpcNetIfcRxTxPayload {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RpcNetIfcRxTxPayload {
     pub const fn new() -> Self {
         Self {
@@ -160,6 +166,12 @@ pub struct BarIoInfo {
     pub addr: u64,
     pub valid: u64,
     pub pci_tag: u64,
+}
+
+impl Default for BarIoInfo {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl BarIoInfo {
