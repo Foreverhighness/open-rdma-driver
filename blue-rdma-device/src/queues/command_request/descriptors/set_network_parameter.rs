@@ -26,7 +26,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<SetNetworkParameter> for DeviceInne
     type Context = ();
     type Output = ();
 
-    fn handle(&self, request: &SetNetworkParameter, _: &mut ()) -> Result<Self::Output> {
+    fn handle(&self, request: &SetNetworkParameter, (): &mut ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         let net_parameter = NetParameter::new(request.ip(), request.gateway(), request.subnet_mask(), request.mac());

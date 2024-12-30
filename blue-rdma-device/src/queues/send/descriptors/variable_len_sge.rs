@@ -4,7 +4,7 @@ use super::common::ScatterGatherElement;
 use super::{DESCRIPTOR_ALIGN, DESCRIPTOR_SIZE};
 
 #[repr(C, align(32))]
-pub(crate) struct VariableLengthSge {
+pub struct VariableLengthSge {
     pub sge2: ScatterGatherElement,
     pub sge1: ScatterGatherElement,
 }

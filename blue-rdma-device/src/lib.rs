@@ -24,5 +24,4 @@ pub type Result<T = ()> = core::result::Result<T, errors::Error>;
 pub type Simulator = DeviceInner<simulator::UdpAgent, simulator::DmaClient>;
 // pub type Emulator = device_inner::DeviceInner<emulator::NetAgent, emulator::DmaClient>;
 
-#[allow(clippy::all, dead_code, unused)]
 mod third_party;

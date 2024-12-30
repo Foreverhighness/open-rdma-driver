@@ -78,7 +78,7 @@ impl MemoryRegionTable for Table {
         let addr = mr_context.addr;
         let len = mr_context.len;
         // SAFETY: (addr + len) should be checked in `MemoryRegionContext`
-        let end = unsafe { addr.0.unchecked_add(len as u64) };
+        let end = unsafe { addr.0.unchecked_add(u64::from(len)) };
         if !(addr.0 <= va.0 && va.0 < end) {
             return Err(Error::OutOfBound { va, addr, len });
         }

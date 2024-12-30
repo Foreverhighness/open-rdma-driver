@@ -23,7 +23,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<UpdatePageTable> for DeviceInner<UA
     type Context = ();
     type Output = ();
 
-    fn handle(&self, request: &UpdatePageTable, _: &mut ()) -> Result<Self::Output> {
+    fn handle(&self, request: &UpdatePageTable, (): &mut ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         let dma_addr = request.dma_addr();

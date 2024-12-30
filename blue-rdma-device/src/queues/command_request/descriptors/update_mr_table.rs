@@ -26,7 +26,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<UpdateMemoryRegionTable> for Device
     type Context = ();
     type Output = ();
 
-    fn handle(&self, request: &UpdateMemoryRegionTable, _: &mut ()) -> Result<Self::Output> {
+    fn handle(&self, request: &UpdateMemoryRegionTable, (): &mut ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         let mr_context = Context::from_req(request);

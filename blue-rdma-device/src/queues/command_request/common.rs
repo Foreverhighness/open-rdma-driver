@@ -83,8 +83,8 @@ impl fmt::Debug for Unknown {
     }
 }
 
-impl AsRef<Unknown> for Unknown {
-    fn as_ref(&self) -> &Unknown {
+impl AsRef<Self> for Unknown {
+    fn as_ref(&self) -> &Self {
         self
     }
 }

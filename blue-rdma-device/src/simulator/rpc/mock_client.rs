@@ -11,7 +11,7 @@ pub struct MockRpcClient {
 }
 
 impl MockRpcClient {
-    #[allow(unused, reason = "used in test")]
+    #[expect(unused, reason = "used in test")]
     pub const fn new() -> Self {
         Self {
             frame: RefCell::new(0),

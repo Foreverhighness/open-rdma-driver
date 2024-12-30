@@ -112,9 +112,9 @@ impl AckExtendedTransportHeader {
     ) -> Self {
         let mut aeth = MetaReportQueueDescFragAETH([0u8; 8]);
         aeth.set_psn(psn);
-        aeth.set_msn(msn as u32);
-        aeth.set_aeth_value(value as u32);
-        aeth.set_aeth_code(u8::from(code) as u32);
+        aeth.set_msn(u32::from(msn));
+        aeth.set_aeth_value(u32::from(value));
+        aeth.set_aeth_code(u32::from(u8::from(code)));
 
         Self(aeth)
     }

@@ -169,7 +169,7 @@ pub(super) fn generate_ack(
     udp_datagram.payload().to_vec()
 }
 
-pub(crate) fn generate_payload_from_msg(msg: &RdmaMessage, src: Ipv4Addr, dst: Ipv4Addr) -> Vec<u8> {
+pub fn generate_payload_from_msg(msg: &RdmaMessage, src: Ipv4Addr, dst: Ipv4Addr) -> Vec<u8> {
     let mut buf = vec![0; 8192];
     let _len = PacketWriter::new(&mut buf)
         .src_addr(src)

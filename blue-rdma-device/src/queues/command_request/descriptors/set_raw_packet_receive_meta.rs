@@ -25,7 +25,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<SetRawPacketReceiveMeta> for Device
     type Output = ();
 
     #[expect(unreachable_code, reason = "testing")]
-    fn handle(&self, request: &SetRawPacketReceiveMeta, _: &mut ()) -> Result<Self::Output> {
+    fn handle(&self, request: &SetRawPacketReceiveMeta, (): &mut ()) -> Result<Self::Output> {
         log::debug!("handle {request:?}");
 
         todo!();

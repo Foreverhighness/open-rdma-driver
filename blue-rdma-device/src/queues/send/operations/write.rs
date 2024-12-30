@@ -48,7 +48,7 @@ fn generate_segments_from_request(mut va: u64, len: u32, path_mtu: u32) -> Vec<S
     let seg = Segment::new(va.into(), len);
     segments.push(seg);
 
-    va += len as u64;
+    va += u64::from(len);
     remainder -= len;
 
     while remainder > 0 {
@@ -56,7 +56,7 @@ fn generate_segments_from_request(mut va: u64, len: u32, path_mtu: u32) -> Vec<S
         let seg = Segment::new(va.into(), len);
         segments.push(seg);
 
-        va += len as u64;
+        va += u64::from(len);
         remainder -= len;
     }
 
@@ -67,7 +67,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 
-    fn handle(&self, req: &Write, _: &mut ()) -> Result<Self::Output> {
+    fn handle(&self, req: &Write, (): &mut ()) -> Result<Self::Output> {
         log::info!("handle write op: {req:#?}");
 
         let path_mtu = u32::from(&req.common.path_mtu_kind);
@@ -134,13 +134,13 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
             [ref first, ref middles @ .., ref last] => {
                 send_write_message(ToHostWorkRbDescOpcode::RdmaWriteFirst, psn, false, remote_va, first);
 
-                remote_va += first.len as u64;
+                remote_va += u64::from(first.len);
                 psn = psn.wrapping_add(1);
 
                 for middle in middles {
                     send_write_message(ToHostWorkRbDescOpcode::RdmaWriteMiddle, psn, false, remote_va, middle);
 
-                    remote_va += middle.len as u64;
+                    remote_va += u64::from(middle.len);
                     psn = psn.wrapping_add(1);
                 }
 
@@ -215,7 +215,7 @@ mod tests {
 
         let expected = vec![
             Segment::new(va.into(), 4096),
-            Segment::new((va + path_mtu as u64).into(), 2048),
+            Segment::new((va + u64::from(path_mtu)).into(), 2048),
         ];
 
         let segments = generate_segments_from_request(va, len, path_mtu);
@@ -275,7 +275,7 @@ mod tests {
         };
         let payload_first = generate_payload_from_msg(&write_first_msg, src, dst);
 
-        remote_va += first.len as u64;
+        remote_va += u64::from(first.len);
         psn = psn.wrapping_add(1);
 
         let payload = PayloadInfo::new_with_data(last.va.0 as *const u8, last.len as usize);
@@ -299,7 +299,7 @@ mod tests {
         // println!("{msg_first:#?}");
         // println!("{msg_last:#?}");
 
-        let filename = &".cache/captures/ethernet-frame-0.bin".to_string();
+        let filename = &".cache/captures/ethernet-frame-0.bin".to_owned();
         let buffer = std::fs::read(filename).unwrap();
 
         let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();
@@ -309,7 +309,7 @@ mod tests {
         let expected = udp_packet.payload();
         assert_eq!(expected, payload_first);
 
-        let filename = &".cache/captures/ethernet-frame-1.bin".to_string();
+        let filename = &".cache/captures/ethernet-frame-1.bin".to_owned();
         let buffer = std::fs::read(filename).unwrap();
 
         let eth_frame = EthernetFrame::new_checked(buffer.as_slice()).unwrap();

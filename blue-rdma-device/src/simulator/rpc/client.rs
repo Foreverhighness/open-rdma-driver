@@ -114,6 +114,7 @@ impl Default for RpcNetIfcRxTxPayload {
 }
 
 impl RpcNetIfcRxTxPayload {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             data: Payload::new(),
@@ -126,6 +127,7 @@ impl RpcNetIfcRxTxPayload {
     }
 
     /// new request, return generated request and used bytes.
+    #[must_use]
     pub fn new_request(buf: &[u8]) -> (Self, usize) {
         assert!(!buf.is_empty());
 
@@ -175,6 +177,7 @@ impl Default for BarIoInfo {
 }
 
 impl BarIoInfo {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             value: 0,
@@ -184,6 +187,7 @@ impl BarIoInfo {
         }
     }
 
+    #[must_use]
     pub const fn new_read_response(pci_tag: u64, value: u64) -> Self {
         Self {
             value,
@@ -193,6 +197,7 @@ impl BarIoInfo {
         }
     }
 
+    #[must_use]
     pub const fn new_write_response(pci_tag: u64, valid: bool) -> Self {
         Self {
             value: 0,

@@ -10,7 +10,7 @@ use crate::queues::work_queue::WorkQueue;
 
 // CommandRequestQueue is same type as RegistersCommandRequestHandle
 #[derive(Debug)]
-pub(crate) struct CommandRequestQueue<'q, UA: Agent, DC: Client, Desc = Unknown> {
+pub struct CommandRequestQueue<'q, UA: Agent, DC: Client, Desc = Unknown> {
     dev: &'q DeviceInner<UA, DC>,
     _descriptors: PhantomData<*mut [Desc]>,
     // addr: u64,
@@ -20,7 +20,7 @@ pub(crate) struct CommandRequestQueue<'q, UA: Agent, DC: Client, Desc = Unknown>
 }
 
 impl<'q, UA: Agent, DC: Client> CommandRequestQueue<'q, UA, DC> {
-    pub(crate) fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
+    pub const fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -78,7 +78,7 @@ impl<UA: Agent, DC: Client> CommandRequestQueue<'_, UA, DC> {
                     DescriptorRef::SetNetworkParameter(req) => self.dev.handle(req, &mut ()).unwrap(),
                     DescriptorRef::SetRawPacketReceiveMeta(req) => self.dev.handle(req, &mut ()).unwrap(),
                     DescriptorRef::UpdateErrorPacketSequenceNumberRecoverPoint(req) => {
-                        self.dev.handle(req, &mut ()).unwrap()
+                        self.dev.handle(req, &mut ()).unwrap();
                     }
                 }
             }
@@ -87,7 +87,7 @@ impl<UA: Agent, DC: Client> CommandRequestQueue<'_, UA, DC> {
 }
 
 impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
-    pub(crate) fn command_request_queue(&self) -> CommandRequestQueue<'_, UA, DC> {
+    pub(crate) const fn command_request_queue(&self) -> CommandRequestQueue<'_, UA, DC> {
         CommandRequestQueue::new(self)
     }
 }

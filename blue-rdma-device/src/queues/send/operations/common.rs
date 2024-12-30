@@ -33,7 +33,7 @@ impl Common {
         let dest_ip = seg0.dest_ip();
         let message_sequence_number = seg0.partition_key;
 
-        Common {
+        Self {
             total_len,
             remote_addr,
             remote_key,

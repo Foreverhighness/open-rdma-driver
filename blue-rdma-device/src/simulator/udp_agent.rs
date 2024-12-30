@@ -15,7 +15,7 @@ use super::super::net::{Agent, RDMA_PORT, Result};
 use super::rpc::{Client, RpcClient, RpcNetIfcRxTxPayload};
 
 #[derive(Debug)]
-/// UdpAgent by using RPC call to communicate with peers
+/// `UdpAgent` by using RPC call to communicate with peers
 pub struct UdpAgent<R: Client = RpcClient> {
     client_id: u64,
     mac: MacAddress,

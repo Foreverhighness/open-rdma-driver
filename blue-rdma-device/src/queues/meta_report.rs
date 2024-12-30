@@ -1,3 +1,3 @@
 mod queue;
 
-pub(crate) mod descriptors;
+pub mod descriptors;

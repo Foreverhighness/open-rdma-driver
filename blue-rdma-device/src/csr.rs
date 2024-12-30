@@ -38,7 +38,7 @@ pub struct EmulatorCsrsHandler<'h, UA: Agent, DC: Client> {
     dev: &'h DeviceInner<UA, DC>,
 }
 impl<'h, UA: Agent, DC: Client> EmulatorCsrsHandler<'h, UA, DC> {
-    pub(super) fn new<'c, 'd>(csrs: &'c EmulatorCsrs, dev: &'d DeviceInner<UA, DC>) -> Self
+    pub(super) const fn new<'c, 'd>(csrs: &'c EmulatorCsrs, dev: &'d DeviceInner<UA, DC>) -> Self
     where
         'c: 'h,
         'd: 'h,

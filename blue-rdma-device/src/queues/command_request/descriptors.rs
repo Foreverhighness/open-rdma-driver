@@ -29,7 +29,7 @@ pub(super) enum DescriptorRef<'d> {
 }
 
 impl<'d> DescriptorRef<'d> {
-    pub(super) fn parse<'r>(raw: &'r Unknown) -> Result<DescriptorRef<'d>>
+    pub(super) fn parse<'r>(raw: &'r Unknown) -> Result<Self>
     where
         'r: 'd,
     {

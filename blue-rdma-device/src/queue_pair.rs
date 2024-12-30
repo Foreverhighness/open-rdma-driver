@@ -56,9 +56,7 @@ impl Context {
             error_psn = i64::from(error_psn)
         );
         let is_error = error_psn != u32::MAX;
-        if !is_error {
-            panic!("logic_error: not error state but get recover")
-        }
+        assert!(is_error, "logic_error: not error state but get recover");
         if error_psn == psn {
             self.clear_error();
             true
@@ -96,7 +94,7 @@ impl Context {
         self.error_psn() != u32::MAX
     }
 
-    /// set expected_psn
+    /// set `expected_psn`
     pub fn expected_psn(&self) -> PacketSequenceNumber {
         self.expected_psn.load(core::sync::atomic::Ordering::SeqCst)
     }

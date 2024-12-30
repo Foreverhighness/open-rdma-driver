@@ -16,7 +16,7 @@ const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<Descriptor>() == DESCRIPTOR_ALIGN);
 
 impl ImmDt {
-    pub fn new(data: u32) -> Self {
+    pub const fn new(data: u32) -> Self {
         Self {
             imm_dt: ImmediateExtendedTransportHeader::new(data),
             _reserved: core::mem::MaybeUninit::uninit(),

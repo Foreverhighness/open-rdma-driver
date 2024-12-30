@@ -28,17 +28,21 @@ pub use write_only_with_immediate::WriteOnlyWithImmediate;
     unused,
     reason = "This trait is intended for comparison with the `HandleMessage<Msg>` trait."
 )]
-pub(crate) trait Message<Dev> {
+pub trait Message<Dev> {
     fn handle(&self, dev: &Dev) -> super::super::Result;
 }
 
 // which is better?
-pub(crate) trait HandleMessage<Msg> {
+pub trait HandleMessage<Msg> {
     fn handle(&self, msg: Msg, src: core::net::IpAddr) -> super::super::Result;
 }
 
 mod handler {
-    use super::*;
+    use super::{
+        Acknowledge, HandleMessage, ReadRequest, ReadResponseFirst, ReadResponseLast, ReadResponseMiddle,
+        ReadResponseOnly, WriteFirst, WriteLast, WriteLastWithImmediate, WriteMiddle, WriteOnly,
+        WriteOnlyWithImmediate,
+    };
     use crate::DeviceInner;
     use crate::dma::Client;
     use crate::errors::Error;
@@ -54,11 +58,11 @@ mod handler {
                 ToHostWorkRbDescOpcode::RdmaWriteMiddle => self.handle(WriteMiddle::parse(msg)?, src)?,
                 ToHostWorkRbDescOpcode::RdmaWriteLast => self.handle(WriteLast::parse(msg)?, src)?,
                 ToHostWorkRbDescOpcode::RdmaWriteLastWithImmediate => {
-                    self.handle(WriteLastWithImmediate::parse(msg)?, src)?
+                    self.handle(WriteLastWithImmediate::parse(msg)?, src)?;
                 }
                 ToHostWorkRbDescOpcode::RdmaWriteOnly => self.handle(WriteOnly::parse(msg)?, src)?,
                 ToHostWorkRbDescOpcode::RdmaWriteOnlyWithImmediate => {
-                    self.handle(WriteOnlyWithImmediate::parse(msg)?, src)?
+                    self.handle(WriteOnlyWithImmediate::parse(msg)?, src)?;
                 }
                 ToHostWorkRbDescOpcode::RdmaReadResponseFirst => self.handle(ReadResponseFirst::parse(msg)?, src)?,
                 ToHostWorkRbDescOpcode::RdmaReadResponseMiddle => self.handle(ReadResponseMiddle::parse(msg)?, src)?,

@@ -8,7 +8,7 @@ use crate::queues::errors::ParseDescriptorError;
 use crate::types::{PacketSequenceNumber, PathMtuKind, QueuePairNumber, QueuePairType, SendFlag};
 
 #[repr(C, align(32))]
-pub(crate) struct Seg1 {
+pub struct Seg1 {
     pmtu_send_flag_qp_type_sge_cnt: common::PMtuAndSendFlagAndQpTypeAndSgeCount,
     psn_inner: common::PacketSequenceNumber,
     mac: [u8; 6],
@@ -55,7 +55,7 @@ impl Seg1 {
         Ok(queue_pair_type)
     }
 
-    pub fn sge_count(&self) -> u8 {
+    pub const fn sge_count(&self) -> u8 {
         self.pmtu_send_flag_qp_type_sge_cnt.sge_count()
     }
 

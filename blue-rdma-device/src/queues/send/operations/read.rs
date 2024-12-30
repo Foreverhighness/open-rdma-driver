@@ -24,7 +24,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Read> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 
-    fn handle(&self, req: &Read, _: &mut Self::Context) -> Result<Self::Output> {
+    fn handle(&self, req: &Read, (): &mut Self::Context) -> Result<Self::Output> {
         log::info!("handle read op: {req:#?}");
 
         // Question here: When to send ack?

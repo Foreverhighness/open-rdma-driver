@@ -2,7 +2,7 @@ macro_rules! declare_and_impl_basic_register {
     ($prefix:ident, $csr_type:ident, $part:ident) => {
         paste::paste! {
             #[derive(Debug, Default)]
-            pub(crate) struct [<$prefix $csr_type $part>] {
+            pub struct [<$prefix $csr_type $part>] {
                 val: core::sync::atomic::AtomicU32,
             }
             impl [<$prefix $csr_type $part>] {
@@ -21,7 +21,7 @@ macro_rules! declare_and_impl_basic_register {
                 dev: &'h DeviceInner<UA, DC>,
             }
             impl<'h, UA: Agent, DC: Client> [<$prefix $csr_type $part Handler>]<'h, UA, DC> {
-                pub(crate) fn new<'r, 'd>(reg: &'r [<$prefix $csr_type $part>], dev: &'d DeviceInner<UA, DC>) -> Self
+                pub(crate) const fn new<'r, 'd>(reg: &'r [<$prefix $csr_type $part>], dev: &'d DeviceInner<UA, DC>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -38,7 +38,7 @@ macro_rules! declare_and_impl_address {
     ($prefix:ident, $csr_type:ident) => {
         paste::paste! {
             #[derive(Debug, Default)]
-            pub(crate) struct [<$prefix $csr_type Address>] {
+            pub struct [<$prefix $csr_type Address>] {
                 pub(crate) low: [<$prefix $csr_type AddressLow>],
                 pub(crate) high: [<$prefix $csr_type AddressHigh>]
             }
@@ -63,7 +63,7 @@ macro_rules! declare_and_impl_address {
                 dev: &'h DeviceInner<UA, DC>,
             }
             impl<'h, UA: Agent, DC: Client> [<$prefix $csr_type AddressHandler>]<'h, UA, DC> {
-                pub(crate) fn new<'r, 'd>(addr: &'r [<$prefix $csr_type Address>], dev: &'d DeviceInner<UA, DC>) -> Self
+                pub(crate) const fn new<'r, 'd>(addr: &'r [<$prefix $csr_type Address>], dev: &'d DeviceInner<UA, DC>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,
@@ -87,7 +87,7 @@ macro_rules! declare_and_impl_queue {
     ($prefix:ident, $csr_type:ident) => {
         paste::paste! {
             #[derive(Debug, Default)]
-            pub(crate) struct [<$prefix $csr_type>] {
+            pub struct [<$prefix $csr_type>] {
                 pub(crate) addr: [<$prefix $csr_type Address>],
                 pub(crate) head: [<$prefix $csr_type Head>],
                 pub(crate) tail: [<$prefix $csr_type Tail>],
@@ -99,7 +99,7 @@ macro_rules! declare_and_impl_queue {
                 dev: &'h DeviceInner<UA, DC>,
             }
             impl<'h, UA: Agent, DC: Client> [<$prefix $csr_type Handler>]<'h, UA, DC> {
-                pub(crate) fn new<'r, 'd>(regs: &'r [<$prefix $csr_type>], dev: &'d DeviceInner<UA, DC>) -> Self
+                pub(crate) const fn new<'r, 'd>(regs: &'r [<$prefix $csr_type>], dev: &'d DeviceInner<UA, DC>) -> Self
                 where
                     'r: 'h,
                     'd: 'h,

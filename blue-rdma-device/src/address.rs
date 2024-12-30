@@ -54,7 +54,7 @@ mod physical {
     }
 
     impl PhysicalAddress {
-        pub fn into_inner(self) -> u64 {
+        pub const fn into_inner(self) -> u64 {
             self.0
         }
     }

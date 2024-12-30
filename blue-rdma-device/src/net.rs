@@ -1,8 +1,8 @@
 mod agent;
 mod message;
-pub(crate) mod util;
+pub mod util;
 
-pub(super) use agent::Agent;
+pub use agent::Agent;
 
 pub type Result<T> = core::result::Result<T, Error>;
 

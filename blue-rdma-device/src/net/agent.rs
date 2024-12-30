@@ -1,6 +1,6 @@
 use super::Result;
 
-/// refer to [std::net::UdpSocket]
+/// refer to [`std::net::UdpSocket`]
 pub trait Agent {
     /// Sends data to the given address. On success, returns the number of bytes written.
     ///

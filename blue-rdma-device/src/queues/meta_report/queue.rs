@@ -7,13 +7,13 @@ use crate::net::Agent;
 use crate::queues::complete_queue::CompleteQueue;
 
 #[derive(Debug)]
-pub(crate) struct MetaReportQueue<'q, UA: Agent, DC: Client, Desc = [u8; DESCRIPTOR_SIZE]> {
+pub struct MetaReportQueue<'q, UA: Agent, DC: Client, Desc = [u8; DESCRIPTOR_SIZE]> {
     dev: &'q DeviceInner<UA, DC>,
     _descriptors: PhantomData<*mut [Desc]>,
 }
 
 impl<'q, UA: Agent, DC: Client> MetaReportQueue<'q, UA, DC> {
-    pub(crate) fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
+    pub const fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -54,7 +54,7 @@ impl<UA: Agent, DC: Client, Desc> CompleteQueue for MetaReportQueue<'_, UA, DC, 
 }
 
 impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
-    pub(crate) fn meta_report_queue(&self) -> MetaReportQueue<'_, UA, DC> {
+    pub(crate) const fn meta_report_queue(&self) -> MetaReportQueue<'_, UA, DC> {
         MetaReportQueue::new(self)
     }
 }

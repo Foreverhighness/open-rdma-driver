@@ -11,13 +11,13 @@ use crate::queues::work_queue::WorkQueue;
 
 // SendQueue is same type as RegistersSendHandle
 #[derive(Debug)]
-pub(crate) struct SendQueue<'q, UA: Agent, DC: Client, Desc = [u8; DESCRIPTOR_SIZE]> {
+pub struct SendQueue<'q, UA: Agent, DC: Client, Desc = [u8; DESCRIPTOR_SIZE]> {
     dev: &'q DeviceInner<UA, DC>,
     _descriptors: PhantomData<*mut [Desc]>,
 }
 
 impl<'q, UA: Agent, DC: Client> SendQueue<'q, UA, DC> {
-    pub(crate) fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
+    pub const fn new(dev: &'q DeviceInner<UA, DC>) -> Self {
         Self {
             dev,
             _descriptors: PhantomData,
@@ -69,7 +69,7 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
     }
 
     pub(crate) fn run(&self) {
-        while let Ok(()) = self.dev.rx_send.recv() {
+        while self.dev.rx_send.recv() == Ok(()) {
             while let Some(raw0) = unsafe { self.pop() } {
                 let seg0 = Seg0::from_bytes(raw0);
                 // TODO(fh): move assertions into `Seg0::from_bytes_checked`.
@@ -151,7 +151,7 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
 }
 
 impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
-    pub(crate) fn send_queue(&self) -> SendQueue<'_, UA, DC> {
+    pub(crate) const fn send_queue(&self) -> SendQueue<'_, UA, DC> {
         SendQueue::new(self)
     }
 }

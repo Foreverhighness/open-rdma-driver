@@ -23,7 +23,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<UpdateErrorPacketSequenceNumberReco
     type Context = ();
     type Output = ();
 
-    fn handle(&self, req: &UpdateErrorPacketSequenceNumberRecoverPoint, _: &mut ()) -> Result<Self::Output> {
+    fn handle(&self, req: &UpdateErrorPacketSequenceNumberRecoverPoint, (): &mut ()) -> Result<Self::Output> {
         log::debug!("handle {req:?}");
 
         let psn = req.packet_sequence_number();

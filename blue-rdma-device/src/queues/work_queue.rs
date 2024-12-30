@@ -1,6 +1,6 @@
 use crate::dma::PointerMut;
 
-pub(crate) trait WorkQueue {
+pub trait WorkQueue {
     type Descriptor;
 
     fn addr(&self) -> u64;

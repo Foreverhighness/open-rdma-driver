@@ -218,7 +218,7 @@ impl<R: rpc::Client> DmaClient<R> {
                             client_id,
                             (addr / BYTES_PER_WORD) & 0xFFFF_FFFF,
                             WORD_WIDTH,
-                        )
+                        );
                     };
 
                     log::trace!(
@@ -235,7 +235,7 @@ impl<R: rpc::Client> DmaClient<R> {
                 addr = addr.checked_add(u64::try_from(len).unwrap()).unwrap();
                 data = remainder;
             }
-        })
+        });
     }
 }
 
@@ -335,7 +335,7 @@ mod tests {
     }
     impl MockRpc {
         fn new(size: usize) -> Self {
-            MockRpc {
+            Self {
                 memory: Arc::new(Mutex::new(vec![0; size])),
             }
         }

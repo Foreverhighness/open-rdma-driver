@@ -22,7 +22,7 @@ enum State {
 }
 
 #[derive(Debug)]
-pub(crate) struct NetParameter {
+pub struct NetParameter {
     pub ip: Ipv4Addr,
     #[expect(unused, reason = "may use later")]
     pub gateway: Ipv4Addr,
@@ -103,11 +103,11 @@ impl<UA: net::Agent, DC: dma::Client, MRT: MemoryRegionTable> DeviceInner<UA, DC
         }
     }
 
-    pub(crate) fn memory_region_table(&self) -> &MRT {
+    pub(crate) const fn memory_region_table(&self) -> &MRT {
         &self.mr_table
     }
 
-    pub(crate) fn queue_pair_table(&self) -> &queue_pair::Table {
+    pub(crate) const fn queue_pair_table(&self) -> &queue_pair::Table {
         &self.qp_table
     }
 }

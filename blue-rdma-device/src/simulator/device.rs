@@ -8,6 +8,7 @@ use super::udp_agent::UdpAgent;
 use crate::memory_region::Table;
 
 impl Simulator {
+    #[must_use]
     pub fn new_simulator(client_id: u64) -> Arc<Self> {
         let dma_client = DmaClient::new(client_id, RpcClient);
 

@@ -8,7 +8,7 @@ pub const REGISTERS_HW_VERSION: u64 = 0x0002_0000;
 pub const HARDWARE_VERSION: u32 = 2024042901;
 
 #[derive(Debug, Default)]
-pub(crate) struct EmulatorRegisterReset {
+pub struct EmulatorRegisterReset {
     val: core::sync::atomic::AtomicU32,
 }
 
@@ -18,17 +18,17 @@ impl EmulatorRegisterReset {
     }
 
     pub fn write(&self, val: u32) {
-        self.val.store(val, core::sync::atomic::Ordering::Relaxed)
+        self.val.store(val, core::sync::atomic::Ordering::Relaxed);
     }
 }
 
-pub(crate) struct EmulatorRegisterResetHandler<'h, UA: Agent, DC: Client> {
+pub struct EmulatorRegisterResetHandler<'h, UA: Agent, DC: Client> {
     reg: &'h EmulatorRegisterReset,
     dev: &'h DeviceInner<UA, DC>,
 }
 
 impl<'h, UA: Agent, DC: Client> EmulatorRegisterResetHandler<'h, UA, DC> {
-    pub(crate) fn new<'r, 'd>(reg: &'r EmulatorRegisterReset, dev: &'d DeviceInner<UA, DC>) -> Self
+    pub const fn new<'r, 'd>(reg: &'r EmulatorRegisterReset, dev: &'d DeviceInner<UA, DC>) -> Self
     where
         'r: 'h,
         'd: 'h,

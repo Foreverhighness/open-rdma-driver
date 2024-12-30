@@ -7,7 +7,7 @@ use crate::address::VirtualAddress;
 use crate::types::MemoryRegionKey;
 
 #[repr(C, align(32))]
-pub(crate) struct Seg0 {
+pub struct Seg0 {
     pub header: Header,
     pub remote_addr: VirtualAddress,
     pub remote_key: MemoryRegionKey,
@@ -20,7 +20,7 @@ const _: () = assert!(size_of::<Descriptor>() == DESCRIPTOR_SIZE);
 const _: () = assert!(align_of::<Descriptor>() == DESCRIPTOR_ALIGN);
 
 impl Seg0 {
-    pub fn dest_ip(&self) -> Ipv4Addr {
+    pub const fn dest_ip(&self) -> Ipv4Addr {
         Ipv4Addr::new(self.dest_ip[3], self.dest_ip[2], self.dest_ip[1], self.dest_ip[0])
     }
 }
