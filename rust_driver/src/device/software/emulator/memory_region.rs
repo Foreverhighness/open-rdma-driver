@@ -103,8 +103,6 @@ impl MemoryRegionTable for Table {
             .checked_add(addr)
             .unwrap();
 
-        // 48 bits
-        let dma_address = dma_address & (1u64 << 48 - 1);
         Ok(dma_address.into())
     }
 }

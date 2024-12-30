@@ -53,7 +53,7 @@ impl<R: rpc::Client> DmaClient<R> {
         let handler = std::thread::spawn(move || unsafe {
             rpc.c_writeBRAM(
                 client_id,
-                addr / u64::from(BYTES_PER_WORD),
+                addr / u64::from(BYTES_PER_WORD) & 0xFFFF_FFFF,
                 buf.as_mut_ptr().cast::<u32>(),
                 byte_en.as_ptr().cast::<u32>().cast_mut(),
                 WORD_WIDTH,
@@ -212,7 +212,14 @@ impl<R: rpc::Client> DmaClient<R> {
                 let rpc = self.rpc.clone();
                 let _ = s.spawn(move || {
                     let mut buf = [0u8; 64];
-                    unsafe { rpc.c_readBRAM(buf.as_mut_ptr().cast(), client_id, addr / BYTES_PER_WORD, WORD_WIDTH) };
+                    unsafe {
+                        rpc.c_readBRAM(
+                            buf.as_mut_ptr().cast(),
+                            client_id,
+                            addr / BYTES_PER_WORD & 0xFFFF_FFFF,
+                            WORD_WIDTH,
+                        )
+                    };
 
                     log::trace!(
                         "read  at {addr:#018X}, start at {start:02}, buf: {buf:02X?}, data: {data:02X?}",
