@@ -5,6 +5,7 @@ use serde::ser::SerializeTuple;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[expect(non_snake_case, reason = "C library interface")]
+#[expect(clippy::missing_safety_doc, reason = "C library interface")]
 pub trait Client: Clone + Send + 'static {
     unsafe fn c_createBRAM(&self, word_width: u32, memory_size: u64) -> u64 {
         unsafe { c_createBRAM(word_width, memory_size) }

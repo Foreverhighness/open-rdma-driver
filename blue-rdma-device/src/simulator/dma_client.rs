@@ -90,7 +90,7 @@ impl<R: rpc::Client> DmaClient<R> {
         unsafe { self.read_bytes(src, slice) };
 
         log::debug!("DMA: read @ {src:#018X} {size:02} bytes: {:02X?}", unsafe {
-            core::mem::transmute::<_, &mut [u8]>(slice)
+            core::mem::transmute::<&mut [std::mem::MaybeUninit<u8>], &mut [u8]>(slice)
         });
 
         // debug_assert_eq!(n_read, size);
@@ -262,7 +262,7 @@ impl<'p, T, R: rpc::Client> Ptr<'p, T, R> {
 
 impl<T, R: rpc::Client> Clone for Ptr<'_, T, R> {
     fn clone(&self) -> Self {
-        Ptr::new(self.addr, self.client)
+        *self
     }
 }
 impl<T, R: rpc::Client> Copy for Ptr<'_, T, R> {}

@@ -69,6 +69,7 @@ impl Common {
 }
 
 impl<UA: net::Agent, DC: dma::Client> DeviceInner<UA, DC> {
+    #[expect(clippy::too_many_arguments, reason = "this function may removed later")]
     pub(super) fn send_write_message<Req: AsRef<Common>>(
         &self,
         req: Req,

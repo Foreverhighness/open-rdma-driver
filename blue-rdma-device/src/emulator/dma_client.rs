@@ -15,7 +15,7 @@ pub struct Ptr<T>(pub *mut T);
 
 impl<T> Clone for Ptr<T> {
     fn clone(&self) -> Self {
-        Self(self.0)
+        *self
     }
 }
 

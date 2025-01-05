@@ -25,6 +25,7 @@ pub struct UdpAgent<R: Client = RpcClient> {
 }
 
 // FIXME(fh): remove this hardcode `ip2mac` function, modify `net::Agent` interface?
+#[expect(clippy::if_same_then_else, reason = "net API may change later")]
 fn ip2mac(ip: IpAddr) -> MacAddress {
     if ip == IpAddr::V4(Ipv4Addr::new(192, 168, 0, 2)) {
         MacAddress::new([0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xFE])

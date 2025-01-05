@@ -27,7 +27,7 @@ impl NetAgent {
         log::info!("new tun {tun_ip} -> {ip}");
         let mut config = tun::configure();
         let config = config.address(tun_ip).netmask(netmask).destination(ip).up();
-        let tun = tun::create(&config).unwrap();
+        let tun = tun::create(config).unwrap();
 
         Self { tun, tun_ip, ip }
     }
@@ -56,12 +56,12 @@ impl NetAgent {
                 )
             }
         };
-        assert_eq!(self.ip, IpAddr::from(dst_ip));
+        assert_eq!(self.ip, dst_ip);
 
         let udp_datagram = UdpPacket::new_checked(datagram)?;
         let payload = udp_datagram.payload();
 
-        Ok((payload, src_ip.into()))
+        Ok((payload, src_ip))
     }
 
     /// construct ethernet frame from UDP payload
@@ -115,7 +115,7 @@ impl NetAgent {
             &self.ip.into(),
             &dst_addr.into(),
             payload.len(),
-            |p| p.copy_from_slice(&payload),
+            |p| p.copy_from_slice(payload),
             &ChecksumCapabilities::ignored(),
         );
 
