@@ -44,11 +44,6 @@ impl BthReth {
             msn_and_can_auto_ack,
         }
     }
-
-    #[expect(unused, reason = "may use later")]
-    pub const fn from_ne_bytes(bytes: [u8; DESCRIPTOR_SIZE]) -> Self {
-        unsafe { core::mem::transmute(bytes) }
-    }
 }
 
 // impl fmt::Debug for BthReth {
@@ -63,3 +58,14 @@ impl BthReth {
 //             .finish()
 //     }
 // }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    impl BthReth {
+        pub const fn from_ne_bytes(bytes: [u8; DESCRIPTOR_SIZE]) -> Self {
+            unsafe { core::mem::transmute(bytes) }
+        }
+    }
+}

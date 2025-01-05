@@ -24,7 +24,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Read> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 
-    fn handle(&self, req: &Read, (): &mut Self::Context) -> Result<Self::Output> {
+    fn handle(&self, req: &Read, &mut (): &mut Self::Context) -> Result<Self::Output> {
         log::info!("handle read op: {req:#?}");
 
         // Question here: When to send ack?
@@ -92,7 +92,7 @@ impl Builder {
     /// Initialize builder from valid seg0
     pub fn from_seg0(seg0: Seg0) -> Self {
         Self(Read {
-            common: Common::from_seg0(&seg0),
+            common: Common::from_seg0(seg0),
             sge: ScatterGatherElement {
                 local_key: 0.into(),
                 len: 0,
@@ -103,7 +103,7 @@ impl Builder {
 
     /// Update valid seg1, assuming only seg0 is processed
     pub fn with_seg1(mut self, seg1: Seg1) -> Self {
-        self.0.common.with_seg1(&seg1);
+        self.0.common.with_seg1(seg1);
 
         self
     }

@@ -44,6 +44,7 @@ fn generate_segments_from_request(mut va: u64, len: u32, path_mtu: u32) -> Vec<S
     let mut remainder = len;
 
     // special judge on first element
+    #[expect(clippy::cast_possible_truncation, reason = "truncate va into u32")]
     let len = remainder.min(path_mtu - ((va as u32) % path_mtu));
     let seg = Segment::new(va.into(), len);
     segments.push(seg);
@@ -67,7 +68,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 
-    fn handle(&self, req: &Write, (): &mut ()) -> Result<Self::Output> {
+    fn handle(&self, req: &Write, &mut (): &mut ()) -> Result<Self::Output> {
         log::info!("handle write op: {req:#?}");
 
         let path_mtu = u32::from(&req.common.path_mtu_kind);
@@ -97,6 +98,7 @@ impl<UA: Agent, DC: Client> HandleDescriptor<Write> for DeviceInner<UA, DC> {
             let ptr = self.dma_client.with_dma_addr::<u8>(dma_addr);
             let len = segment.len as usize;
             let mut data = vec![0u8; len];
+            // SAFETY: caller should guarantee ptr is valid dma ptr
             unsafe { ptr.copy_to_nonoverlapping(data.as_mut_ptr(), len) };
 
             let payload = PayloadInfo::new_with_data(data.as_ptr(), len);
@@ -164,7 +166,7 @@ impl Builder {
         let first = seg0.header.first();
         let last = seg0.header.last();
         Self(Write {
-            common: Common::from_seg0(&seg0),
+            common: Common::from_seg0(seg0),
             last,
             first,
             sge: ScatterGatherElement {
@@ -177,7 +179,7 @@ impl Builder {
 
     /// Update valid seg1, assuming only seg0 is processed
     pub fn with_seg1(mut self, seg1: Seg1) -> Self {
-        self.0.common.with_seg1(&seg1);
+        self.0.common.with_seg1(seg1);
 
         self
     }

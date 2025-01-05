@@ -42,16 +42,16 @@ impl NetAgent {
                 }
 
                 (
-                    packet.src_addr().into_address(),
-                    packet.dst_addr().into_address(),
+                    IpAddr::from(packet.src_addr()),
+                    IpAddr::from(packet.dst_addr()),
                     packet.payload(),
                 )
             }
             IpAddr::V6(_) => {
                 let packet = Ipv6Packet::new_checked(buffer)?;
                 (
-                    packet.src_addr().into_address(),
-                    packet.dst_addr().into_address(),
+                    IpAddr::from(packet.src_addr()),
+                    IpAddr::from(packet.dst_addr()),
                     packet.payload(),
                 )
             }

@@ -1,8 +1,7 @@
 //! Emulator for blue rdma device
 
 pub mod device_api;
-// TODO(fh): move emulator to driver layer?
-// pub mod emulator;
+pub mod emulator;
 pub mod simulator;
 
 mod address;
@@ -22,6 +21,6 @@ pub use device_inner::DeviceInner;
 pub type Result<T = ()> = core::result::Result<T, errors::Error>;
 
 pub type Simulator = DeviceInner<simulator::UdpAgent, simulator::DmaClient>;
-// pub type Emulator = device_inner::DeviceInner<emulator::NetAgent, emulator::DmaClient>;
+pub type Emulator = DeviceInner<emulator::NetAgent, emulator::DmaClient>;
 
 mod third_party;

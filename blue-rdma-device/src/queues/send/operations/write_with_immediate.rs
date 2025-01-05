@@ -37,7 +37,7 @@ impl Builder {
         let first = seg0.header.first();
         let last = seg0.header.last();
         Self(WriteWithImmediate {
-            common: Common::from_seg0(&seg0),
+            common: Common::from_seg0(seg0),
             last,
             first,
             immediate_data: 0,
@@ -51,9 +51,9 @@ impl Builder {
 
     /// Update valid seg1, assuming only seg0 is processed
     pub fn with_seg1(mut self, seg1: Seg1) -> Self {
-        self.0.common.with_seg1(&seg1);
-
         self.0.immediate_data = seg1.immediate_data;
+
+        self.0.common.with_seg1(seg1);
 
         self
     }

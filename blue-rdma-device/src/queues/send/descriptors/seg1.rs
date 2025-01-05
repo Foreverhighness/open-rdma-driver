@@ -81,7 +81,7 @@ impl fmt::Debug for Seg1 {
             .field("mac", &self.mac)
             .field("queue_pair_number", &self.dest_qpn_inner)
             .field("immediate_data", &self.immediate_data)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 

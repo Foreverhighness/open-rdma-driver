@@ -27,10 +27,15 @@ impl BthAeth {
             _reserved: core::mem::MaybeUninit::uninit(),
         }
     }
+}
 
-    // TODO(fh): replace args with reference?
-    #[expect(unused, reason = "may use later")]
-    pub const fn from_ne_bytes(bytes: [u8; DESCRIPTOR_SIZE]) -> Self {
-        unsafe { core::mem::transmute(bytes) }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    impl BthAeth {
+        pub const fn from_ne_bytes(bytes: [u8; DESCRIPTOR_SIZE]) -> Self {
+            unsafe { core::mem::transmute(bytes) }
+        }
     }
 }

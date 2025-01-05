@@ -25,7 +25,7 @@ pub(super) struct Common {
 
 impl Common {
     /// Construct Common part from Seg0
-    pub fn from_seg0(seg0: &Seg0) -> Self {
+    pub fn from_seg0(seg0: Seg0) -> Self {
         let total_len = seg0.header.total_len();
 
         let remote_addr = seg0.remote_addr;
@@ -49,7 +49,7 @@ impl Common {
     }
 
     /// Update Common part from Seg1
-    pub fn with_seg1(&mut self, seg1: &Seg1) {
+    pub fn with_seg1(&mut self, seg1: Seg1) {
         self.dest_qpn = seg1.dest_queue_pair_number();
         self.dest_mac = seg1.mac();
         self.path_mtu_kind = seg1.path_mtu_kind().unwrap();

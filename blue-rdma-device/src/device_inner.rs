@@ -26,7 +26,6 @@ pub struct NetParameter {
     pub ip: Ipv4Addr,
     #[expect(unused, reason = "may use later")]
     pub gateway: Ipv4Addr,
-    #[expect(unused, reason = "may use later")]
     pub subnet_mask: Ipv4Addr,
     pub mac: MacAddress,
 }

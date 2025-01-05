@@ -70,6 +70,7 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
 
     pub(crate) fn run(&self) {
         while self.dev.rx_send.recv() == Ok(()) {
+            // SAFETY: caller should guarantee queue is valid
             while let Some(raw0) = unsafe { self.pop() } {
                 let seg0 = Seg0::from_bytes(raw0);
                 // TODO(fh): move assertions into `Seg0::from_bytes_checked`.
@@ -82,11 +83,13 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
                         // write use 3 descriptors
                         let builder = WriteBuilder::from_seg0(seg0);
 
+                        // SAFETY: caller should guarantee queue is valid
                         let raw1 = unsafe { self.pop() }.expect("partial write operator");
                         let seg1 = Seg1::from_bytes(raw1);
 
                         let builder = builder.with_seg1(seg1);
 
+                        // SAFETY: caller should guarantee queue is valid
                         let raw2 = unsafe { self.pop() }.expect("partial write operator");
                         let sge = VariableLengthSge::from_bytes(raw2);
 
@@ -98,11 +101,13 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
                         // WriteWithImm use 3 descriptors
                         let builder = WriteWithImmediateBuilder::from_seg0(seg0);
 
+                        // SAFETY: caller should guarantee queue is valid
                         let raw1 = unsafe { self.pop() }.expect("partial write_with_immediate operator");
                         let seg1 = Seg1::from_bytes(raw1);
 
                         let builder = builder.with_seg1(seg1);
 
+                        // SAFETY: caller should guarantee queue is valid
                         let raw2 = unsafe { self.pop() }.expect("partial write_with_immediate operator");
                         let sge = VariableLengthSge::from_bytes(raw2);
 
@@ -116,11 +121,13 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
                         // Read use 3 descriptors
                         let builder = ReadBuilder::from_seg0(seg0);
 
+                        // SAFETY: caller should guarantee queue is valid
                         let raw1 = unsafe { self.pop() }.expect("partial read operator");
                         let seg1 = Seg1::from_bytes(raw1);
 
                         let builder = builder.with_seg1(seg1);
 
+                        // SAFETY: caller should guarantee queue is valid
                         let raw2 = unsafe { self.pop() }.expect("partial read operator");
                         let sge = VariableLengthSge::from_bytes(raw2);
 
@@ -132,11 +139,13 @@ impl<UA: Agent, DC: Client> SendQueue<'_, UA, DC> {
                         // ReadResp use 3 descriptors
                         let builder = ReadResponseBuilder::from_seg0(seg0);
 
+                        // SAFETY: caller should guarantee queue is valid
                         let raw1 = unsafe { self.pop() }.expect("partial read_response operator");
                         let seg1 = Seg1::from_bytes(raw1);
 
                         let builder = builder.with_seg1(seg1);
 
+                        // SAFETY: caller should guarantee queue is valid
                         let raw2 = unsafe { self.pop() }.expect("partial read_response operator");
                         let sge = VariableLengthSge::from_bytes(raw2);
 
