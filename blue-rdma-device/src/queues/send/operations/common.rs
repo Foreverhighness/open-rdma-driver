@@ -178,6 +178,7 @@ pub(super) fn generate_segments_from_request(mut va: u64, len: u32, path_mtu: u3
 #[cfg(test)]
 mod tests {
     use core::ffi::{c_int, c_void};
+    use core::ptr;
 
     use libc::{off_t, size_t};
     use smoltcp::wire::{EthernetFrame, Ipv4Packet, UdpPacket};
@@ -231,13 +232,14 @@ mod tests {
             -> *mut c_void;
         }
 
-        let va = first.va.0;
-        let data = unsafe { mmap(va as usize as _, 8192, 1 | 2, 0x02 | 0x20, -1, 0) };
+        let addr = ptr::null_mut::<c_void>().with_addr(first.va.0.try_into().unwrap());
+        let data = unsafe { mmap(addr, 8192, 1 | 2, 0x02 | 0x20, -1, 0) };
+        assert!(ptr::addr_eq(addr, data));
         let data = data.cast::<u8>();
         let slice = unsafe { core::slice::from_raw_parts_mut(data, 6144) };
         slice.iter_mut().enumerate().for_each(|(i, e)| *e = i as u8);
 
-        let payload = PayloadInfo::new_with_data(first.va.0 as *const u8, first.len as usize);
+        let payload = PayloadInfo::new_with_data(data, first.len as usize);
         let write_first_msg = RdmaMessage {
             meta_data: Metadata::General(RdmaGeneralMeta {
                 common_meta: common_meta(ToHostWorkRbDescOpcode::RdmaWriteFirst, psn, false),

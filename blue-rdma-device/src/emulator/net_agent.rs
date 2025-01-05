@@ -167,6 +167,7 @@ mod tests {
     const NETMASK: IpAddr = IpAddr::V4(Ipv4Addr::new(255, 255, 255, 0));
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn test_recv_from() {
         let _sender = NetAgent::new(SENDER_ADDR.ip(), NETMASK, SENDER_TUN_ADDR.ip());
         let receiver = NetAgent::new(RECEIVER_ADDR.ip(), NETMASK, RECEIVER_TUN_ADDR.ip());
@@ -183,6 +184,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn test_sent_to() {
         let sender = NetAgent::new(SENDER_ADDR.ip(), NETMASK, SENDER_TUN_ADDR.ip());
         let receiver = NetAgent::new(RECEIVER_ADDR.ip(), NETMASK, RECEIVER_TUN_ADDR.ip());
