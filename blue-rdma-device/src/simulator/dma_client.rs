@@ -240,22 +240,21 @@ impl<R: rpc::Client> DmaClient<R> {
 }
 
 #[derive(Debug)]
-pub struct Ptr<'p, T, R: rpc::Client> {
+pub struct Ptr<'prov, T, R: rpc::Client> {
     addr: DmaAddress,
-    client: &'p DmaClient<R>,
+    client: &'prov DmaClient<R>,
 
     _ptr: PhantomData<*mut T>,
+    _provenance: PhantomData<fn(&'prov ()) -> &'prov ()>,
 }
 
-impl<'p, T, R: rpc::Client> Ptr<'p, T, R> {
-    const fn new<'cli>(addr: DmaAddress, client: &'cli DmaClient<R>) -> Self
-    where
-        'cli: 'p,
-    {
+impl<'prov, T, R: rpc::Client> Ptr<'prov, T, R> {
+    const fn new(addr: DmaAddress, client: &'prov DmaClient<R>) -> Self {
         Ptr {
             addr,
             client,
             _ptr: PhantomData,
+            _provenance: PhantomData,
         }
     }
 }
@@ -267,7 +266,7 @@ impl<T, R: rpc::Client> Clone for Ptr<'_, T, R> {
 }
 impl<T, R: rpc::Client> Copy for Ptr<'_, T, R> {}
 
-impl<T, R: rpc::Client> dma::PointerMut for Ptr<'_, T, R> {
+impl<'prov, T, R: rpc::Client> dma::PointerMut<'prov> for Ptr<'prov, T, R> {
     type Output = T;
 
     unsafe fn read(self) -> T {
@@ -315,7 +314,7 @@ impl<T, R: rpc::Client> dma::PointerMut for Ptr<'_, T, R> {
 }
 
 impl<R: rpc::Client> dma::Client for DmaClient<R> {
-    fn with_dma_addr<T>(&self, addr: DmaAddress) -> impl dma::PointerMut<Output = T> {
+    fn with_dma_addr<T>(&self, addr: DmaAddress) -> impl dma::PointerMut<'_, Output = T> {
         Ptr::new(addr, self)
     }
 }

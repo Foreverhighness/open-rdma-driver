@@ -8,10 +8,10 @@ pub trait Client {
     // type Ptr;
     // Currently use only one ptr type for simplicity
 
-    fn with_dma_addr<T>(&self, addr: DmaAddress) -> impl PointerMut<Output = T>;
+    fn with_dma_addr<T>(&self, addr: DmaAddress) -> impl PointerMut<'_, Output = T>;
 }
 
-pub trait PointerMut: Clone + Copy {
+pub trait PointerMut<'prov>: Clone + Copy {
     type Output;
 
     /// Reads the value from `self` without moving it. This leaves the
@@ -50,7 +50,7 @@ pub trait PointerMut: Clone + Copy {
 }
 
 #[expect(unused, reason = "for zero copy usage, may use later")]
-pub trait PointerMutExt: PointerMut {
+pub trait PointerMutExt<'prov>: PointerMut<'prov> {
     unsafe fn with<F, T>(self, f: F) -> T
     where
         F: FnOnce(&Self::Output) -> T;
