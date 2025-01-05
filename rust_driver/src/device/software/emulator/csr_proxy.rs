@@ -2,10 +2,11 @@
 
 use std::sync::Arc;
 
+use blue_rdma_device::device_api::csr::{RegisterOperation, RegistersQueue};
+use blue_rdma_device::device_api::{ControlStatusRegisters, RawDevice};
+use blue_rdma_device::Emulator;
+
 use crate::device::ringbuf::{CsrReaderAdaptor, CsrWriterAdaptor};
-use crate::device::software::emulator::device_api::csr::{RegisterOperation, RegistersQueue};
-use crate::device::software::emulator::device_api::{ControlStatusRegisters, RawDevice};
-use crate::device::software::emulator::Emulator;
 use crate::device::DeviceError;
 
 #[derive(Debug)]

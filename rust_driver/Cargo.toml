@@ -35,9 +35,7 @@ core_affinity = "0.8.1"
 derive_more = { version = "1.0.0", features = ["from", "into"] }
 paste = "1.0.15"
 env_logger = "0.11.5"
-papaya = "0.1.6"
-bitfield-struct = "0.9.3"
-tun = "0.7.6"
+blue-rdma-device = { path = "../blue-rdma-device" }
 
 
 [dev-dependencies]
@@ -47,3 +45,5 @@ buddy_system_allocator = "0.9.1"
 libc = "0.2.153"
 lazy_static = "1.4.0"
 serial_test = "3.0.0"
+
+[workspace]

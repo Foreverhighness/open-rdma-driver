@@ -149,7 +149,7 @@ use checker::{PacketChecker, PacketCheckerContext, RecvContextMap};
 use core_affinity::CoreId;
 use ctrl_poller::{ControlPoller, ControlPollerContext};
 use derive_builder::Builder;
-use device::software::emulator::emulator::device::EmulatorDevice;
+use device::software::emulator::EmulatorDevice;
 use device::{
     ToCardCtrlRbDescCommon, ToCardCtrlRbDescSetNetworkParam, ToCardCtrlRbDescSetRawPacketReceiveMeta, ToCardWorkRbDesc,
     ToCardWorkRbDescBuilder, ToCardWorkRbDescOpcode,

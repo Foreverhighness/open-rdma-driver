@@ -1,16 +1,14 @@
 use core::net::IpAddr;
 use std::sync::Arc;
 
+use blue_rdma_device::device_api::csr::{RegistersQueue, RegistersQueueAddress};
+use blue_rdma_device::device_api::{ControlStatusRegisters, RawDevice};
+use blue_rdma_device::Emulator;
 use core_affinity::CoreId;
 use parking_lot::Mutex;
 
 use super::csr_proxy::{CommandRequest, CommandResponse, MetaReport, Send};
-use super::{DmaClient, NetAgent};
 use crate::device::ringbuf::Ringbuf;
-use crate::device::software::emulator::device_api::csr::{RegistersQueue, RegistersQueueAddress};
-use crate::device::software::emulator::device_api::{ControlStatusRegisters, RawDevice};
-use crate::device::software::emulator::memory_region::Table;
-use crate::device::software::emulator::Emulator;
 use crate::device::software::DescriptorScheduler;
 use crate::device::{
     constants, DeviceAdaptor, DeviceError, ToCardCtrlRbDesc, ToCardRb, ToHostCtrlRbDesc, ToHostRb, ToHostWorkRbDesc,
@@ -197,19 +195,5 @@ impl ToHostRb<ToHostWorkRbDesc> for Mutex<ToHostWorkRb> {
                 }
             }
         }
-    }
-}
-
-impl Emulator {
-    pub fn new_emulator(tun_ip: IpAddr) -> Arc<Self> {
-        let dma_client = DmaClient;
-        let mr_table = Table::new();
-
-        let dev = Arc::new(Self::new(dma_client, mr_table));
-
-        dev.start_work_queue();
-        dev.start_net(move |para| NetAgent::new(para.ip.into(), para.subnet_mask.into(), tun_ip));
-
-        dev
     }
 }
