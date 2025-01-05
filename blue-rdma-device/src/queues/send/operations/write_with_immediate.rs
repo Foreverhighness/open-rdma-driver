@@ -16,6 +16,12 @@ pub struct WriteWithImmediate {
     sge: ScatterGatherElement,
 }
 
+impl AsRef<Common> for WriteWithImmediate {
+    fn as_ref(&self) -> &Common {
+        &self.common
+    }
+}
+
 impl<UA: Agent, DC: Client> HandleDescriptor<WriteWithImmediate> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();

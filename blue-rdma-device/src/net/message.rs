@@ -52,7 +52,7 @@ mod handler {
 
     impl<UA: Agent, DC: Client> DeviceInner<UA, DC> {
         pub(crate) fn handle_message(&self, msg: &RdmaMessage, src: core::net::IpAddr) -> Result<(), Error> {
-            log::debug!("handle network message {msg:#?}");
+            log::debug!("handle network message {msg:?}");
             match msg.meta_data.common_meta().opcode {
                 ToHostWorkRbDescOpcode::RdmaWriteFirst => self.handle(WriteFirst::parse(msg)?, src)?,
                 ToHostWorkRbDescOpcode::RdmaWriteMiddle => self.handle(WriteMiddle::parse(msg)?, src)?,

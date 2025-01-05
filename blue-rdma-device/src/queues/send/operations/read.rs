@@ -20,12 +20,18 @@ pub struct Read {
     sge: ScatterGatherElement,
 }
 
+impl AsRef<Common> for Read {
+    fn as_ref(&self) -> &Common {
+        &self.common
+    }
+}
+
 impl<UA: Agent, DC: Client> HandleDescriptor<Read> for DeviceInner<UA, DC> {
     type Context = ();
     type Output = ();
 
     fn handle(&self, req: &Read, &mut (): &mut Self::Context) -> Result<Self::Output> {
-        log::info!("handle read op: {req:#?}");
+        log::info!("handle read op: {req:?}");
 
         // Question here: When to send ack?
         let ack_req = req.common.send_flag == SendFlag::IbvSendSignaled;
