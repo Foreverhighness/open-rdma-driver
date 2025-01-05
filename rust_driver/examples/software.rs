@@ -79,15 +79,15 @@ fn main() {
     init_logging("log.txt").unwrap();
     let a_network = RdmaDeviceNetworkParamBuilder::default()
         .gateway(Ipv4Addr::new(127, 0, 0, 0x1))
-        .netmask(Ipv4Addr::new(255, 0, 0, 0))
-        .ipaddr(Ipv4Addr::new(127, 0, 0, 2))
+        .netmask(Ipv4Addr::new(255, 255, 255, 255))
+        .ipaddr(Ipv4Addr::new(10, 0, 2, 1))
         .macaddr(MacAddress::new([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFE]))
         .build()
         .unwrap();
     let b_network = RdmaDeviceNetworkParamBuilder::default()
         .gateway(Ipv4Addr::new(127, 0, 0, 0x1))
-        .netmask(Ipv4Addr::new(255, 0, 0, 0))
-        .ipaddr(Ipv4Addr::new(127, 0, 0, 3))
+        .netmask(Ipv4Addr::new(255, 255, 255, 255))
+        .ipaddr(Ipv4Addr::new(10, 0, 1, 1))
         .macaddr(MacAddress::new([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]))
         .build()
         .unwrap();
